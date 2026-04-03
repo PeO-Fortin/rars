@@ -9,7 +9,7 @@ import java.util.List;
  * Can only enter at the first instruction, and exit at the last one (called terminator).
  */
 
-class BasicBlock {
+public class BasicBlock {
     public int id;
     public CFG cfg;
     public List<ProgramStatement> instructions = new ArrayList<>();
