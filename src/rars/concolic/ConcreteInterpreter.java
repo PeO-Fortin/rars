@@ -1,7 +1,5 @@
 package rars.concolic;
 
-import rars.riscv.hardware.RegisterFile;
-
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -40,39 +38,17 @@ public class ConcreteInterpreter extends GenericInterpreter<Integer> {
         super(new ConcreteValues());
     }
 
-    protected void ecallManager(int ecallNumber) {
-        Scanner scanner = new Scanner(System.in);
-
-        switch (ecallNumber) {
-            case 5:  // ReadInt
-                registers[10] = values.inject(scanner.nextInt());
-                break;
-            case 12: // ReadChar
-                registers[10] = values.inject(scanner.next().charAt(0));
-                break;
-            case 1:  // PrintInt
-                System.out.print(values.asInt(registers[(RegisterFile.getRegister("a0").getNumber())]));
-                break;
-            case 11: // PrintChar
-                System.out.print(values.asChar(registers[(RegisterFile.getRegister("a0").getNumber())]));
-                break;
-            case 34: // PrintIntHex
-                System.out.printf("%x", values.asInt(registers[(RegisterFile.getRegister("a0").getNumber())]));
-                break;
-            case 35: // PrintIntBinary
-                System.out.print(Integer.toBinaryString(values.asInt(registers[(RegisterFile.getRegister("a0").getNumber())])));
-                break;
-            default:
-                break;
-        }
-    }
-
-    protected Integer getchar() {
+    protected Integer readChar() {
         try {
             int c = System.in.read();
             return c;
         } catch (IOException e) {
-            throw new RuntimeException("cannot getchar: " + e);
+            throw new RuntimeException("cannot readChar: " + e);
         }
+    }
+
+    protected Integer readInt() {
+        Scanner s = new Scanner(System.in);
+        return s.nextInt();
     }
 }
