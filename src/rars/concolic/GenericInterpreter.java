@@ -1,88 +1,86 @@
 package rars.concolic;
 
-import language_minic.*;
-import minic.*;
-import minic.front.*;
-import minic.ir.*;
+import rars.ProgramStatement;
+import rars.RISCVprogram;
+import rars.assembler.Assembler;
+import rars.cfg.*;
 
-import java.io.FileReader;
-import java.io.Reader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public abstract class GenericInterpreter<V> {
     InterpreterValues<V> values;
+
     public GenericInterpreter(InterpreterValues<V> values) {
         this.values = values;
     }
 
-    Map<String, Function> functions;
     public void runOn(String filename) throws Exception {
         prepare(filename);
-        runMain(new ArrayList<V>());
+        runMain();
     }
 
+    CFG cfg;
     public void prepare(String filename) throws Exception {
-        MiniCC2 compiler = new MiniCC2();
-        Reader r = new FileReader(filename);
-        Parser parser = new Parser(r);
-        Node syntaxTree = parser.parse();
-        syntaxTree.apply(compiler.litteralAnalysis);
-        syntaxTree.apply(compiler.scopeAnalysis);
-        syntaxTree.apply(compiler.typeAnalysis);
-        syntaxTree.apply(compiler);
+        RISCVprogram program = new RISCVprogram();
+        ArrayList<String> filenames = new ArrayList<>();
+        filenames.add(filename);
 
-        for (Function function : compiler.scopeAnalysis.functions.values()) {
-            CFG cfg = function.cfg;
-            function.file = filename;
-            compiler.passManager.processPasses(cfg);
-        }
-        functions = compiler.scopeAnalysis.functions;
+        ArrayList<RISCVprogram> programs = program.prepareFilesForAssembly(filenames, filename, null);
+        Assembler assembler = new Assembler();
+        assembler.assemble(programs, true, false, program);
+
+        cfg = new CFG(program);
+        CFGBuilder builder = new CFGBuilder(cfg);
+        builder.build();
     }
 
-    Map<String, V> memory = new HashMap<>();
-    void write(Operand r, V v) {
-        memory.put(r.toString(), v);
-    }
-
-    V read(Operand r) {
-        return memory.get(r.toString());
-    }
-
+    V[] registers = (V[]) new Object[32];
     protected BasicBlock currentBlock;
     void run() {
+        registers[0] = values.inject(0);
         while (currentBlock != null) {
-            for (IR ir : currentBlock.instructions) {
-                switch (ir.instr) {
-                case Add: add(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Sub: sub(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Mul: mul(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Lt: lt(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Mv: mv(toValue(ir.src[0]), ir.dst); break;
-                case Jmp: jmp(ir.labels[0]); break;
-                case Iflt: iflt(toValue(ir.src[0]), toValue(ir.src[1]), ir.labels[0], ir.labels[1]); break;
-                case If: if_(toValue(ir.src[0]), ir.labels[0], ir.labels[1]); break;
-                case Ifneq: ifneq(toValue(ir.src[0]), toValue(ir.src[1]), ir.labels[0], ir.labels[1]); break;
-                case Ret: ret(toValue(ir.src[0])); return;
-                case Call: call(ir.symbol, toValues(ir.src), ir.dst); break;
-                case Not: not(toValue(ir.src[0]), ir.dst); break;
-                case Neq: neq(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Bxor: bxor(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Band: band(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Bor: bor(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Bshl: bshl(toValue(ir.src[0]), toValue(ir.src[1]), ir.dst); break;
-                case Phi: throw new RuntimeException("should not have phis");
+            for (ProgramStatement ps : currentBlock.instructions) {
+                String name = ps.getInstruction().getName();
+                int[] operands = ps.getOperands();
+
+                switch (name) {
+                    case "add": add(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "addi": add(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+                    case "sub": sub(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "mul": mul(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "div": div(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "jal": jmp(currentBlock.takenSuccessor); break;
+                    case "bge": ifgeq(registers[operands[0]], registers[operands[1]],
+                            currentBlock.takenSuccessor, currentBlock.fallthroughSuccessor); break;
+                    case "blt": iflt(registers[operands[0]], registers[operands[1]],
+                            currentBlock.takenSuccessor, currentBlock.fallthroughSuccessor); break;
+                    case "beq": ifeq(registers[operands[0]], registers[operands[1]],
+                            currentBlock.takenSuccessor, currentBlock.fallthroughSuccessor); break;
+                    case "bne": ifneq(registers[operands[0]], registers[operands[1]],
+                            currentBlock.takenSuccessor, currentBlock.fallthroughSuccessor); break;
+                    case "ecall": ecall(values.asInt(registers[17])); break; // Register a7
+                    case "xor": xor(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "xori": xor(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+                    case "and": and(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "andi": and(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+                    case "or": or(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "ori": or(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+                    case "sll": sll(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "slli": sll(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+                    case "srl": srl(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "srli": srl(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+                    case "sra": sra(registers[operands[1]], registers[operands[2]], operands[0]); break;
+                    case "srai": sra(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
                 }
             }
         }
     }
 
-    public V runMain(List<V> arguments) {
-        Register resultRegister = new Register(0, "ret");
-        call("main", arguments, resultRegister);
-        return read(resultRegister);
+    public void runMain() {
+        currentBlock = cfg.entryBlock;
+        run();
     }
 
     protected void setCurrentBlock(BasicBlock target) {
@@ -93,49 +91,42 @@ public abstract class GenericInterpreter<V> {
         setCurrentBlock(target);
     }
 
-    void add(V left, V right, Register dst) {
-        write(dst, values.add(left, right));
-    }
+    void add(V left, V right, int dst) {registers[dst] = values.add(left, right);}
 
-    void sub(V left, V right, Register dst) {
-        write(dst, values.sub(left, right));
-    }
+    void sub(V left, V right, int dst) {registers[dst] = values.sub(left, right);}
 
-    void mul(V left, V right, Register dst) {
-        write(dst, values.mul(left, right));
-    }
+    void mul(V left, V right, int dst) {registers[dst] = values.mul(left, right);}
 
-    void lt(V left, V right, Register dst) {
-        write(dst, values.lt(left, right));
-    }
-
-    void mv(V v, Register dst) {
-        write(dst, v);
-    }
-
-    void not(V v, Register dst) {
-        write(dst, values.not(v));
-    }
+    void div(V left, V right, int dst) {registers[dst] = values.mul(left, right);}
 
     void jmp(BasicBlock target) {
         setCurrentBlock(target);
+    }
+
+    void ifgeq(V left, V right, BasicBlock then, BasicBlock else_) {
+        if_(values.geq(left, right), then, else_);
     }
 
     void iflt(V left, V right, BasicBlock then, BasicBlock else_) {
         if_(values.lt(left, right), then, else_);
     }
 
+    void ifeq(V left, V right, BasicBlock then, BasicBlock else_) { if_(values.eq(left, right), then, else_); }
+
     void ifneq(V left, V right, BasicBlock then, BasicBlock else_) { if_(values.neq(left, right), then, else_); }
 
-    void neq(V left, V right, Register dst) { write(dst, values.neq(left, right)); }
 
-    void bxor(V left, V right, Register dst) { write(dst, values.bxor(left, right)); }
+    void xor(V left, V right, int dst) { registers[dst] = values.xor(left, right); }
 
-    void band(V left, V right, Register dst) { write(dst, values.band(left, right)); }
+    void and(V left, V right, int dst) { registers[dst] = values.and(left, right); }
 
-    void bor(V left, V right, Register dst) { write(dst, values.bor(left, right)); }
+    void or(V left, V right, int dst) { registers[dst] = values.or(left, right); }
 
-    void bshl(V left, V right, Register dst) { write(dst, values.bshl(left, right)); }
+    void sll(V left, V right, int dst) { registers[dst] = values.sll(left, right); }
+
+    void srl(V left, V right, int dst) { registers[dst] = values.srl(left, right); }
+
+    void sra(V left, V right, int dst) { registers[dst] = values.sra(left, right); }
 
     protected void if_(V cond, BasicBlock then, BasicBlock else_) {
         if (values.isTruthy(cond)) {
@@ -145,68 +136,28 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    Register returnRegister;
-    public void call(String function, List<V> args, Register dst) {
-        switch (function) {
-        case "printint":
-            System.out.println(values.asInt(args.get(0)));
-            return;
-        case "printbool":
-            System.out.println(!values.isTruthy(args.get(0)) ? "false" : "true");
-            return;
-        case "println":
-            System.out.println("");
-            return;
-        case "putchar":
-            System.out.print(values.asChar(args.get(0)));
-            return;
-        case "getchar":
-            V c = getchar();
-            if (dst != null) {
-                write(dst, c);
-            }
-            return;
+    protected abstract V readChar();
+    protected abstract V readInt();
+    public void ecall(int syscall) {
+        switch (syscall) {
+            // Register 10 = a0
+            case 5:  // ReadInt
+                registers[10] = readInt();
+                return;
+            case 12: // ReadChar
+                registers[10] = readChar();
+                return;
+            case 1:  // PrintInt
+                System.out.print(values.asInt(registers[10]));
+                return;
+            case 11: // PrintChar
+                System.out.print(values.asChar(registers[10]));
+                return;
+            case 34: // PrintIntHex
+                System.out.printf("%x", values.asInt(registers[10]));
+                return;
+            case 35: // PrintIntBinary
+                System.out.print(Integer.toBinaryString(values.asInt(registers[10])));
         }
-        int i = 0;
-        for (V arg : args) {
-            Parameter param = new Parameter(i);
-            write(param, arg);
-            i++;
-        }
-        Function f = functions.get(function);
-        if (f == null) { throw new RuntimeException("undefined function: " + function); }
-        BasicBlock returnBlock = currentBlock;
-        Register previousReturnRegister = returnRegister;
-        returnRegister = dst;
-        setCurrentBlock(f.cfg.entryBlock);
-        run();
-        currentBlock = returnBlock;
-        returnRegister = previousReturnRegister;
-    }
-
-    protected abstract V getchar();
-
-    void ret(V v) {
-        write(returnRegister, v);
-    }
-
-    V toValue(Operand operand) {
-        if (operand instanceof Constant) {
-            return values.inject((Constant ) operand);
-        } else if (operand instanceof Register) {
-            return read(operand);
-        } else if (operand instanceof Parameter) {
-            return read(operand);
-        } else {
-            throw new RuntimeException("invalid case");
-        }
-    }
-
-    List<V> toValues(Operand[] operands) {
-        List<V> values = new ArrayList<>();
-        for (Operand operand : operands) {
-            values.add(toValue(operand));
-        }
-        return values;
     }
 }
