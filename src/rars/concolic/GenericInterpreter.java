@@ -3,10 +3,9 @@ package rars.concolic;
 import rars.ProgramStatement;
 import rars.RISCVprogram;
 import rars.assembler.Assembler;
-import rars.cfg.*;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class GenericInterpreter<V> {
@@ -21,7 +20,8 @@ public abstract class GenericInterpreter<V> {
         runMain();
     }
 
-    CFG cfg;
+    Map<Integer, ProgramStatement> instructionsMap = new HashMap<>();
+    ArrayList<ProgramStatement> machineList;
     public void prepare(String filename) throws Exception {
         RISCVprogram program = new RISCVprogram();
         ArrayList<String> filenames = new ArrayList<>();
@@ -31,90 +31,80 @@ public abstract class GenericInterpreter<V> {
         Assembler assembler = new Assembler();
         assembler.assemble(programs, true, false, program);
 
-        cfg = new CFG(program);
-        CFGBuilder builder = new CFGBuilder(cfg);
-        builder.build();
+        machineList = program.getMachineList();
+
+        for (ProgramStatement ps : machineList) {
+            instructionsMap.put(ps.getAddress(), ps);
+        }
     }
 
+    final int DEFAULT_OFFSET = 4;
+    int currentProgramCounter;
     V[] registers = (V[]) new Object[32];
-    protected BasicBlock currentBlock;
-    void run() {
+    void run(int programCounter) {
+        currentProgramCounter = programCounter;
         registers[0] = values.inject(0);
-        while (currentBlock != null) {
-            for (ProgramStatement ps : currentBlock.instructions) {
-                String name = ps.getInstruction().getName();
-                int[] operands = ps.getOperands();
+        ProgramStatement ps = instructionsMap.get(programCounter);
+        while (ps != null) {
+            String instructionName = ps.getInstruction().getName();
+            int[] operands = ps.getOperands();
 
-                switch (name) {
-                    case "add": add(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "addi": add(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "sub": sub(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "mul": mul(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "div": div(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "jal": jmp(currentBlock.takenSuccessor); break;
-                    case "bge": ifgeq(registers[operands[0]], registers[operands[1]],
-                            currentBlock.takenSuccessor, currentBlock.fallthroughSuccessor); break;
-                    case "blt": iflt(registers[operands[0]], registers[operands[1]],
-                            currentBlock.takenSuccessor, currentBlock.fallthroughSuccessor); break;
-                    case "beq": ifeq(registers[operands[0]], registers[operands[1]],
-                            currentBlock.takenSuccessor, currentBlock.fallthroughSuccessor); break;
-                    case "bne": ifneq(registers[operands[0]], registers[operands[1]],
-                            currentBlock.takenSuccessor, currentBlock.fallthroughSuccessor); break;
-                    case "ecall": ecall(values.asInt(registers[17])); break; // Register a7
-                    case "xor": xor(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "xori": xor(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "and": and(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "andi": and(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "or": or(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "ori": or(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "sll": sll(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "slli": sll(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "srl": srl(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "srli": srl(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "sra": sra(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "srai": sra(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                }
+            switch (instructionName) {
+                case "add": add(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "addi": add(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sub": sub(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "mul": mul(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "div": div(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "ecall": ecall(values.asInt(registers[17])); setCurrentPc(DEFAULT_OFFSET); break; // Register a7
+                case "xor": xor(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "xori": xor(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "and": and(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "andi": and(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "or": or(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "ori": or(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sll": sll(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "slli": sll(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "srl": srl(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "srli": srl(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sra": sra(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "srai": sra(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "jal": setCurrentPc(operands[1]); break;
+                case "bge": ifgeq(registers[operands[0]], registers[operands[1]], operands[2]); break;
+                case "blt": iflt(registers[operands[0]], registers[operands[1]], operands[2]); break;
+                case "beq": ifeq(registers[operands[0]], registers[operands[1]], operands[2]); break;
+                case "bne": ifneq(registers[operands[0]], registers[operands[1]], operands[2]); break;
             }
+            ps = instructionsMap.get(currentProgramCounter);
         }
     }
 
     public void runMain() {
-        currentBlock = cfg.entryBlock;
-        run();
+        run(machineList.get(0).getAddress());
     }
 
-    protected void setCurrentBlock(BasicBlock target) {
-        currentBlock = target;
+    protected void setCurrentPc(int offset) {
+         currentProgramCounter += offset;
     }
 
-    protected void setCurrentBlockCond(BasicBlock target) {
-        setCurrentBlock(target);
+    protected void setCurrentPcCond(int offset) {
+        setCurrentPc(offset);
     }
 
-    void add(V left, V right, int dst) {registers[dst] = values.add(left, right);}
+    void add(V left, V right, int dst) {registers[dst] = values.add(left, right); }
 
-    void sub(V left, V right, int dst) {registers[dst] = values.sub(left, right);}
+    void sub(V left, V right, int dst) {registers[dst] = values.sub(left, right); }
 
-    void mul(V left, V right, int dst) {registers[dst] = values.mul(left, right);}
+    void mul(V left, V right, int dst) {registers[dst] = values.mul(left, right); }
 
-    void div(V left, V right, int dst) {registers[dst] = values.mul(left, right);}
+    void div(V left, V right, int dst) {registers[dst] = values.mul(left, right); }
 
-    void jmp(BasicBlock target) {
-        setCurrentBlock(target);
-    }
+    void ifgeq(V left, V right, int condOffset) {if_(values.geq(left, right), condOffset); }
 
-    void ifgeq(V left, V right, BasicBlock then, BasicBlock else_) {
-        if_(values.geq(left, right), then, else_);
-    }
+    void iflt(V left, V right, int condOffset) {if_(values.lt(left, right), condOffset); }
 
-    void iflt(V left, V right, BasicBlock then, BasicBlock else_) {
-        if_(values.lt(left, right), then, else_);
-    }
+    void ifeq(V left, V right, int condOffset) { if_(values.eq(left, right), condOffset); }
 
-    void ifeq(V left, V right, BasicBlock then, BasicBlock else_) { if_(values.eq(left, right), then, else_); }
-
-    void ifneq(V left, V right, BasicBlock then, BasicBlock else_) { if_(values.neq(left, right), then, else_); }
-
+    void ifneq(V left, V right, int condOffset) { if_(values.neq(left, right), condOffset); }
 
     void xor(V left, V right, int dst) { registers[dst] = values.xor(left, right); }
 
@@ -128,14 +118,15 @@ public abstract class GenericInterpreter<V> {
 
     void sra(V left, V right, int dst) { registers[dst] = values.sra(left, right); }
 
-    protected void if_(V cond, BasicBlock then, BasicBlock else_) {
+    protected void if_(V cond, int condOffset) {
         if (values.isTruthy(cond)) {
-            setCurrentBlockCond(then);
+            setCurrentPcCond(condOffset);
         } else {
-            setCurrentBlockCond(else_);
+            setCurrentPcCond(DEFAULT_OFFSET);
         }
     }
 
+    public String output = "";
     protected abstract V readChar();
     protected abstract V readInt();
     public void ecall(int syscall) {
@@ -148,15 +139,19 @@ public abstract class GenericInterpreter<V> {
                 registers[10] = readChar();
                 return;
             case 1:  // PrintInt
+                output += values.asInt(registers[10]) + " | ";
                 System.out.print(values.asInt(registers[10]));
                 return;
             case 11: // PrintChar
+                output += values.asChar(registers[10]) + " | ";
                 System.out.print(values.asChar(registers[10]));
                 return;
             case 34: // PrintIntHex
+                output += Integer.toHexString(values.asInt(registers[10])) + " | ";
                 System.out.printf("%x", values.asInt(registers[10]));
                 return;
             case 35: // PrintIntBinary
+                output += Integer.toBinaryString(values.asInt(registers[10])) + " | ";
                 System.out.print(Integer.toBinaryString(values.asInt(registers[10])));
         }
     }

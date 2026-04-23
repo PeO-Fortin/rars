@@ -84,21 +84,21 @@ class SymbolicOperation extends SymbolicValue {
     }
     @Override public String toString() {
         switch (operator) {
-        case Add: return "(" + operands[0].toString() + "+" + operands[1].toString() + ")";
-        case Sub: return "(" + operands[0].toString() + "-" + operands[1].toString() + ")";
-        case Mul: return "(" + operands[0].toString() + "*" + operands[1].toString() + ")";
-        case Div: return "(" + operands[0].toString() + "/" + operands[1].toString() + ")";
-        case Not: return "(!" + operands[0].toString() + ")";
-        case Eq: return "(" + operands[0].toString() + "==" + operands[1].toString() + ")";
-        case Neq: return "(" + operands[0].toString() + "!=" + operands[1].toString() + ")";
-        case Geq: return "(" + operands[0].toString() + ">=" + operands[1].toString() + ")";
-        case Lt: return "(" + operands[0].toString() + "<" + operands[1].toString() + ")";
-        case Xor: return "(" + operands[0].toString() + "^" + operands[1].toString() + ")";
-        case And: return "(" + operands[0].toString() + "&" + operands[1].toString() + ")";
-        case Or: return "(" + operands[0].toString() + "|" + operands[1].toString() + ")";
-        case Sll: return "(" + operands[0].toString() + "<<" + operands[1].toString() + ")";
-        case Srl: return "(" + operands[0].toString() + ">>>" + operands[1].toString() + ")";
-        case Sra: return "(" + operands[0].toString() + ">>" + operands[1].toString() + ")";
+            case Add: return "(" + operands[0].toString() + "+" + operands[1].toString() + ")";
+            case Sub: return "(" + operands[0].toString() + "-" + operands[1].toString() + ")";
+            case Mul: return "(" + operands[0].toString() + "*" + operands[1].toString() + ")";
+            case Div: return "(" + operands[0].toString() + "/" + operands[1].toString() + ")";
+            case Not: return "(!" + operands[0].toString() + ")";
+            case Eq: return "(" + operands[0].toString() + "==" + operands[1].toString() + ")";
+            case Neq: return "(" + operands[0].toString() + "!=" + operands[1].toString() + ")";
+            case Geq: return "(" + operands[0].toString() + ">=" + operands[1].toString() + ")";
+            case Lt: return "(" + operands[0].toString() + "<" + operands[1].toString() + ")";
+            case Xor: return "(" + operands[0].toString() + "^" + operands[1].toString() + ")";
+            case And: return "(" + operands[0].toString() + "&" + operands[1].toString() + ")";
+            case Or: return "(" + operands[0].toString() + "|" + operands[1].toString() + ")";
+            case Sll: return "(" + operands[0].toString() + "<<" + operands[1].toString() + ")";
+            case Srl: return "(" + operands[0].toString() + ">>>" + operands[1].toString() + ")";
+            case Sra: return "(" + operands[0].toString() + ">>" + operands[1].toString() + ")";
         }
         return "unknown";
     }

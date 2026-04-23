@@ -1,12 +1,8 @@
 package rars.concolic;
 
-import minic.front.*;
-import minic.fuzzing.Edge;
-import minic.ir.*;
-import minic.lib.*;
-
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
@@ -17,7 +13,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
     }
 
-    Random random = new Random();
+    Random random = new java.util.Random();
     public ConcolicInterpreter() {
         super(new ConcolicValues());
     }
@@ -25,15 +21,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public ExecutionTreeNode executionTreeRoot = new ExecutionTreeNode(0);
     public ExecutionTreeNode currentNode = executionTreeRoot;
     int nextId = 0;
-    Map<BasicBlock, Integer> distanceToError;
 
     @Override
-    protected void if_(ConcolicValues.V cond, BasicBlock then, BasicBlock else_) {
+    protected void if_(ConcolicValues.V cond, int condOffset) {
         currentNode.condition = cond.symbolic;
-        currentNode.block = currentBlock;
-        if (distanceToError != null) {
-            currentNode.distanceToError = distanceToError.getOrDefault(currentBlock, 10000);
-        }
         if (!currentNode.hasChildren()) {
             currentNode.trueBranch = new ExecutionTreeNode(++nextId);
             currentNode.trueBranch.parent = currentNode;
@@ -45,20 +36,32 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         } else {
             currentNode = currentNode.falseBranch;
         }
-        super.if_(cond, then, else_);
+        super.if_(cond, condOffset);
     }
 
     int lastReadCharacter = 0;
     @Override
-    protected ConcolicValues.V getchar() {
-        String symbol = "getchar_" + lastReadCharacter++;
-        // The result from getchar is between -1 (included) and 255 (included)
+    protected ConcolicValues.V readChar() {
+        String symbol = "readChar_" + lastReadCharacter++;
+        // The result from readChar is between -1 (included) and 127 (included)
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                                                               new SymbolicValue[]{ new SymbolicInteger(-2), new SymbolicVariable(symbol) }));
+                new SymbolicValue[]{ new SymbolicInteger(-2), new SymbolicVariable(symbol) }));
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                                                               new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(256) }));
-        // To better deal with program reading from stdin until EOF, we default to EOF as the value for getchar
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(256) }));
+        // To better deal with program reading from stdin until EOF, we default to EOF as the value for readChar
         return getFromModel(symbol, -1);
+    }
+
+    int lastReadInteger = 0;
+    @Override
+    protected ConcolicValues.V readInt() {
+        String symbol = "readInt_" + lastReadInteger++;
+        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicInteger(Integer.MIN_VALUE), new SymbolicVariable(symbol) }));
+        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(Integer.MAX_VALUE) }));
+        // To better deal with program reading from stdin until EOF, we default to EOF as the value for readChar
+        return getFromModel(symbol, 0);
     }
 
     ConcolicValues.V getFromModel(String symbol, int defaultValue) {
@@ -68,81 +71,29 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     Map<String, Integer> model = new HashMap<>();
     public void runConcolic(int maxIterations) {
-        this.distanceToError = calculateDistanceToError();
-        if (this.distanceToError != null) {
-            executionTreeRoot.distanceToError = this.distanceToError.get(
-                    functions.get("main").cfg.entryBlock
-            );
-        }
         int iteration = 0;
         try {
+            PrintWriter pw = new PrintWriter(new FileWriter("Results.txt"));
             do {
+                pw.println("***********************");
+                pw.println("Iteration: " + iteration);
                 currentNode = executionTreeRoot;
                 lastReadCharacter = 0;
                 computeNextModel();
-                ConcolicValues.V result = runMain(getArguments());
-                currentNode.result = result.concrete;
-                dumpDot("concolic." + iteration + ".dot");
+                pw.println("Input(s): " + model);
+                super.output = "| ";
+                runMain();
+                pw.println("Output(s): " + super.output);
+                pw.println("***********************");
+                pw.println();
                 iteration++;
-                if (currentNode.result == 1) {
-                    System.out.println("Program return 1");
-                    printUsedStdIn();
-                    break;
-                }
             } while (iteration < maxIterations);
+            pw.close();
         } catch (ExecutionDone e) {
-            dumpDot("concolic.final.dot");
+            System.out.println("Execution completed");
+        } catch (IOException e) {
+            System.out.println("IO Error");
         }
-    }
-
-    Map<BasicBlock, Integer> calculateDistanceToError() {
-        Map<BasicBlock, Integer> distances = new HashMap<>();
-        Queue<BasicBlock> worklist = new LinkedList<>();
-
-        for (Function function : functions.values()) {
-            for (BasicBlock block : function.cfg.blocks) {
-                for (IR ir : block.instructions) {
-                    if (ir.instr == Instr.Call && "error".equals(ir.symbol)) {
-                        distances.put(block, 0);
-                        worklist.add(block);
-                    }
-                }
-            }
-        }
-
-        if (worklist.isEmpty()) return null;
-
-        while (!worklist.isEmpty()) {
-            BasicBlock block = worklist.remove();
-            int currentDistance = distances.get(block);
-            for (BasicBlock predecessor : block.getIn()) {
-                if (!distances.containsKey(predecessor)) {
-                    distances.put(predecessor, currentDistance + 1);
-                    worklist.add(predecessor);
-                }
-            }
-        }
-
-        return distances;
-    }
-
-    public void printUsedStdIn() {
-        System.out.println("Standard input:");
-        for (int i = 0; i < lastReadCharacter; i++) {
-            int input = getFromModel("getchar_" + i, -1).concrete;
-            if (input == -1) break;
-            System.out.print(input + " ");
-        }
-        System.out.println();
-    }
-
-     List<ConcolicValues.V> getArguments() {
-        List<ConcolicValues.V> arguments = new ArrayList<ConcolicValues.V>();
-        Function main = functions.get("main");
-        for (Variable arg : main.parameters) {
-            arguments.add(getFromModel(arg.name, random.nextInt()));
-        }
-        return arguments;
     }
 
     ConstraintSolver solver = new ConstraintSolver();
@@ -159,26 +110,13 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         }
     }
 
-
-    public void dumpDot(String filename) {
-        try {
-            FileWriter fw = new FileWriter(filename);
-            fw.write("digraph {\n");
-            executionTreeRoot.dumpDot(fw);
-            fw.write("}\n");
-            fw.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static class ExecutionDone extends RuntimeException {}
 
-    public Collection<Edge> edgesCovered = new HashSet<>();
+    public Collection<FuzzingEdge> edgesCovered = new HashSet<>();
     @Override
-    protected void setCurrentBlockCond(BasicBlock target) {
-        edgesCovered.add(new Edge(currentBlock, target));
-        super.setCurrentBlock(target);
+    protected void setCurrentPcCond(int condOffset) {
+        edgesCovered.add(new FuzzingEdge(currentProgramCounter, currentProgramCounter + condOffset));
+        super.setCurrentPcCond(condOffset);
     }
 }
 
@@ -190,31 +128,9 @@ class ExecutionTreeNode {
     public boolean unsat = false;
     public Collection<SymbolicValue> extraConstraints = new HashSet<>();
     public Integer result;
-    public BasicBlock block;
-    public Integer distanceToError;
     public int id;
     public ExecutionTreeNode(int id) {
         this.id = id;
-    }
-
-    public void dumpDot(FileWriter fw) throws IOException {
-        String label = "";
-        if (condition != null) {
-            label += condition.toString();
-        } else if (result != null)  {
-            label += result.toString();
-        } else if (unsat) {
-            label += "unsat";
-        } else {
-            label += "unexplored";
-        }
-        fw.write("node_" + id + "[shape=plaintext,label=<" + id + ":" + CFGraphviz.escape(label) + ">];\n");
-        if (trueBranch != null && falseBranch != null) {
-            fw.write("node_" + id + " -> " + "node_" + trueBranch.id + "[label=T];\n");
-            trueBranch.dumpDot(fw);
-            fw.write("node_" + id + " -> " + "node_" + falseBranch.id + "[label=F];\n");
-            falseBranch.dumpDot(fw);
-        }
     }
 
     public boolean isUnexplored() {
@@ -258,44 +174,8 @@ class ExecutionTreeNode {
         return null;
     }
 
-    public ExecutionTreeNode nextUnexploredError() {
-        List<ExecutionTreeNode> candidates = new ArrayList<>();
-        Queue<ExecutionTreeNode> worklist = new LinkedList<>();
-        ExecutionTreeNode best = null;
-        worklist.add(this);
-        while (!worklist.isEmpty()) {
-            ExecutionTreeNode node = worklist.remove();
-            if (node.isUnexplored()) {
-                candidates.add(node);
-            } else {
-                if (node.trueBranch != null) worklist.add(node.trueBranch);
-                if (node.falseBranch != null) worklist.add(node.falseBranch);
-            }
-        }
-
-        int bestScore = 10000;
-            for (ExecutionTreeNode candidate : candidates) {
-                int score;
-                if (candidate.parent == null) {
-                    score = candidate.distanceToError != null ? candidate.distanceToError : 10000;
-                } else {
-                    score = candidate.parent.distanceToError != null ? candidate.parent.distanceToError : 10000;
-                }
-                if (best == null || score < bestScore) {
-                    best = candidate;
-                    bestScore = score;
-                }
-            }
-        return best;
-    }
-
     public ExecutionTreeNode nextUnexplored() {
-        ExecutionTreeNode result;
-        if (distanceToError != null) {
-            result = nextUnexploredError();
-        } else {
-            result = nextUnexploredBFS();
-        }
+        ExecutionTreeNode result = nextUnexploredBFS();
         return result;
     }
 
@@ -326,3 +206,4 @@ class ExecutionTreeNode {
     }
 
 }
+

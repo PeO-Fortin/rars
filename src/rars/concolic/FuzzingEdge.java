@@ -1,13 +1,11 @@
 package rars.concolic;
 
-import rars.cfg.*;
-
 import java.util.Objects;
 
 public class FuzzingEdge {
-    public BasicBlock from;
-    public BasicBlock to;
-    public FuzzingEdge(BasicBlock from, BasicBlock to) {
+    public int from;
+    public int to;
+    public FuzzingEdge(int from, int to) {
         this.from = from;
         this.to = to;
     }
@@ -17,7 +15,7 @@ public class FuzzingEdge {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         FuzzingEdge other = (FuzzingEdge) object;
-        return from.equals(other.from) && to.equals(other.to);
+        return from == other.from && to == other.to;
     }
 
     @Override
