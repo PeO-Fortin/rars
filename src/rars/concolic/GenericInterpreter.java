@@ -41,11 +41,12 @@ public abstract class GenericInterpreter<V> {
     final int DEFAULT_OFFSET = 4;
     int currentProgramCounter;
     V[] registers = (V[]) new Object[32];
+    boolean exit = false;
     void run(int programCounter) {
         currentProgramCounter = programCounter;
-        registers[0] = values.inject(0);
         ProgramStatement ps = instructionsMap.get(programCounter);
-        while (ps != null) {
+        while (ps != null && !exit) {
+            registers[0] = values.inject(0);
             String instructionName = ps.getInstruction().getName();
             int[] operands = ps.getOperands();
 
@@ -68,12 +69,13 @@ public abstract class GenericInterpreter<V> {
                 case "srli": srl(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sra": sra(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "srai": sra(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "jal": setCurrentPc(operands[1]); break;
+                case "jal": jmp(registers[operands[0]],operands[1]); break;
                 case "bge": ifgeq(registers[operands[0]], registers[operands[1]], operands[2]); break;
                 case "blt": iflt(registers[operands[0]], registers[operands[1]], operands[2]); break;
                 case "beq": ifeq(registers[operands[0]], registers[operands[1]], operands[2]); break;
                 case "bne": ifneq(registers[operands[0]], registers[operands[1]], operands[2]); break;
             }
+            registers[0] = values.inject(0);
             ps = instructionsMap.get(currentProgramCounter);
         }
     }
@@ -96,7 +98,7 @@ public abstract class GenericInterpreter<V> {
 
     void mul(V left, V right, int dst) {registers[dst] = values.mul(left, right); }
 
-    void div(V left, V right, int dst) {registers[dst] = values.mul(left, right); }
+    void div(V left, V right, int dst) {registers[dst] = values.div(left, right); }
 
     void ifgeq(V left, V right, int condOffset) {if_(values.geq(left, right), condOffset); }
 
@@ -117,6 +119,11 @@ public abstract class GenericInterpreter<V> {
     void srl(V left, V right, int dst) { registers[dst] = values.srl(left, right); }
 
     void sra(V left, V right, int dst) { registers[dst] = values.sra(left, right); }
+
+    void jmp(V rd, int offset) {
+        rd = values.inject(currentProgramCounter + DEFAULT_OFFSET);
+        setCurrentPc(offset);
+    }
 
     protected void if_(V cond, int condOffset) {
         if (values.isTruthy(cond)) {
@@ -140,19 +147,19 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 1:  // PrintInt
                 output += values.asInt(registers[10]) + " | ";
-                System.out.print(values.asInt(registers[10]));
                 return;
             case 11: // PrintChar
                 output += values.asChar(registers[10]) + " | ";
-                System.out.print(values.asChar(registers[10]));
                 return;
             case 34: // PrintIntHex
                 output += Integer.toHexString(values.asInt(registers[10])) + " | ";
-                System.out.printf("%x", values.asInt(registers[10]));
                 return;
             case 35: // PrintIntBinary
                 output += Integer.toBinaryString(values.asInt(registers[10])) + " | ";
-                System.out.print(Integer.toBinaryString(values.asInt(registers[10])));
+                return;
+            case 10: // Exit
+                exit = true;
+                return;
         }
     }
 }

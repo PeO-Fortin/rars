@@ -1,5 +1,6 @@
 package rars.concolic;
 
+import rars.Globals;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -7,13 +8,13 @@ import java.util.*;
 
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static void main(String[] args) throws Exception {
+        Globals.initialize();
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(args[0]);
         interpreter.runConcolic(Integer.parseInt(args[1]));
         System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
     }
 
-    Random random = new java.util.Random();
     public ConcolicInterpreter() {
         super(new ConcolicValues());
     }
@@ -24,6 +25,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     @Override
     protected void if_(ConcolicValues.V cond, int condOffset) {
+        System.out.println("COND SYMBOLIC: " + cond.symbolic);
         currentNode.condition = cond.symbolic;
         if (!currentNode.hasChildren()) {
             currentNode.trueBranch = new ExecutionTreeNode(++nextId);
@@ -56,11 +58,13 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     @Override
     protected ConcolicValues.V readInt() {
         String symbol = "readInt_" + lastReadInteger++;
-        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicInteger(Integer.MIN_VALUE), new SymbolicVariable(symbol) }));
-        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(Integer.MAX_VALUE) }));
-        // To better deal with program reading from stdin until EOF, we default to EOF as the value for readChar
+        /*
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicInteger(-100), new SymbolicVariable(symbol) }));
+
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(100) }));
+         */
         return getFromModel(symbol, 0);
     }
 
@@ -75,14 +79,17 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         try {
             PrintWriter pw = new PrintWriter(new FileWriter("Results.txt"));
             do {
+                currentProgramCounter = machineList.get(0).getAddress();
+                lastReadCharacter = 0;
+                lastReadInteger = 0;
                 pw.println("***********************");
                 pw.println("Iteration: " + iteration);
                 currentNode = executionTreeRoot;
-                lastReadCharacter = 0;
                 computeNextModel();
                 pw.println("Input(s): " + model);
                 super.output = "| ";
                 runMain();
+                currentTarget.result = 1;
                 pw.println("Output(s): " + super.output);
                 pw.println("***********************");
                 pw.println();
@@ -97,12 +104,15 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     }
 
     ConstraintSolver solver = new ConstraintSolver();
+    ExecutionTreeNode currentTarget;
     public void computeNextModel() {
         ExecutionTreeNode next = executionTreeRoot.nextUnexplored();
+        currentTarget = next;
         if (next == null) {
             throw new ExecutionDone();
         }
-        model = solver.solve(next.collectConstraints(null));
+        System.out.println("Constraints: " + next.collectConstraints(next));
+        model = solver.solve(next.collectConstraints(next));
         if (model == null) {
             // unsat!
             next.unsat = true;
@@ -134,8 +144,7 @@ class ExecutionTreeNode {
     }
 
     public boolean isUnexplored() {
-        return result == null && condition == null && !unsat;
-    }
+       return !hasChildren() && result == null && !unsat; }
 
     public boolean hasChildren() {
         return trueBranch != null && falseBranch != null;
