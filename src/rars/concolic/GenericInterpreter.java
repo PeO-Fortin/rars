@@ -46,7 +46,6 @@ public abstract class GenericInterpreter<V> {
         currentProgramCounter = programCounter;
         ProgramStatement ps = instructionsMap.get(programCounter);
         while (ps != null && !exit) {
-            registers[0] = values.inject(0);
             String instructionName = ps.getInstruction().getName();
             int[] operands = ps.getOperands();
 
@@ -75,12 +74,14 @@ public abstract class GenericInterpreter<V> {
                 case "beq": ifeq(registers[operands[0]], registers[operands[1]], operands[2]); break;
                 case "bne": ifneq(registers[operands[0]], registers[operands[1]], operands[2]); break;
             }
-            registers[0] = values.inject(0);
             ps = instructionsMap.get(currentProgramCounter);
         }
     }
 
     public void runMain() {
+        registers = (V[]) new Object[32];
+        registers[0] = values.inject(0);
+        exit = false;
         run(machineList.get(0).getAddress());
     }
 

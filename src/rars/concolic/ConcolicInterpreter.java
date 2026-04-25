@@ -25,7 +25,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     @Override
     protected void if_(ConcolicValues.V cond, int condOffset) {
-        System.out.println("COND SYMBOLIC: " + cond.symbolic);
         currentNode.condition = cond.symbolic;
         if (!currentNode.hasChildren()) {
             currentNode.trueBranch = new ExecutionTreeNode(++nextId);
@@ -49,9 +48,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicInteger(-2), new SymbolicVariable(symbol) }));
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(256) }));
-        // To better deal with program reading from stdin until EOF, we default to EOF as the value for readChar
-        return getFromModel(symbol, -1);
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(128) }));
+        // To better deal with program reading from stdin until '.', we default to '.' as the value for readChar
+        return getFromModel(symbol, 46);
     }
 
     int lastReadInteger = 0;
@@ -93,6 +92,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 pw.println("Output(s): " + super.output);
                 pw.println("***********************");
                 pw.println();
+                pw.flush();
                 iteration++;
             } while (iteration < maxIterations);
             pw.close();
