@@ -85,10 +85,11 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 pw.println("Iteration: " + iteration);
                 currentNode = executionTreeRoot;
                 computeNextModel();
-                pw.println("Input(s): " + model);
                 super.output = "| ";
+                super.input = "| ";
                 runMain();
                 currentTarget.result = 1;
+                pw.println("Input(s): " + super.input);
                 pw.println("Output(s): " + super.output);
                 pw.println("***********************");
                 pw.println();
@@ -111,7 +112,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         if (next == null) {
             throw new ExecutionDone();
         }
-        System.out.println("Constraints: " + next.collectConstraints(next));
         model = solver.solve(next.collectConstraints(next));
         if (model == null) {
             // unsat!

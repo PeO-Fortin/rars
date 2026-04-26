@@ -135,6 +135,7 @@ public abstract class GenericInterpreter<V> {
     }
 
     public String output = "";
+    public String input = "";
     protected abstract V readChar();
     protected abstract V readInt();
     public void ecall(int syscall) {
@@ -142,9 +143,11 @@ public abstract class GenericInterpreter<V> {
             // Register 10 = a0
             case 5:  // ReadInt
                 registers[10] = readInt();
+                input += values.asInt(registers[10]) + " | ";
                 return;
             case 12: // ReadChar
                 registers[10] = readChar();
+                input += values.asChar(registers[10]) + " | ";
                 return;
             case 1:  // PrintInt
                 output += values.asInt(registers[10]) + " | ";
