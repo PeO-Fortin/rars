@@ -46,9 +46,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String symbol = "readChar_" + lastReadCharacter++;
         // The result from readChar is between -1 (included) and 127 (included)
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicInteger(-2), new SymbolicVariable(symbol) }));
+                new SymbolicValue[]{ new SymbolicInteger(31), new SymbolicVariable(symbol) }));
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(128) }));
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(127) }));
         // To better deal with program reading from stdin until '.', we default to '.' as the value for readChar
         return getFromModel(symbol, 46);
     }
