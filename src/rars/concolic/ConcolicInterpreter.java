@@ -57,13 +57,13 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     @Override
     protected ConcolicValues.V readInt() {
         String symbol = "readInt_" + lastReadInteger++;
-        /*
+
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicInteger(-100), new SymbolicVariable(symbol) }));
 
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(100) }));
-         */
+
         return getFromModel(symbol, 0);
     }
 
@@ -88,7 +88,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 super.output = "| ";
                 super.input = "| ";
                 runMain();
-                currentTarget.result = 1;
+                currentNode.explored = true;
                 pw.println("Input(s): " + super.input);
                 pw.println("Output(s): " + super.output);
                 pw.println("***********************");
@@ -105,10 +105,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     }
 
     ConstraintSolver solver = new ConstraintSolver();
-    ExecutionTreeNode currentTarget;
     public void computeNextModel() {
         ExecutionTreeNode next = executionTreeRoot.nextUnexplored();
-        currentTarget = next;
+        currentNode = next;
         if (next == null) {
             throw new ExecutionDone();
         }
@@ -137,14 +136,14 @@ class ExecutionTreeNode {
     public ExecutionTreeNode falseBranch;
     public boolean unsat = false;
     public Collection<SymbolicValue> extraConstraints = new HashSet<>();
-    public Integer result;
+    public boolean explored = false;
     public int id;
     public ExecutionTreeNode(int id) {
         this.id = id;
     }
 
     public boolean isUnexplored() {
-       return !hasChildren() && result == null && !unsat; }
+       return !hasChildren() && !explored && !unsat; }
 
     public boolean hasChildren() {
         return trueBranch != null && falseBranch != null;
@@ -213,6 +212,4 @@ class ExecutionTreeNode {
         }
         return constraints;
     }
-
 }
-
