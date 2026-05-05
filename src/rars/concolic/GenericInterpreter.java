@@ -40,7 +40,7 @@ public abstract class GenericInterpreter<V> {
 
     final int DEFAULT_OFFSET = 4;
     int currentProgramCounter;
-    V[] registers = (V[]) new Object[32];
+    V[] registers;
     boolean exit = false;
     void run(int programCounter) {
         currentProgramCounter = programCounter;

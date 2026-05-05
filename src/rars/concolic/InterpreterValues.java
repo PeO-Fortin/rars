@@ -25,6 +25,18 @@ abstract class InterpreterValues<V> {
     public abstract V srl(V v1, V v2);
     public abstract V sra(V v1, V v2);
 
+    //Stores
+    public abstract V sb(V v1, V v2);
+    public abstract V sh(V v1, V v2);
+    public abstract V sw(V v1, V v2);
+    public abstract V sd(V v1, V v2);
+
+    //Loads
+    public abstract V lb(V v1, V v2);
+    public abstract V lh(V v1, V v2);
+    public abstract V lw(V v1, V v2);
+    public abstract V ld(V v1, V v2);
+
     //Others
     public abstract boolean isTruthy(V v);
     public abstract int asInt(V v);
