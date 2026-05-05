@@ -29,4 +29,6 @@ abstract class InterpreterValues<V> {
     public abstract boolean isTruthy(V v);
     public abstract int asInt(V v);
     public abstract char asChar(V v);
+    public abstract double asDouble(V v);
+    public abstract float asFloat(V v);
 }

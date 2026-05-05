@@ -2,9 +2,9 @@ package rars.concolic;
 
 public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     static class V {
-        int concrete;
+        Number concrete;
         SymbolicValue symbolic;
-        public V(int concrete, SymbolicValue symbolic) {
+        public V(Number concrete, SymbolicValue symbolic) {
             this.concrete = concrete;
             this.symbolic = symbolic;
         }
@@ -46,7 +46,7 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
         }
         int[] concreteOperands = new int[args.length];
         for (int i = 0; i < args.length; i++) {
-            concreteOperands[i] = args[i].concrete;
+            concreteOperands[i] = (int) args[i].concrete;
         }
         return new V(op.apply(concreteOperands), symbolic);
     }
@@ -165,17 +165,27 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
 
     @Override
     public boolean isTruthy(V v) {
-        return v.concrete != 0;
+        return v.concrete.intValue() != 0;
     }
 
     @Override
     public int asInt(V v) {
-        return v.concrete;
+        return v.concrete.intValue();
     }
 
     @Override
     public char asChar(V v) {
-        return (char) v.concrete;
+        return (char) v.concrete.intValue();
+    }
+
+    @Override
+    public double asDouble(V v) {
+        return v.concrete.doubleValue();
+    }
+
+    @Override
+    public float asFloat(V v) {
+        return v.concrete.floatValue();
     }
 
 }

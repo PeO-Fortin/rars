@@ -41,6 +41,7 @@ public abstract class GenericInterpreter<V> {
     final int DEFAULT_OFFSET = 4;
     int currentProgramCounter;
     V[] registers = (V[]) new Object[32];
+    V[] fRegisters = (V[]) new Object[31];
     boolean exit = false;
     void run(int programCounter) {
         currentProgramCounter = programCounter;
@@ -138,31 +139,47 @@ public abstract class GenericInterpreter<V> {
     public String input = "";
     protected abstract V readChar();
     protected abstract V readInt();
+    protected abstract V readFloat();
+    protected abstract V readDouble();
     public void ecall(int syscall) {
         switch (syscall) {
             // Register 10 = a0
+            case 1:  // PrintInt
+                output += values.asInt(registers[10]) + " | ";
+                return;
+            case 2: // PrintFloat
+                output += values.asFloat(fRegisters[10]) + " | ";
+                return;
+            case 3: // PrintDouble
+                output += values.asDouble(fRegisters[10]) + " | ";
+                return;
             case 5:  // ReadInt
                 registers[10] = readInt();
                 input += values.asInt(registers[10]) + " | ";
                 return;
-            case 12: // ReadChar
-                registers[10] = readChar();
-                input += values.asChar(registers[10]) + " | ";
+            case 6:  // ReadFloat
+                registers[10] = readFloat();
+                input += values.asFloat(fRegisters[10]) + " | ";
                 return;
-            case 1:  // PrintInt
-                output += values.asInt(registers[10]) + " | ";
+            case 7:  // ReadDouble
+                registers[10] = readDouble();
+                input += values.asDouble(fRegisters[10]) + " | ";
+                return;
+            case 10: // Exit
+                exit = true;
                 return;
             case 11: // PrintChar
                 output += values.asChar(registers[10]) + " | ";
+                return;
+            case 12: // ReadChar
+                registers[10] = readChar();
+                input += values.asChar(registers[10]) + " | ";
                 return;
             case 34: // PrintIntHex
                 output += Integer.toHexString(values.asInt(registers[10])) + " | ";
                 return;
             case 35: // PrintIntBinary
                 output += Integer.toBinaryString(values.asInt(registers[10])) + " | ";
-                return;
-            case 10: // Exit
-                exit = true;
                 return;
         }
     }

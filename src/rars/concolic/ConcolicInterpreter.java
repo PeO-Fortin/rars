@@ -67,6 +67,34 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         return getFromModel(symbol, 0);
     }
 
+    int getLastReadFloat = 0;
+    @Override
+    protected ConcolicValues.V readFloat() {
+        String symbol = "readFloat_" + getLastReadFloat++;
+
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicFloat(-100.0f), new SymbolicVariable(symbol) }));
+
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicFloat(100.0f) }));
+
+        return getFromModel(symbol, 0.0f);
+    }
+
+    int getLastReadDouble = 0;
+    @Override
+    protected ConcolicValues.V readDouble() {
+        String symbol = "readDouble_" + getLastReadDouble++;
+
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicDouble(-100.0), new SymbolicVariable(symbol) }));
+
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicFloat(100.0) }));
+
+        return getFromModel(symbol, 0.0);
+    }
+
     ConcolicValues.V getFromModel(String symbol, int defaultValue) {
         ConcolicValues.V v = ConcolicValues.variable(model.getOrDefault(symbol, defaultValue), symbol);
         return v;
