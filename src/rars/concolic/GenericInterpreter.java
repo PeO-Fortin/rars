@@ -130,47 +130,102 @@ public abstract class GenericInterpreter<V> {
     void or(V left, V right, int dst) { registers[dst] = values.or(left, right); }
 
     void sb(V value, V offset, V MemAddress) {
-        memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE);
+        try {
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void sh(V value, V offset, V MemAddress) {
-        memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD);
+        try {
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void sw(V value, V offset, V MemAddress) {
-        memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD);
+        try {
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void sd(V value, V offset, V MemAddress) {
-        memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD);
+        try {
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void lb(V offset, V MemAddress, int dst) {
-        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, false));
+        try {
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, false));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void lbu(V offset, V MemAddress, int dst) {
-        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, true));
+        try {
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, true));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void lh(V offset, V MemAddress, int dst) {
-        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, false));
+        try {
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, false));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void lhu(V offset, V MemAddress, int dst) {
-        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, true));
+        try {
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, true));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void lw(V offset, V MemAddress, int dst) {
-        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD, false));
+        try {
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD, false));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void lwu(V offset, V MemAddress, int dst) {
-        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD, true));
+        try {
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD, true));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void ld(V offset, V MemAddress, int dst) {
-        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD, false));
+        try {
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD, false));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        }
     }
 
     void sll(V left, V right, int dst) { registers[dst] = values.sll(left, right); }
