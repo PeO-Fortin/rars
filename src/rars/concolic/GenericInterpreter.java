@@ -274,6 +274,8 @@ public abstract class GenericInterpreter<V> {
                 registers[10] = readInt();
                 input += values.asInt(registers[10]) + " | ";
                 return;
+            case 9: //Sbrk
+                memory.sBrk(values.asInt(registers[10]));
             case 10: // Exit
                 exit = true;
                 return;
