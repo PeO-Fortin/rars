@@ -96,7 +96,7 @@ class ConstraintSolver {
                     throw new RuntimeException("type mismatch when generating constraint");
             }
         } else {
-            SymbolicInteger value = (SymbolicInteger) v;
+            SymbolicLong value = (SymbolicLong) v;
             return ctx.mkNumeral(value.value, bvs);
         }
     }

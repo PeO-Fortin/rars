@@ -20,28 +20,6 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long and(Long v1, Long v2) { return v1 & v2; }
     @Override public Long or(Long v1, Long v2) { return v1 | v2; }
 
-    @Override public Long lb(Long v1, Long v2) {
-        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.BYTE, false);
-    };
-    @Override public Long lbu(Long v1, Long v2) {
-        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.BYTE, true);
-    };
-    @Override public Long lh(Long v1, Long v2) {
-        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.HALFWORD, false);
-    };
-    @Override public Long lhu(Long v1, Long v2) {
-        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.HALFWORD, true);
-    };
-    @Override public Long lw(Long v1, Long v2) {
-        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.WORD, false);
-    };
-    @Override public Long lwu(Long v1, Long v2) {
-        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.WORD, true);
-    };
-    @Override public Long ld(Long v1, Long v2) {
-        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.DOUBLEWORD, false);
-    };
-
     @Override public Long sll(Long v1, Long v2) { return v1 << v2; }
     @Override public Long srl(Long v1, Long v2) { return v1 >>> v2; }
     @Override public Long sra(Long v1, Long v2) { return v1 >> v2; }

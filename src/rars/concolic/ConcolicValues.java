@@ -2,16 +2,16 @@ package rars.concolic;
 
 public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     static class V {
-        int concrete;
+        long concrete;
         SymbolicValue symbolic;
-        public V(int concrete, SymbolicValue symbolic) {
+        public V(long concrete, SymbolicValue symbolic) {
             this.concrete = concrete;
             this.symbolic = symbolic;
         }
     }
 
-    public V inject(int i) {
-            return new V(i, new SymbolicInteger(i));
+    public V inject(long i) {
+            return new V(i, new SymbolicLong(i));
     }
 
     public static V variable(int value, String name) {
@@ -25,7 +25,7 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     V op(Op op, V[] args) {
         boolean remainsSymbolic = false;
         for (V arg : args) {
-            if (!(arg.symbolic instanceof SymbolicInteger)) {
+            if (!(arg.symbolic instanceof SymbolicLong)) {
                 remainsSymbolic = true;
             }
         }
@@ -40,13 +40,13 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
         } else {
             int[] operands = new int[args.length];
             for (int i = 0; i < args.length; i++) {
-                operands[i] = ((SymbolicInteger) args[i].symbolic).value;
+                operands[i] = (int)((SymbolicLong) args[i].symbolic).value;
             }
-            symbolic = new SymbolicInteger(op.apply(operands));
+            symbolic = new SymbolicLong(op.apply(operands));
         }
         int[] concreteOperands = new int[args.length];
         for (int i = 0; i < args.length; i++) {
-            concreteOperands[i] = args[i].concrete;
+            concreteOperands[i] = asInt(args[i]);
         }
         return new V(op.apply(concreteOperands), symbolic);
     }
@@ -169,13 +169,15 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     }
 
     @Override
-    public int asInt(V v) {
-        return v.concrete;
-    }
+    public byte asByte(V v) {return (byte) v.concrete; }
 
     @Override
-    public char asChar(V v) {
-        return (char) v.concrete;
-    }
+    public long asLong(V v) { return v.concrete; }
+
+    @Override
+    public int asInt(V v) { return (int) v.concrete;}
+
+    @Override
+    public char asChar(V v) { return (char) v.concrete; }
 
 }
