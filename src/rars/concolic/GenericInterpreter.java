@@ -57,6 +57,7 @@ public abstract class GenericInterpreter<V> {
                 case "sub": sub(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "mul": mul(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "div": div(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "auipc": add(values.inject(programCounter), values.inject(operands[1] << 12), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "ecall": ecall(values.asInt(registers[17])); setCurrentPc(DEFAULT_OFFSET); break; // Register a7
                 case "xor": xor(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "xori": xor(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
