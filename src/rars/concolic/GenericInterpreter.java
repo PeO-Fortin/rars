@@ -52,6 +52,7 @@ public abstract class GenericInterpreter<V> {
             int[] operands = ps.getOperands();
 
             switch (instructionName) {
+                case "lui": lui(values.inject(operands[1] << 12), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "add": add(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "addi": add(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sub": sub(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
@@ -111,6 +112,8 @@ public abstract class GenericInterpreter<V> {
     protected void setCurrentPcCond(int offset) {
         setCurrentPc(offset);
     }
+
+    void lui(V value, int dst) { registers [dst] = value; }
 
     void add(V left, V right, int dst) {registers[dst] = values.add(left, right); }
 
