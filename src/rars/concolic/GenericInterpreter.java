@@ -57,7 +57,7 @@ public abstract class GenericInterpreter<V> {
                 case "sub": sub(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "mul": mul(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "div": div(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "auipc": add(values.inject(programCounter), values.inject(operands[1] << 12), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "auipc": add(values.inject(currentProgramCounter), values.inject(operands[1] << 12), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "ecall": ecall(values.asInt(registers[17])); setCurrentPc(DEFAULT_OFFSET); break; // Register a7
                 case "xor": xor(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "xori": xor(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
@@ -82,7 +82,8 @@ public abstract class GenericInterpreter<V> {
                 case "srli": srl(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sra": sra(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "srai": sra(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "jal": jmp(registers[operands[0]],operands[1]); break;
+                case "jal": jal(operands[1],operands[0]); break;
+                case "jalr": jalr(registers[operands[1]], operands[2], operands[0]); break;
                 case "bge": ifgeq(registers[operands[0]], registers[operands[1]], operands[2]); break;
                 case "blt": iflt(registers[operands[0]], registers[operands[1]], operands[2]); break;
                 case "beq": ifeq(registers[operands[0]], registers[operands[1]], operands[2]); break;
@@ -94,8 +95,11 @@ public abstract class GenericInterpreter<V> {
 
     public void runMain() {
         registers = (V[]) new Object[32];
-        registers[0] = values.inject(0);
-        registers[2] = values.inject(Memory.DEFAULT_STACK_POINTER);
+        for (int i = 0; i < registers.length; i++) {
+            registers[i] = values.inject(0);
+        }
+        registers[2] = values.inject(Memory.DEFAULT_STACK_POINTER); //sp
+        registers[3] = values.inject(Memory.DEFAULT_GLOBAL_POINTER); //gp
         exit = false;
         run(machineList.get(0).getAddress());
     }
@@ -235,9 +239,14 @@ public abstract class GenericInterpreter<V> {
 
     void sra(V left, V right, int dst) { registers[dst] = values.sra(left, right); }
 
-    void jmp(V rd, int offset) {
-        rd = values.inject(currentProgramCounter + DEFAULT_OFFSET);
+    void jal(int offset, int dst) {
+        registers[dst] = values.inject(currentProgramCounter + DEFAULT_OFFSET);
         setCurrentPc(offset);
+    }
+
+    void jalr(V jd, int offset, int dst) {
+        registers[dst] = values.inject(currentProgramCounter + DEFAULT_OFFSET);
+        setCurrentPc(values.asInt(jd) + offset);
     }
 
     protected void if_(V cond, int condOffset) {

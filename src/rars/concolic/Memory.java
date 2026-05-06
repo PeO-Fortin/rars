@@ -5,6 +5,7 @@ import rars.riscv.hardware.MemoryConfigurations;
 public class Memory {
     public static final int MEMORY_BASE_ADDRESS = MemoryConfigurations.getDefaultDataBaseAddress();
     public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
+    public static final int DEFAULT_GLOBAL_POINTER = MemoryConfigurations.getDefaultGlobalPointer();
     public static final int HEAP_BASE_ADDRESS = MemoryConfigurations.getDefaultHeapBaseAddress();
     public static final int DATA_LIMIT_ADDRESS = MemoryConfigurations.getDefaultUserHighAddress();
     public static final int MEMORY_SIZE = DATA_LIMIT_ADDRESS - MEMORY_BASE_ADDRESS;
