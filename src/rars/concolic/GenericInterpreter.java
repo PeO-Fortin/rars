@@ -94,6 +94,7 @@ public abstract class GenericInterpreter<V> {
     public void runMain() {
         registers = (V[]) new Object[32];
         registers[0] = values.inject(0);
+        registers[2] = values.inject(Memory.DEFAULT_STACK_POINTER);
         exit = false;
         run(machineList.get(0).getAddress());
     }
