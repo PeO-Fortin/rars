@@ -276,6 +276,7 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 9: //Sbrk
                 memory.sBrk(values.asInt(registers[10]));
+                return;
             case 10: // Exit
                 exit = true;
                 return;
