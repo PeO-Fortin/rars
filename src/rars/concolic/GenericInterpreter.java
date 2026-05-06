@@ -144,19 +144,33 @@ public abstract class GenericInterpreter<V> {
         memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD);
     }
 
-    void lb(V offset, V MemAddress, int dst) { registers[dst] = values.lb(offset, MemAddress); }
+    void lb(V offset, V MemAddress, int dst) {
+        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, false));
+    }
 
-    void lbu(V offset, V MemAddress, int dst) { registers[dst] = values.lbu(offset, MemAddress); }
+    void lbu(V offset, V MemAddress, int dst) {
+        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, true));
+    }
 
-    void lh(V offset, V MemAddress, int dst) { registers[dst] = values.lh(offset, MemAddress); }
+    void lh(V offset, V MemAddress, int dst) {
+        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, false));
+    }
 
-    void lhu(V offset, V MemAddress, int dst) { registers[dst] = values.lhu(offset, MemAddress); }
+    void lhu(V offset, V MemAddress, int dst) {
+        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, true));
+    }
 
-    void lw(V offset, V MemAddress, int dst) { registers[dst] = values.lw(offset, MemAddress); }
+    void lw(V offset, V MemAddress, int dst) {
+        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD, false));
+    }
 
-    void lwu(V offset, V MemAddress, int dst) { registers[dst] = values.lwu(offset, MemAddress); }
+    void lwu(V offset, V MemAddress, int dst) {
+        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD, true));
+    }
 
-    void ld(V offset, V MemAddress, int dst) { registers[dst] = values.ld(offset, MemAddress); }
+    void ld(V offset, V MemAddress, int dst) {
+        registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD, false));
+    }
 
     void sll(V left, V right, int dst) { registers[dst] = values.sll(left, right); }
 

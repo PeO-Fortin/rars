@@ -7,6 +7,24 @@ import java.util.Set;
 abstract class SymbolicValue {
     public abstract Set<String> variables();
 }
+class SymbolicLong extends SymbolicValue {
+    long value;
+    public SymbolicLong(long value) {
+        this.value = value;
+    }
+    public Set<String> variables() { return new HashSet<>(); }
+    @Override public String toString() { return "" + value; }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SymbolicLong)) return false;
+        return value == ((SymbolicLong) o).value;
+    }
+
+    @Override
+    public int hashCode() {return Long.hashCode(value);}
+}
+
 class SymbolicInteger extends SymbolicValue {
     int value;
     public SymbolicInteger(int value) {
@@ -22,9 +40,7 @@ class SymbolicInteger extends SymbolicValue {
     }
 
     @Override
-    public int hashCode() {
-        return Integer.hashCode(value);
-    }
+    public int hashCode() {return Integer.hashCode(value);}
 }
 
 class SymbolicVariable extends SymbolicValue {
