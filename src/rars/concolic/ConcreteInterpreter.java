@@ -3,33 +3,55 @@ package rars.concolic;
 import java.io.IOException;
 import java.util.Scanner;
 
-class ConcreteValues extends InterpreterValues<Integer> {
-    @Override public Integer inject(int i) { return i; }
+class ConcreteValues extends InterpreterValues<Long> {
+    @Override public Long inject(long i) { return i; }
 
-    @Override public Integer add(Integer v1, Integer v2) { return v1 + v2; }
-    @Override public Integer sub(Integer v1, Integer v2) { return v1 - v2; }
-    @Override public Integer mul(Integer v1, Integer v2) { return v1 * v2; }
-    @Override public Integer div(Integer v1, Integer v2) { return v1 / v2; }
+    @Override public Long add(Long v1, Long v2) { return v1 + v2; }
+    @Override public Long sub(Long v1, Long v2) { return v1 - v2; }
+    @Override public Long mul(Long v1, Long v2) { return v1 * v2; }
+    @Override public Long div(Long v1, Long v2) { return v1 / v2; }
 
-    @Override public Integer eq(Integer v1, Integer v2) { return v1 == v2 ? 1 : 0; }
-    @Override public Integer neq(Integer v1, Integer v2) { return v1 != v2 ? 1 : 0; }
-    @Override public Integer geq(Integer v1, Integer v2) { return v1 >= v2 ? 1 : 0; }
-    @Override public Integer lt(Integer v1, Integer v2) { return v1 < v2 ? 1 : 0; }
+    @Override public Long eq(Long v1, Long v2) { return (long)(v1 == v2 ? 1 : 0); }
+    @Override public Long neq(Long v1, Long v2) { return (long)(v1 != v2 ? 1 : 0); }
+    @Override public Long geq(Long v1, Long v2) { return (long)(v1 >= v2 ? 1 : 0); }
+    @Override public Long lt(Long v1, Long v2) { return (long)(v1 < v2 ? 1 : 0); }
 
-    @Override public Integer xor(Integer v1, Integer v2) { return v1 ^ v2; }
-    @Override public Integer and(Integer v1, Integer v2) { return v1 & v2; }
-    @Override public Integer or(Integer v1, Integer v2) { return v1 | v2; }
+    @Override public Long xor(Long v1, Long v2) { return v1 ^ v2; }
+    @Override public Long and(Long v1, Long v2) { return v1 & v2; }
+    @Override public Long or(Long v1, Long v2) { return v1 | v2; }
 
-    @Override public Integer sll(Integer v1, Integer v2) { return v1 << v2; }
-    @Override public Integer srl(Integer v1, Integer v2) { return v1 >>> v2; }
-    @Override public Integer sra(Integer v1, Integer v2) { return v1 >> v2; }
+    @Override public Long lb(Long v1) {
+        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.BYTE, false);
+    };
+    @Override public Long lbu(Long v1) {
+        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.BYTE, true);
+    };
+    @Override public Long lh(Long v1) {
+        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.HALFWORD, false);
+    };
+    @Override public Long lhu(Long v1) {
+        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.HALFWORD, true);
+    };
+    @Override public Long lw(Long v1) {
+        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.WORD, false);
+    };
+    @Override public Long lwu(Long v1) {
+        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.WORD, true);
+    };
+    @Override public Long ld(Long v1) {
+        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.DOUBLEWORD, false);
+    };
 
-    @Override public boolean isTruthy(Integer v) { return v != 0; }
-    @Override public int asInt(Integer v) { return v.intValue(); }
-    @Override public char asChar(Integer v) { return (char) v.intValue(); }
+    @Override public Long sll(Long v1, Long v2) { return v1 << v2; }
+    @Override public Long srl(Long v1, Long v2) { return v1 >>> v2; }
+    @Override public Long sra(Long v1, Long v2) { return v1 >> v2; }
+
+    @Override public boolean isTruthy(Long v) { return v != 0; }
+    @Override public int asInt(Long v) { return v.intValue(); }
+    @Override public char asChar(Long v) { return (char) v.intValue(); }
 }
 
-public class ConcreteInterpreter extends GenericInterpreter<Integer> {
+public class ConcreteInterpreter extends GenericInterpreter<Long> {
     public static void main(String[] args) throws Exception {
         ConcreteInterpreter interpreter = new ConcreteInterpreter();
         interpreter.runOn(args[0]);
@@ -38,17 +60,17 @@ public class ConcreteInterpreter extends GenericInterpreter<Integer> {
         super(new ConcreteValues());
     }
 
-    protected Integer readChar() {
+    protected Long readChar() {
         try {
-            int c = System.in.read();
+            long c = System.in.read();
             return c;
         } catch (IOException e) {
             throw new RuntimeException("cannot readChar: " + e);
         }
     }
 
-    protected Integer readInt() {
+    protected Long readInt() {
         Scanner s = new Scanner(System.in);
-        return s.nextInt();
+        return (long)(s.nextInt());
     }
 }

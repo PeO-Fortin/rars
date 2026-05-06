@@ -22,7 +22,7 @@ public abstract class GenericInterpreter<V> {
 
     Map<Integer, ProgramStatement> instructionsMap = new HashMap<>();
     ArrayList<ProgramStatement> machineList;
-    Memory memory;
+    static Memory memory;
     public void prepare(String filename) throws Exception {
         RISCVprogram program = new RISCVprogram();
         ArrayList<String> filenames = new ArrayList<>();
@@ -143,28 +143,28 @@ public abstract class GenericInterpreter<V> {
     public void ecall(int syscall) {
         switch (syscall) {
             // Register 10 = a0
+            case 1:  // PrintInt
+                output += values.asInt(registers[10]) + " | ";
+                return;
             case 5:  // ReadInt
                 registers[10] = readInt();
                 input += values.asInt(registers[10]) + " | ";
                 return;
-            case 12: // ReadChar
-                registers[10] = readChar();
-                input += values.asChar(registers[10]) + " | ";
-                return;
-            case 1:  // PrintInt
-                output += values.asInt(registers[10]) + " | ";
+            case 10: // Exit
+                exit = true;
                 return;
             case 11: // PrintChar
                 output += values.asChar(registers[10]) + " | ";
+                return;
+            case 12: // ReadChar
+                registers[10] = readChar();
+                input += values.asChar(registers[10]) + " | ";
                 return;
             case 34: // PrintIntHex
                 output += Integer.toHexString(values.asInt(registers[10])) + " | ";
                 return;
             case 35: // PrintIntBinary
                 output += Integer.toBinaryString(values.asInt(registers[10])) + " | ";
-                return;
-            case 10: // Exit
-                exit = true;
                 return;
         }
     }

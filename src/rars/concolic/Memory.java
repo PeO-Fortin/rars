@@ -6,13 +6,12 @@ public class Memory {
     public static final int MEMORY_BASE_ADDRESS = MemoryConfigurations.getDefaultDataBaseAddress();
     public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
     public static final int HEAP_BASE_ADDRESS = MemoryConfigurations.getDefaultHeapBaseAddress();
-    public static final int MEMORY_SIZE = 4096;
+    public static final int DATA_LIMIT_ADDRESS = MemoryConfigurations.getDefaultUserHighAddress();
+    public static final int MEMORY_SIZE = DATA_LIMIT_ADDRESS - MEMORY_BASE_ADDRESS;
 
     private int heapAddress;
-    private int stackPointer;
 
-    private byte[] dataBlockTable;
-    private byte[] stackBlockTable;
+    private byte[] memoryBlockTable;
 
     public Memory() {
         initialize();
@@ -20,22 +19,7 @@ public class Memory {
 
     public void initialize() {
         heapAddress = HEAP_BASE_ADDRESS;
-        stackPointer = DEFAULT_STACK_POINTER;
-        dataBlockTable = new byte[MEMORY_SIZE];
-        stackBlockTable = new byte[MEMORY_SIZE];
-    }
-
-    public int  getStackPointer() {
-        return stackPointer;
-    }
-
-    public int getHeapAddress() {
-        return heapAddress;
-    }
-
-    public int moveStackPointer(int offset) {
-        stackPointer += offset;
-        return stackPointer;
+        memoryBlockTable = new byte[MEMORY_SIZE];
     }
 
     public int sBrk(int nbrBytesNeeded) {
@@ -46,83 +30,66 @@ public class Memory {
 
     /**
      *
-     * @param address
-     * @return
+     * @param address   the address of the memory block
+     * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
+     * @param unsigned  true if the value must be unsigned, false if signed
+     * @return the value at this address (64 bits)
      */
-    public long accessStack(int address, MemoryValueTypes valueType, boolean unsigned) {
+    public long accessMemory(long address, MemoryValueSizes valueSize, boolean unsigned) {
         long value = 0;
-        int memoryBlockAddress;
-        int memoryBlockValue;
-        try {
-            memoryBlockAddress = Math.abs(address - DEFAULT_STACK_POINTER);
+        int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS);
+        long memoryBlockValue;
 
-            //Check if negative Doubleword
-            boolean dwNeg = (valueType == valueType.DOUBLEWORD &&
-                    stackBlockTable[memoryBlockAddress + (valueType.getSize() - 1)] < 0);
+        //Check if negative Doubleword
+        boolean dwNeg = (valueSize == valueSize.DOUBLEWORD &&
+                memoryBlockTable[memoryBlockAddress + (valueSize.getSize() - 1)] < 0);
 
-            if (dwNeg) {
-                value = Long.MIN_VALUE;
+        if (dwNeg) {
+            value = Long.MIN_VALUE; //
+        }
+        for (int i = 0; i < valueSize.getSize(); i++) {
+            memoryBlockValue = memoryBlockTable[memoryBlockAddress + i];
+            if (dwNeg && i == valueSize.getSize() - 1) {
+                memoryBlockAddress -= 0x80; //Remove the MSB
             }
-            for (int i = 0; i < valueType.getSize(); i++) {
-                memoryBlockValue = stackBlockTable[memoryBlockAddress + i];
-                if (dwNeg && i == valueType.getSize() - 1) {
-                    memoryBlockAddress -= 0x80;
-                }
-                memoryBlockValue = memoryBlockValue << (i * 8);
-                value += memoryBlockValue;
-            }
+            memoryBlockValue = memoryBlockValue << (i * 8);
+            value += memoryBlockValue;
+        }
 
+        if (!unsigned) {
+            value = signedValue(value, valueSize);
+        }
 
-            if (!unsigned) {
-                value = signedValue(value, valueType);
-            }
-        } catch (ArrayIndexOutOfBoundsException e) { }
-        return value;
-    }
-
-    /**
-     *
-     * @param address
-     * @return
-     */
-    public long accessMemory(int address, MemoryValueTypes valueType, boolean unsigned) {
-        long value = 0;
-        int memoryBlockAddress;
-        int memoryBlockValue;
-        try {
-            memoryBlockAddress = address - MEMORY_BASE_ADDRESS;
-
-            //Check if negative Doubleword
-            boolean dwNeg = (valueType == valueType.DOUBLEWORD &&
-                    dataBlockTable[memoryBlockAddress + (valueType.getSize() - 1)] < 0);
-
-            if (dwNeg) {
-                value = Long.MIN_VALUE;
-            }
-            for (int i = 0; i < valueType.getSize(); i++) {
-                memoryBlockValue = dataBlockTable[memoryBlockAddress + i];
-                if (dwNeg && i == valueType.getSize() - 1) {
-                    memoryBlockAddress -= 0x80;
-                }
-                memoryBlockValue = memoryBlockValue << (i * 8);
-                value += memoryBlockValue;
-            }
-
-            if (!unsigned) {
-                value = signedValue(value, valueType);
-            }
-        } catch (ArrayIndexOutOfBoundsException e) { }
         return value;
     }
 
     /**
      *
      * @param value
-     * @param valueType
+     * @param address
+     * @param valueSize
+     */
+    public void storeMemory(long value, long address, MemoryValueSizes valueSize) {
+        int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS);
+        value = maskedValue(value, valueSize);
+        byte memoryBlockValue;
+        long mask = 0xFF;
+
+        for (int i = 0; i < valueSize.getSize(); i++) {
+            mask = mask << (i * 8);
+            memoryBlockValue = (byte) ((value ^ mask) >> (i * 8));
+            memoryBlockTable[memoryBlockAddress + i] = memoryBlockValue;
+        }
+    }
+
+    /**
+     *
+     * @param value
+     * @param valueSize
      * @return
      */
-    private long signedValue(long value, MemoryValueTypes valueType) {
-        switch (valueType) {
+    private long signedValue(long value, MemoryValueSizes valueSize) {
+        switch (valueSize) {
             case BYTE:
                 if(value > Byte.MAX_VALUE) {
                     value = Byte.MIN_VALUE + (value - Byte.MAX_VALUE);
@@ -142,6 +109,18 @@ public class Memory {
         return value;
     }
 
-
-
+    private long maskedValue(long value, MemoryValueSizes valueSize) {
+        switch (valueSize) {
+            case BYTE:
+                value = value ^ 0xFF;
+                break;
+            case HALFWORD:
+                value = value ^ 0xFFFF;
+                break;
+            case WORD:
+                value = value ^ 0xFFFFFF;
+                break;
+        }
+        return value;
+    }
 }
