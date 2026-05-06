@@ -30,13 +30,15 @@ public class Memory {
     }
 
     /**
+     * Gets the value at a specific address in memory, in a specific format.
      *
      * @param address   the address of the memory block
+     * @param offset    the offset to apply to the address
      * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
      * @param unsigned  true if the value must be unsigned, false if signed
-     * @return the value at this address (64 bits)
+     * @return the value at this address
      */
-    public long accessMemory(long address, byte offset,MemoryValueSizes valueSize, boolean unsigned) {
+    public long accessMemory(long address, byte offset, MemoryValueSizes valueSize, boolean unsigned) {
         long value = 0;
         int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS + offset);
         long memoryBlockValue;
@@ -65,10 +67,13 @@ public class Memory {
     }
 
     /**
+     * Store a value from a specific size at a specif address in memory.
+     * The store is made in little-endian.
      *
-     * @param value
-     * @param address
-     * @param valueSize
+     * @param value     the value to store
+     * @param address   the address where to store the value
+     * @param offset    the offset to apply to the address
+     * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
      */
     public void storeMemory(long value, long address, byte offset, MemoryValueSizes valueSize) {
         int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS + offset);
@@ -84,10 +89,11 @@ public class Memory {
     }
 
     /**
+     * Apply the right sign to an unsigned value.
      *
-     * @param value
-     * @param valueSize
-     * @return
+     * @param value     the unsigned value
+     * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
+     * @return the value with the right sign
      */
     private long signedValue(long value, MemoryValueSizes valueSize) {
         switch (valueSize) {
@@ -109,6 +115,14 @@ public class Memory {
         }
         return value;
     }
+
+    /**
+     * Apply the correct mask to a value based on the size required.
+     *
+     * @param value     the value on which the mask has to be applied
+     * @param valueSize the size required (BYTE, HALFWORD, WORD, DOUBLEWORD)
+     * @return the value with the correct mask applied
+     */
 
     private long maskedValue(long value, MemoryValueSizes valueSize) {
         switch (valueSize) {
