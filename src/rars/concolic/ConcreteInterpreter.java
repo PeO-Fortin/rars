@@ -20,26 +20,26 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long and(Long v1, Long v2) { return v1 & v2; }
     @Override public Long or(Long v1, Long v2) { return v1 | v2; }
 
-    @Override public Long lb(Long v1) {
-        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.BYTE, false);
+    @Override public Long lb(Long v1, Long v2) {
+        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.BYTE, false);
     };
-    @Override public Long lbu(Long v1) {
-        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.BYTE, true);
+    @Override public Long lbu(Long v1, Long v2) {
+        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.BYTE, true);
     };
-    @Override public Long lh(Long v1) {
-        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.HALFWORD, false);
+    @Override public Long lh(Long v1, Long v2) {
+        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.HALFWORD, false);
     };
-    @Override public Long lhu(Long v1) {
-        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.HALFWORD, true);
+    @Override public Long lhu(Long v1, Long v2) {
+        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.HALFWORD, true);
     };
-    @Override public Long lw(Long v1) {
-        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.WORD, false);
+    @Override public Long lw(Long v1, Long v2) {
+        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.WORD, false);
     };
-    @Override public Long lwu(Long v1) {
-        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.WORD, true);
+    @Override public Long lwu(Long v1, Long v2) {
+        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.WORD, true);
     };
-    @Override public Long ld(Long v1) {
-        return GenericInterpreter.memory.accessMemory(v1, MemoryValueSizes.DOUBLEWORD, false);
+    @Override public Long ld(Long v1, Long v2) {
+        return GenericInterpreter.memory.accessMemory(v1, v2.byteValue(), MemoryValueSizes.DOUBLEWORD, false);
     };
 
     @Override public Long sll(Long v1, Long v2) { return v1 << v2; }
@@ -47,8 +47,10 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long sra(Long v1, Long v2) { return v1 >> v2; }
 
     @Override public boolean isTruthy(Long v) { return v != 0; }
+    @Override public byte asByte(Long v) { return v.byteValue(); }
     @Override public int asInt(Long v) { return v.intValue(); }
-    @Override public char asChar(Long v) { return (char) v.intValue(); }
+    @Override public char asChar(Long v) { return (char) v.byteValue(); }
+    @Override public long asLong(Long v) { return v.longValue(); }
 }
 
 public class ConcreteInterpreter extends GenericInterpreter<Long> {

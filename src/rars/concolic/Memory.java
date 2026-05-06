@@ -35,9 +35,9 @@ public class Memory {
      * @param unsigned  true if the value must be unsigned, false if signed
      * @return the value at this address (64 bits)
      */
-    public long accessMemory(long address, MemoryValueSizes valueSize, boolean unsigned) {
+    public long accessMemory(long address, byte offset,MemoryValueSizes valueSize, boolean unsigned) {
         long value = 0;
-        int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS);
+        int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS + offset);
         long memoryBlockValue;
 
         //Check if negative Doubleword
@@ -69,8 +69,8 @@ public class Memory {
      * @param address
      * @param valueSize
      */
-    public void storeMemory(long value, long address, MemoryValueSizes valueSize) {
-        int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS);
+    public void storeMemory(long value, long address, byte offset, MemoryValueSizes valueSize) {
+        int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS + offset);
         value = maskedValue(value, valueSize);
         byte memoryBlockValue;
         long mask = 0xFF;

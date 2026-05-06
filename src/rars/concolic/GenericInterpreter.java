@@ -64,6 +64,17 @@ public abstract class GenericInterpreter<V> {
                 case "andi": and(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "or": or(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "ori": or(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sb": sb(registers[operands[0]], registers[operands[1]], registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sh": sh(registers[operands[0]], registers[operands[1]], registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sw": sw(registers[operands[0]], registers[operands[1]], registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sd": sd(registers[operands[0]], registers[operands[1]], registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lb": lb(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lbu": lbu(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lh": lh(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lhu": lhu(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lw": lw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lwu": lwu(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "ld": ld(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sll": sll(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "slli": sll(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "srl": srl(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
@@ -116,6 +127,36 @@ public abstract class GenericInterpreter<V> {
     void and(V left, V right, int dst) { registers[dst] = values.and(left, right); }
 
     void or(V left, V right, int dst) { registers[dst] = values.or(left, right); }
+
+    void sb(V value, V offset, V MemAddress) {
+        memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE);
+    }
+
+    void sh(V value, V offset, V MemAddress) {
+        memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD);
+    }
+
+    void sw(V value, V offset, V MemAddress) {
+        memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD);
+    }
+
+    void sd(V value, V offset, V MemAddress) {
+        memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD);
+    }
+
+    void lb(V offset, V MemAddress, int dst) { registers[dst] = values.lb(offset, MemAddress); }
+
+    void lbu(V offset, V MemAddress, int dst) { registers[dst] = values.lbu(offset, MemAddress); }
+
+    void lh(V offset, V MemAddress, int dst) { registers[dst] = values.lh(offset, MemAddress); }
+
+    void lhu(V offset, V MemAddress, int dst) { registers[dst] = values.lhu(offset, MemAddress); }
+
+    void lw(V offset, V MemAddress, int dst) { registers[dst] = values.lw(offset, MemAddress); }
+
+    void lwu(V offset, V MemAddress, int dst) { registers[dst] = values.lwu(offset, MemAddress); }
+
+    void ld(V offset, V MemAddress, int dst) { registers[dst] = values.ld(offset, MemAddress); }
 
     void sll(V left, V right, int dst) { registers[dst] = values.sll(left, right); }
 
