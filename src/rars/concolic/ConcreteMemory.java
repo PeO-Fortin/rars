@@ -1,5 +1,6 @@
 package rars.concolic;
 
+import rars.riscv.hardware.Memory;
 import rars.riscv.hardware.MemoryConfigurations;
 import rars.riscv.hardware.AddressErrorException;
 
@@ -29,6 +30,24 @@ public class ConcreteMemory {
         heapAddress = HEAP_BASE_ADDRESS;
         dataBlockTable = new byte[DATA_SIZE];
         stackBlockTable = new byte[STACK_SIZE];
+        intializeData();
+    }
+
+    private void intializeData() {
+        Memory rarsMemory = Memory.getInstance();
+        int base = MemoryConfigurations.getDefaultDataBaseAddress();
+        Integer value;
+        for(int i = 0; i < dataBlockTable.length; i += 4){
+            try {
+                value = rarsMemory.getRawWordOrNull(base + i);
+                if (value == null) {
+                    break;
+                }
+                storeMemory(value.longValue(), (base + i), (byte) 0, MemoryValueSizes.WORD);
+            } catch (AddressErrorException e) {
+                System.out.println("Data initialization failed: ");
+            }
+        }
     }
 
     public int sBrk(int nbrBytesNeeded) {
