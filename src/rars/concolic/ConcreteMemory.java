@@ -1,6 +1,7 @@
 package rars.concolic;
 
 import rars.riscv.hardware.MemoryConfigurations;
+import rars.riscv.hardware.AddressErrorException;
 
 public class ConcreteMemory {
     public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
@@ -24,7 +25,7 @@ public class ConcreteMemory {
         initialize();
     }
 
-    public void initialize() {
+    private void initialize() {
         heapAddress = HEAP_BASE_ADDRESS;
         dataBlockTable = new byte[DATA_SIZE];
         stackBlockTable = new byte[STACK_SIZE];
@@ -55,11 +56,15 @@ public class ConcreteMemory {
      * @param unsigned  true if the value must be unsigned, false if signed
      * @return the value at this address
      */
-    public long accessMemory(long address, byte offset, MemoryValueSizes valueSize, boolean unsigned) {
+    public long accessMemory(long address, byte offset, MemoryValueSizes valueSize, boolean unsigned) throws AddressErrorException {
         long value = 0;
         byte [] memoryBlockTable;
         int memoryBlockAddress;
         long memoryBlockValue;
+
+        if (address % valueSize.getSize() != 0) {
+            throw new AddressErrorException("Load address not aligned", 4, (int)address);
+        }
 
         if (address > DATA_BASE_ADDRESS && address < DATA_LIMIT_ADDRESS) {
             memoryBlockTable = dataBlockTable;
@@ -77,7 +82,7 @@ public class ConcreteMemory {
                 memoryBlockTable[memoryBlockAddress + (valueSize.getSize() - 1)] < 0);
 
         if (dwNeg) {
-            value = Long.MIN_VALUE; //
+            value = Long.MIN_VALUE; //Prevents overflow
         }
         for (int i = 0; i < valueSize.getSize(); i++) {
             memoryBlockValue = memoryBlockTable[memoryBlockAddress + i];
@@ -104,12 +109,16 @@ public class ConcreteMemory {
      * @param offset    the offset to apply to the address
      * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
      */
-    public void storeMemory(long value, long address, byte offset, MemoryValueSizes valueSize) {
-        int memoryBlockAddress = (int)(address - DATA_BASE_ADDRESS + offset);
+    public void storeMemory(long value, long address, byte offset, MemoryValueSizes valueSize) throws AddressErrorException {
+        int memoryBlockAddress;
         byte[] memoryBlockTable;
         value = maskedValue(value, valueSize);
         byte memoryBlockValue;
         long mask = 0xFF;
+
+        if (address % valueSize.getSize() != 0) {
+            throw new AddressErrorException("Store address not aligned", 4, (int)address);
+        }
 
         if (address > DATA_BASE_ADDRESS && address < DATA_LIMIT_ADDRESS) {
             memoryBlockTable = dataBlockTable;

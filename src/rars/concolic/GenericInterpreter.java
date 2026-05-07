@@ -3,6 +3,7 @@ package rars.concolic;
 import rars.ProgramStatement;
 import rars.RISCVprogram;
 import rars.assembler.Assembler;
+import rars.riscv.hardware.AddressErrorException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +41,8 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
+    public String output = "";
+    public String input = "";
     final int DEFAULT_OFFSET = 4;
     int currentProgramCounter;
     V[] registers;
@@ -143,6 +146,9 @@ public abstract class GenericInterpreter<V> {
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
         }
     }
 
@@ -151,6 +157,9 @@ public abstract class GenericInterpreter<V> {
             memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
             exit = true;
         }
     }
@@ -161,6 +170,9 @@ public abstract class GenericInterpreter<V> {
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
         }
     }
 
@@ -170,6 +182,9 @@ public abstract class GenericInterpreter<V> {
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
         }
     }
 
@@ -177,7 +192,10 @@ public abstract class GenericInterpreter<V> {
         try {
             registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, false));
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += e.getMessage() + " | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
             exit = true;
         }
     }
@@ -186,7 +204,10 @@ public abstract class GenericInterpreter<V> {
         try {
             registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, true));
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += e.getMessage() + " | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
             exit = true;
         }
     }
@@ -197,6 +218,9 @@ public abstract class GenericInterpreter<V> {
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
         }
     }
 
@@ -205,6 +229,9 @@ public abstract class GenericInterpreter<V> {
             registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, true));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
             exit = true;
         }
     }
@@ -215,6 +242,9 @@ public abstract class GenericInterpreter<V> {
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
         }
     }
 
@@ -224,6 +254,9 @@ public abstract class GenericInterpreter<V> {
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
         }
     }
 
@@ -232,6 +265,9 @@ public abstract class GenericInterpreter<V> {
             registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
             exit = true;
         }
     }
@@ -260,8 +296,6 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    public String output = "";
-    public String input = "";
     protected abstract V readChar();
     protected abstract V readInt();
     public void ecall(int syscall) {
