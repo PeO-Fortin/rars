@@ -2,30 +2,47 @@ package rars.concolic;
 
 import rars.riscv.hardware.MemoryConfigurations;
 
-public class Memory {
-    public static final int MEMORY_BASE_ADDRESS = MemoryConfigurations.getDefaultDataBaseAddress();
+public class ConcreteMemory {
     public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
     public static final int DEFAULT_GLOBAL_POINTER = MemoryConfigurations.getDefaultGlobalPointer();
+
+    public static final int DATA_BASE_ADDRESS = MemoryConfigurations.getDefaultDataSegmentBaseAddress();
+    public static final int DATA_LIMIT_ADDRESS = DATA_BASE_ADDRESS + 4194304; //4MB
     public static final int HEAP_BASE_ADDRESS = MemoryConfigurations.getDefaultHeapBaseAddress();
-    public static final int DATA_LIMIT_ADDRESS = MemoryConfigurations.getDefaultUserHighAddress();
-    public static final int MEMORY_SIZE = DATA_LIMIT_ADDRESS - MEMORY_BASE_ADDRESS;
+    public static final int STACK_BASE_ADDRESS = MemoryConfigurations.getDefaultStackBaseAddress();
+    public static final int STACK_LIMIT_ADDRESS = STACK_BASE_ADDRESS - 4096; //4KB
+
+    public static final int DATA_SIZE = DATA_LIMIT_ADDRESS - DATA_BASE_ADDRESS;
+    public static final int STACK_SIZE = STACK_BASE_ADDRESS - STACK_LIMIT_ADDRESS;
 
     private int heapAddress;
 
-    private byte[] memoryBlockTable;
+    private byte[] dataBlockTable;
+    private byte[] stackBlockTable;
 
-    public Memory() {
+    public ConcreteMemory() {
         initialize();
     }
 
     public void initialize() {
         heapAddress = HEAP_BASE_ADDRESS;
-        memoryBlockTable = new byte[MEMORY_SIZE];
+        dataBlockTable = new byte[DATA_SIZE];
+        stackBlockTable = new byte[STACK_SIZE];
     }
 
     public int sBrk(int nbrBytesNeeded) {
         int initialHeapAddress = heapAddress;
+        int size = MemoryValueSizes.DOUBLEWORD.getSize();
+        if (nbrBytesNeeded < 0) {
+            throw new IllegalArgumentException("request (" + nbrBytesNeeded + ") is negative heap amount");
+        }
+
         heapAddress += nbrBytesNeeded;
+
+        if (heapAddress % size != 0) {
+            heapAddress = heapAddress + size - (heapAddress % size);
+        }
+
         return initialHeapAddress;
     }
 
@@ -40,8 +57,20 @@ public class Memory {
      */
     public long accessMemory(long address, byte offset, MemoryValueSizes valueSize, boolean unsigned) {
         long value = 0;
-        int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS + offset);
+        byte [] memoryBlockTable;
+        int memoryBlockAddress;
         long memoryBlockValue;
+
+        if (address > DATA_BASE_ADDRESS && address < DATA_LIMIT_ADDRESS) {
+            memoryBlockTable = dataBlockTable;
+            memoryBlockAddress = (int)(address - DATA_BASE_ADDRESS + offset);
+        } else if (address < STACK_BASE_ADDRESS && address > STACK_LIMIT_ADDRESS) {
+            memoryBlockTable = stackBlockTable;
+            memoryBlockAddress = (int)(STACK_BASE_ADDRESS - address + offset);
+        } else {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+
 
         //Check if negative Doubleword
         boolean dwNeg = (valueSize == valueSize.DOUBLEWORD &&
@@ -76,10 +105,21 @@ public class Memory {
      * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
      */
     public void storeMemory(long value, long address, byte offset, MemoryValueSizes valueSize) {
-        int memoryBlockAddress = (int)(address - MEMORY_BASE_ADDRESS + offset);
+        int memoryBlockAddress = (int)(address - DATA_BASE_ADDRESS + offset);
+        byte[] memoryBlockTable;
         value = maskedValue(value, valueSize);
         byte memoryBlockValue;
         long mask = 0xFF;
+
+        if (address > DATA_BASE_ADDRESS && address < DATA_LIMIT_ADDRESS) {
+            memoryBlockTable = dataBlockTable;
+            memoryBlockAddress = (int)(address - DATA_BASE_ADDRESS + offset);
+        } else if (address < STACK_BASE_ADDRESS && address > STACK_LIMIT_ADDRESS) {
+            memoryBlockTable = stackBlockTable;
+            memoryBlockAddress = (int)(STACK_BASE_ADDRESS - address + offset);
+        } else {
+            throw new ArrayIndexOutOfBoundsException();
+        }
 
         for (int i = 0; i < valueSize.getSize(); i++) {
             mask = mask << (i * 8);

@@ -22,7 +22,7 @@ public abstract class GenericInterpreter<V> {
 
     Map<Integer, ProgramStatement> instructionsMap = new HashMap<>();
     ArrayList<ProgramStatement> machineList;
-    static Memory memory;
+    static ConcreteMemory memory;
     public void prepare(String filename) throws Exception {
         RISCVprogram program = new RISCVprogram();
         ArrayList<String> filenames = new ArrayList<>();
@@ -33,7 +33,7 @@ public abstract class GenericInterpreter<V> {
         assembler.assemble(programs, true, false, program);
 
         machineList = program.getMachineList();
-        memory = new Memory();
+        memory = new ConcreteMemory();
 
         for (ProgramStatement ps : machineList) {
             instructionsMap.put(ps.getAddress(), ps);
@@ -99,8 +99,8 @@ public abstract class GenericInterpreter<V> {
         for (int i = 0; i < registers.length; i++) {
             registers[i] = values.inject(0);
         }
-        registers[2] = values.inject(Memory.DEFAULT_STACK_POINTER); //sp
-        registers[3] = values.inject(Memory.DEFAULT_GLOBAL_POINTER); //gp
+        registers[2] = values.inject(ConcreteMemory.DEFAULT_STACK_POINTER); //sp
+        registers[3] = values.inject(ConcreteMemory.DEFAULT_GLOBAL_POINTER); //gp
         exit = false;
         run(machineList.get(0).getAddress());
     }
