@@ -5,9 +5,13 @@ abstract class InterpreterValues<V> {
 
     //Arithmetic
     public abstract V add(V v1, V v2);
+    public abstract V addw(V v1, V v2);
     public abstract V sub(V v1, V v2);
+    public abstract V subw(V v1, V v2);
     public abstract V mul(V v1, V v2);
+    public abstract V mulw(V v1, V v2);
     public abstract V div(V v1, V v2);
+    public abstract V divw(V v1, V v2);
 
     //Branches
     public abstract V eq(V v1, V v2);
@@ -22,8 +26,11 @@ abstract class InterpreterValues<V> {
 
     //Shifts
     public abstract V sll(V v1, V v2);
+    public abstract V sllw(V v1, V v2);
     public abstract V srl(V v1, V v2);
+    public abstract V srlw(V v1, V v2);
     public abstract V sra(V v1, V v2);
+    public abstract V sraw(V v1, V v2);
 
     //Others
     public abstract boolean isTruthy(V v);
