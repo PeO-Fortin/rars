@@ -7,9 +7,13 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long inject(long i) { return i; }
 
     @Override public Long add(Long v1, Long v2) { return v1 + v2; }
+    @Override public Long addw(Long v1, Long v2) { return (long)((v1.intValue() + v2.intValue())); }
     @Override public Long sub(Long v1, Long v2) { return v1 - v2; }
+    @Override public Long subw(Long v1, Long v2) { return (long)(v1.intValue() - v2.intValue()); }
     @Override public Long mul(Long v1, Long v2) { return v1 * v2; }
+    @Override public Long mulw(Long v1, Long v2) { return (long)(v1.intValue() * v2.intValue()); }
     @Override public Long div(Long v1, Long v2) { return v1 / v2; }
+    @Override public Long divw(Long v1, Long v2) { return (long)(v1.intValue() / v2.intValue()); }
 
     @Override public Long eq(Long v1, Long v2) { return (long)(v1 == v2 ? 1 : 0); }
     @Override public Long neq(Long v1, Long v2) { return (long)(v1 != v2 ? 1 : 0); }
@@ -21,8 +25,11 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long or(Long v1, Long v2) { return v1 | v2; }
 
     @Override public Long sll(Long v1, Long v2) { return v1 << v2; }
+    @Override public Long sllw(Long v1, Long v2) { return (long) (v1.intValue() << v2.intValue()); }
     @Override public Long srl(Long v1, Long v2) { return v1 >>> v2; }
+    @Override public Long srlw(Long v1, Long v2) { return (long) (v1.intValue() >>> v2.intValue()); }
     @Override public Long sra(Long v1, Long v2) { return v1 >> v2; }
+    @Override public Long sraw(Long v1, Long v2) { return (long) (v1.intValue() >> v2.intValue()); }
 
     @Override public boolean isTruthy(Long v) { return v != 0; }
     @Override public byte asByte(Long v) { return v.byteValue(); }

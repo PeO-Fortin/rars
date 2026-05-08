@@ -1,5 +1,6 @@
 package rars.concolic;
 
+import rars.AssemblyException;
 import rars.ProgramStatement;
 import rars.RISCVprogram;
 import rars.assembler.Assembler;
@@ -25,19 +26,23 @@ public abstract class GenericInterpreter<V> {
     ArrayList<ProgramStatement> machineList;
     static ConcreteMemory memory;
     public void prepare(String filename) throws Exception {
-        RISCVprogram program = new RISCVprogram();
-        ArrayList<String> filenames = new ArrayList<>();
-        filenames.add(filename);
+        try {
+            RISCVprogram program = new RISCVprogram();
+            ArrayList<String> filenames = new ArrayList<>();
+            filenames.add(filename);
 
-        ArrayList<RISCVprogram> programs = program.prepareFilesForAssembly(filenames, filename, null);
-        Assembler assembler = new Assembler();
-        assembler.assemble(programs, true, false, program);
+            ArrayList<RISCVprogram> programs = program.prepareFilesForAssembly(filenames, filename, null);
+            Assembler assembler = new Assembler();
+            assembler.assemble(programs, true, false, program);
 
-        machineList = program.getMachineList();
-        memory = new ConcreteMemory();
+            machineList = program.getMachineList();
+            memory = new ConcreteMemory();
 
-        for (ProgramStatement ps : machineList) {
-            instructionsMap.put(ps.getAddress(), ps);
+            for (ProgramStatement ps : machineList) {
+                instructionsMap.put(ps.getAddress(), ps);
+            }
+        }catch (AssemblyException e) {
+            System.err.println("Assembly error: " + e.getMessage());
         }
     }
 
@@ -52,15 +57,21 @@ public abstract class GenericInterpreter<V> {
         ProgramStatement ps = instructionsMap.get(programCounter);
         while (ps != null && !exit) {
             String instructionName = ps.getInstruction().getName();
+            System.out.println("PC: " + currentProgramCounter + " instr: " + ps.getInstruction().getName());
             int[] operands = ps.getOperands();
 
             switch (instructionName) {
                 case "lui": lui(values.inject(operands[1] << 12), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "add": add(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "addw": addw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "addi": add(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "addiw": addw(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sub": sub(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "subw": subw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "mul": mul(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "mulw": mulw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "div": div(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "divw": divw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "auipc": add(values.inject(currentProgramCounter), values.inject(operands[1] << 12), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "ecall": ecall(values.asInt(registers[17])); setCurrentPc(DEFAULT_OFFSET); break; // Register a7
                 case "xor": xor(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
@@ -69,23 +80,29 @@ public abstract class GenericInterpreter<V> {
                 case "andi": and(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "or": or(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "ori": or(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "sb": sb(registers[operands[0]], registers[operands[1]], registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "sh": sh(registers[operands[0]], registers[operands[1]], registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "sw": sw(registers[operands[0]], registers[operands[1]], registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "sd": sd(registers[operands[0]], registers[operands[1]], registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "lb": lb(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "lbu": lbu(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "lh": lh(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "lhu": lhu(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "lw": lw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "lwu": lwu(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "ld": ld(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sb": sb(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sh": sh(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sw": sw(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sd": sd(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lb": lb(registers[operands[1]], values.inject(operands[1]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lbu": lbu(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lh": lh(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lhu": lhu(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lw": lw(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lwu": lwu(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "ld": ld(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sll": sll(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "slli": sll(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sllw": sllw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "slliw": sllw(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "srl": srl(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "srli": srl(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "srlw": srlw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "srliw": srlw(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sra": sra(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "srai": sra(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sraw": sraw(registers[operands[1]], registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "sraiw": sraw(registers[operands[1]], values.inject(operands[2]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "jal": jal(operands[1],operands[0]); break;
                 case "jalr": jalr(registers[operands[1]], operands[2], operands[0]); break;
                 case "bge": ifgeq(registers[operands[0]], registers[operands[1]], operands[2]); break;
@@ -120,11 +137,19 @@ public abstract class GenericInterpreter<V> {
 
     void add(V left, V right, int dst) {registers[dst] = values.add(left, right); }
 
+    void addw(V left, V right, int dst) {registers[dst] = values.addw(left, right); }
+
     void sub(V left, V right, int dst) {registers[dst] = values.sub(left, right); }
+
+    void subw(V left, V right, int dst) {registers[dst] = values.subw(left, right); }
 
     void mul(V left, V right, int dst) {registers[dst] = values.mul(left, right); }
 
+    void mulw(V left, V right, int dst)  {registers[dst] = values.mulw(left, right); }
+
     void div(V left, V right, int dst) {registers[dst] = values.div(left, right); }
+
+    void divw(V left, V right, int dst) {registers[dst] = values.divw(left, right); }
 
     void ifgeq(V left, V right, int condOffset) {if_(values.geq(left, right), condOffset); }
 
@@ -142,7 +167,7 @@ public abstract class GenericInterpreter<V> {
 
     void sb(V value, V offset, V MemAddress) {
         try {
-            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE);
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.BYTE);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -154,7 +179,7 @@ public abstract class GenericInterpreter<V> {
 
     void sh(V value, V offset, V MemAddress) {
         try {
-            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD);
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.HALFWORD);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -166,7 +191,7 @@ public abstract class GenericInterpreter<V> {
 
     void sw(V value, V offset, V MemAddress) {
         try {
-            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD);
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.WORD);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -178,7 +203,7 @@ public abstract class GenericInterpreter<V> {
 
     void sd(V value, V offset, V MemAddress) {
         try {
-            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD);
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.DOUBLEWORD);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -190,7 +215,7 @@ public abstract class GenericInterpreter<V> {
 
     void lb(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, false));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.BYTE, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += e.getMessage() + " | ";
             exit = true;
@@ -202,7 +227,7 @@ public abstract class GenericInterpreter<V> {
 
     void lbu(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.BYTE, true));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.BYTE, true));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += e.getMessage() + " | ";
             exit = true;
@@ -214,7 +239,7 @@ public abstract class GenericInterpreter<V> {
 
     void lh(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, false));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.HALFWORD, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -226,7 +251,7 @@ public abstract class GenericInterpreter<V> {
 
     void lhu(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.HALFWORD, true));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.HALFWORD, true));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -238,7 +263,7 @@ public abstract class GenericInterpreter<V> {
 
     void lw(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD, false));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.WORD, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -250,7 +275,7 @@ public abstract class GenericInterpreter<V> {
 
     void lwu(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.WORD, true));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.WORD, true));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -262,7 +287,7 @@ public abstract class GenericInterpreter<V> {
 
     void ld(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asByte(offset), MemoryValueSizes.DOUBLEWORD, false));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.DOUBLEWORD, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -274,9 +299,15 @@ public abstract class GenericInterpreter<V> {
 
     void sll(V left, V right, int dst) { registers[dst] = values.sll(left, right); }
 
+    void sllw(V left, V right, int dst) { registers[dst] = values.sllw(left, right); }
+
     void srl(V left, V right, int dst) { registers[dst] = values.srl(left, right); }
 
+    void srlw(V left, V right, int dst) { registers[dst] = values.srlw(left, right); }
+
     void sra(V left, V right, int dst) { registers[dst] = values.sra(left, right); }
+
+    void sraw(V left, V right, int dst) { registers[dst] = values.sraw(left, right); }
 
     void jal(int offset, int dst) {
         registers[dst] = values.inject(currentProgramCounter + DEFAULT_OFFSET);

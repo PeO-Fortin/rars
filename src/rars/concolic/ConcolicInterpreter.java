@@ -59,10 +59,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String symbol = "readInt_" + lastReadInteger++;
 
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicInteger(-100), new SymbolicVariable(symbol) }));
+                new SymbolicValue[]{ new SymbolicLong(-100), new SymbolicVariable(symbol) }));
 
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(100) }));
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(100) }));
 
         return getFromModel(symbol, 0);
     }
