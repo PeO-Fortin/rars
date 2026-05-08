@@ -75,7 +75,7 @@ public class ConcreteMemory {
      * @param unsigned  true if the value must be unsigned, false if signed
      * @return the value at this address
      */
-    public long accessMemory(long address, byte offset, MemoryValueSizes valueSize, boolean unsigned) throws AddressErrorException {
+    public long accessMemory(long address, long offset, MemoryValueSizes valueSize, boolean unsigned) throws AddressErrorException {
         long value = 0;
         byte [] memoryBlockTable;
         int memoryBlockAddress;
@@ -85,10 +85,10 @@ public class ConcreteMemory {
             throw new AddressErrorException("Load address not aligned", 4, (int)address);
         }
 
-        if (address > DATA_BASE_ADDRESS && address < DATA_LIMIT_ADDRESS) {
+        if (address >= DATA_BASE_ADDRESS && address <= DATA_LIMIT_ADDRESS) {
             memoryBlockTable = dataBlockTable;
             memoryBlockAddress = (int)(address - DATA_BASE_ADDRESS + offset);
-        } else if (address < STACK_BASE_ADDRESS && address > STACK_LIMIT_ADDRESS) {
+        } else if (address <= STACK_BASE_ADDRESS && address >= STACK_LIMIT_ADDRESS) {
             memoryBlockTable = stackBlockTable;
             memoryBlockAddress = (int)(STACK_BASE_ADDRESS - address + offset);
         } else {
@@ -128,7 +128,7 @@ public class ConcreteMemory {
      * @param offset    the offset to apply to the address
      * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
      */
-    public void storeMemory(long value, long address, byte offset, MemoryValueSizes valueSize) throws AddressErrorException {
+    public void storeMemory(long value, long address, long offset, MemoryValueSizes valueSize) throws AddressErrorException {
         int memoryBlockAddress;
         byte[] memoryBlockTable;
         value = maskedValue(value, valueSize);
@@ -139,10 +139,10 @@ public class ConcreteMemory {
             throw new AddressErrorException("Store address not aligned", 4, (int)address);
         }
 
-        if (address > DATA_BASE_ADDRESS && address < DATA_LIMIT_ADDRESS) {
+        if (address >= DATA_BASE_ADDRESS && address <= DATA_LIMIT_ADDRESS) {
             memoryBlockTable = dataBlockTable;
             memoryBlockAddress = (int)(address - DATA_BASE_ADDRESS + offset);
-        } else if (address < STACK_BASE_ADDRESS && address > STACK_LIMIT_ADDRESS) {
+        } else if (address <= STACK_BASE_ADDRESS && address >= STACK_LIMIT_ADDRESS) {
             memoryBlockTable = stackBlockTable;
             memoryBlockAddress = (int)(STACK_BASE_ADDRESS - address + offset);
         } else {
