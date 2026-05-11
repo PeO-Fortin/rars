@@ -25,6 +25,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libz3-dev z3
 
+      - name: Download jsoftfloat
+        run: |
+          mkdir -p lib
+          wget -O lib/jsoftfloat.jar https://repo1.maven.org/maven2/net/ijbrown/jsoftfloat/1.0/jsoftfloat-1.0.jar
+
       - name: Prepare scripts
         run: |
           chmod +x run.sh build.sh
