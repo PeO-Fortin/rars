@@ -132,8 +132,6 @@ public class ConcreteMemory {
         int memoryBlockAddress;
         byte[] memoryBlockTable;
         value = maskedValue(value, valueSize);
-        byte memoryBlockValue;
-        long mask = 0xFF;
 
         if (address % valueSize.getSize() != 0) {
             throw new AddressErrorException("Store address not aligned", 4, (int)address);
@@ -150,9 +148,7 @@ public class ConcreteMemory {
         }
 
         for (int i = 0; i < valueSize.getSize(); i++) {
-            mask = mask << (i * 8);
-            memoryBlockValue = (byte) ((value ^ mask) >> (i * 8));
-            memoryBlockTable[memoryBlockAddress + i] = memoryBlockValue;
+            memoryBlockTable[memoryBlockAddress + i] = (byte) (value >> (i * 8));
         }
     }
 
@@ -195,13 +191,13 @@ public class ConcreteMemory {
     private long maskedValue(long value, MemoryValueSizes valueSize) {
         switch (valueSize) {
             case BYTE:
-                value = value ^ 0xFF;
+                value = value & 0xFF;
                 break;
             case HALFWORD:
-                value = value ^ 0xFFFF;
+                value = value & 0xFFFF;
                 break;
             case WORD:
-                value = value ^ 0xFFFFFF;
+                value = value & 0xFFFFFFFFL;
                 break;
         }
         return value;

@@ -57,7 +57,6 @@ public abstract class GenericInterpreter<V> {
         ProgramStatement ps = instructionsMap.get(programCounter);
         while (ps != null && !exit) {
             String instructionName = ps.getInstruction().getName();
-            System.out.println("PC: " + currentProgramCounter + " instr: " + ps.getInstruction().getName());
             int[] operands = ps.getOperands();
 
             switch (instructionName) {
