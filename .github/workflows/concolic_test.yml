@@ -1,0 +1,73 @@
+name: Concolic Tests
+
+on:
+  push:
+    branches:
+      - master
+      - memoire
+
+jobs:
+  concolic-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Z3
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libz3-dev z3
+
+      - name: Build project
+        run: |
+          chmod +x run.sh
+          ./build.sh
+
+      - name: Run concolic tests
+        run: |
+          TEST_DIR="./test/concolic"
+          FAIL=0
+
+          for program in "$TEST_DIR"/*.s; do
+            echo "======================================="
+            echo "Testing $program"
+            echo "======================================="
+
+            ./run.sh rars.concolic.ConcolicInterpreter "$program" 30
+
+            if [ ! -f Results.txt ]; then
+              echo "Results.txt not found for $program"
+              FAIL=1
+              continue
+            fi
+
+            if ! grep -q "Iteration:" Results.txt; then
+              echo "No iterations found in Results.txt for $program"
+              FAIL=1
+            fi
+
+            if ! grep -q "edges covered:" <(./run.sh rars.concolic.ConcolicInterpreter "$program" 30 2>&1); then
+              echo "Coverage information missing for $program"
+              FAIL=1
+            fi
+
+            cp Results.txt "Results-$(basename "$program" .s).txt"
+          done
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "Some concolic tests failed."
+            exit 1
+          fi
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: concolic-results
+          path: Results-*.txt
