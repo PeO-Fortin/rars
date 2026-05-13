@@ -236,4 +236,9 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     @Override
     public char asChar(V v) { return (char) v.concrete; }
 
+    @Override
+    public BinaryValue asBinaryValue(V v) {
+        return new BinaryValue(v.concrete);
+    }
+
 }

@@ -36,6 +36,7 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public int asInt(Long v) { return v.intValue(); }
     @Override public char asChar(Long v) { return (char) v.byteValue(); }
     @Override public long asLong(Long v) { return v.longValue(); }
+    @Override public BinaryValue asBinaryValue(Long v) { return new BinaryValue(v); }
 }
 
 public class ConcreteInterpreter extends GenericInterpreter<Long> {
