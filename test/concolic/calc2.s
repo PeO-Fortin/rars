@@ -1,6 +1,3 @@
-# TP1 - Simple positive integer calculator
-# Félix Servant-L'Heureux - SERF08069508 - (groupe 050)
-#
 # This program implements a simple calculator that can perform addition, subtraction,
 # multiplication, division, and modulo operations on positive integers.
 # It reads characters from the input, interprets them as numbers and operators,

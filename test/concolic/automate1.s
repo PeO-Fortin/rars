@@ -1,6 +1,4 @@
-# TP1 - Automate cellulaire 1D
-# Cynthia Tran TRAC83550401 (groupe 50)
-#
+
 # Ce programme implémente un automate cellulaire élémentaire 1D en fournissant le nombre de générations, la règle de l'automate et l'entrée initiale.
 # Il n'y a aucun bogue connu.
 

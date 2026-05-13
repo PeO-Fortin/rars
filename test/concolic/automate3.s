@@ -1,6 +1,3 @@
-# TP2 - Automate cellulaire
-# Charles-Antoine Lanthier LANC70040208 (groupe 050)
-#
 # Ce programme est un automate cellulaire qui prend le nombre d'itération, la règle ainsi que la valeur initiale
 # de l'automate en entrée
 #

@@ -1,6 +1,3 @@
-# TP1 - Calculatrice positive, mais bête
-# Cynthia Tran TRAC83550401 (groupe 50)
-#
 # Ce programme est une calculatrice gérant 5 opérations arithmétiques de base sur des entiers.
 # Le but étamt de lire une séquence de nombres et d'opérations en alternance, le programme va soit faire l'opération arithmétique ou faire un affichage du résultat.
 # Aucun bogue rencontré.

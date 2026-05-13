@@ -1,6 +1,3 @@
-# TP1 - Calculatrice
-# Pierre-Olivier Fortin FORP22028608 (groupe 050)
-#
 # Ce programme effectue des opérations entières de base sur des nombres positifs.
 # Les débordements ne sont pas gérés par le programme.
 # Les priorités d'opérations ne sont pas gérés par le programme.

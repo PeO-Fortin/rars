@@ -1,6 +1,3 @@
-# TP2 - Cellular automate simulator
-# Félix Servant-L'Heureux - SERF08069508 - (groupe 050)
-#
 # This program simulates a cellular automaton based on a given rule number and an initial generation.
 # It reads the rule number and the initial generation from the input, processes the generations,
 # and prints each generation until the specified number of generations is reached.

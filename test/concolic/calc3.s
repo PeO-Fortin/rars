@@ -1,6 +1,3 @@
-# TP1 - Calculatrice
-# Charles-Antoine Lanthier LANC70040208 (groupe 050)
-#
 # Ce programme est une calculatrice contenant les opérations "+", "-", "*", "/", "%".
 #
 # Tous les tests sont fonctionnels et les erreurs sont gérées.
