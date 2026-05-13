@@ -1,6 +1,6 @@
 package rars.concolic;
 
-public enum MemoryValueSizes {
+public enum MemoryValueTypes {
     BYTE(1),
     HALFWORD(2),
     WORD(4),
@@ -8,7 +8,7 @@ public enum MemoryValueSizes {
 
     private final int size;
 
-    MemoryValueSizes(int size) {
+    MemoryValueTypes(int size) {
         this.size = size;
     }
 

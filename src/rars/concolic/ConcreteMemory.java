@@ -7,15 +7,14 @@ import rars.riscv.hardware.AddressErrorException;
 public class ConcreteMemory {
     public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
     public static final int DEFAULT_GLOBAL_POINTER = MemoryConfigurations.getDefaultGlobalPointer();
+    public static final int DATA_SIZE = 4194304; //4MB
+    public static final int STACK_SIZE = 8192; //8KB
 
     public static final int DATA_BASE_ADDRESS = MemoryConfigurations.getDefaultDataSegmentBaseAddress();
-    public static final int DATA_LIMIT_ADDRESS = DATA_BASE_ADDRESS + 4194304; //4MB
+    public static final int DATA_LIMIT_ADDRESS = DATA_BASE_ADDRESS + DATA_SIZE;
     public static final int HEAP_BASE_ADDRESS = MemoryConfigurations.getDefaultHeapBaseAddress();
-    public static final int STACK_BASE_ADDRESS = MemoryConfigurations.getDefaultStackBaseAddress();
-    public static final int STACK_LIMIT_ADDRESS = STACK_BASE_ADDRESS - 4096; //4KB
-
-    public static final int DATA_SIZE = DATA_LIMIT_ADDRESS - DATA_BASE_ADDRESS;
-    public static final int STACK_SIZE = STACK_BASE_ADDRESS - STACK_LIMIT_ADDRESS;
+    public static final long STACK_BASE_ADDRESS = MemoryConfigurations.getDefaultStackBaseAddress();
+    public static final long STACK_LIMIT_ADDRESS = STACK_BASE_ADDRESS - STACK_SIZE;
 
     private int heapAddress;
 
@@ -36,14 +35,14 @@ public class ConcreteMemory {
     private void intializeData() {
         Memory rarsMemory = Memory.getInstance();
         int base = MemoryConfigurations.getDefaultDataBaseAddress();
-        Integer value;
+        BinaryValue value = new BinaryValue(MemoryValueTypes.WORD, true);
         for(int i = 0; i < dataBlockTable.length; i += 4){
             try {
-                value = rarsMemory.getRawWordOrNull(base + i);
-                if (value == null) {
+                value.setValue(rarsMemory.getRawWordOrNull(base + i));
+                if (value.getRawValue() == null) {
                     break;
                 }
-                storeMemory(value.longValue(), (base + i), (byte) 0, MemoryValueSizes.WORD);
+                storeMemory(value, (base + i), 0);
             } catch (AddressErrorException e) {
                 System.out.println("Data initialization failed: ");
             }
@@ -52,7 +51,7 @@ public class ConcreteMemory {
 
     public int sBrk(int nbrBytesNeeded) {
         int initialHeapAddress = heapAddress;
-        int size = MemoryValueSizes.DOUBLEWORD.getSize();
+        int size = MemoryValueTypes.DOUBLEWORD.getSize();
         if (nbrBytesNeeded < 0) {
             throw new IllegalArgumentException("request (" + nbrBytesNeeded + ") is negative heap amount");
         }
@@ -71,52 +70,38 @@ public class ConcreteMemory {
      *
      * @param address   the address of the memory block
      * @param offset    the offset to apply to the address
-     * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
-     * @param unsigned  true if the value must be unsigned, false if signed
+     * @param value     the container for the value
      * @return the value at this address
      */
-    public long accessMemory(long address, long offset, MemoryValueSizes valueSize, boolean unsigned) throws AddressErrorException {
-        long value = 0;
-        byte [] memoryBlockTable;
+    public void accessMemory(long address, long offset, BinaryValue value) throws AddressErrorException {
+        long tempValue = 0;
+        byte [] memoryBlockTable = null;
         int memoryBlockAddress;
         long memoryBlockValue;
 
-        if (address % valueSize.getSize() != 0) {
+        if (address % value.getSize() != 0) {
             throw new AddressErrorException("Load address not aligned", 4, (int)address);
         }
 
-        if (address >= DATA_BASE_ADDRESS && address <= DATA_LIMIT_ADDRESS) {
-            memoryBlockTable = dataBlockTable;
-            memoryBlockAddress = (int)(address - DATA_BASE_ADDRESS + offset);
-        } else if (address <= STACK_BASE_ADDRESS && address >= STACK_LIMIT_ADDRESS) {
-            memoryBlockTable = stackBlockTable;
-            memoryBlockAddress = (int)(STACK_BASE_ADDRESS - address + offset);
-        } else {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
+        memoryBlockAddress = getMemorySetup(memoryBlockTable, address, offset);
 
         //Check if negative Doubleword
-        boolean dwNeg = (valueSize == valueSize.DOUBLEWORD &&
-                memoryBlockTable[memoryBlockAddress + (valueSize.getSize() - 1)] < 0);
+        boolean dwNeg = (value.getType() == MemoryValueTypes.DOUBLEWORD &&
+                memoryBlockTable[memoryBlockAddress + (value.getSize() - 1)] < 0);
 
         if (dwNeg) {
-            value = Long.MIN_VALUE; //Prevents overflow
+            tempValue = Long.MIN_VALUE; //Prevents overflow
         }
-        for (int i = 0; i < valueSize.getSize(); i++) {
+        for (int i = 0; i < value.getSize(); i++) {
             memoryBlockValue = memoryBlockTable[memoryBlockAddress + i];
-            if (dwNeg && i == valueSize.getSize() - 1) {
+            if (dwNeg && i == value.getSize() - 1) {
                 memoryBlockAddress -= 0x80; //Remove the MSB
             }
             memoryBlockValue = memoryBlockValue << (i * 8);
-            value += memoryBlockValue;
+            tempValue += memoryBlockValue;
         }
 
-        if (!unsigned) {
-            value = signedValue(value, valueSize);
-        }
-
-        return value;
+        value.setValue(tempValue);
     }
 
     /**
@@ -126,80 +111,35 @@ public class ConcreteMemory {
      * @param value     the value to store
      * @param address   the address where to store the value
      * @param offset    the offset to apply to the address
-     * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
      */
-    public void storeMemory(long value, long address, long offset, MemoryValueSizes valueSize) throws AddressErrorException {
+    public void storeMemory(BinaryValue value, long address, long offset) throws AddressErrorException {
         int memoryBlockAddress;
-        byte[] memoryBlockTable;
-        value = maskedValue(value, valueSize);
+        byte[] memoryBlockTable = null;
 
-        if (address % valueSize.getSize() != 0) {
+        if (address % value.getSize() != 0) {
             throw new AddressErrorException("Store address not aligned", 4, (int)address);
         }
 
+        memoryBlockAddress = getMemorySetup(memoryBlockTable, address, offset);
+
+        for (int i = 0; i < value.getSize(); i++) {
+            memoryBlockTable[memoryBlockAddress + i] = (byte) (value.getValue() >> (i * 8));
+        }
+    }
+
+    private int getMemorySetup(byte[] memoryBlockTable, long address, long offset) {
+        int memoryBlockIndex;
+
         if (address >= DATA_BASE_ADDRESS && address <= DATA_LIMIT_ADDRESS) {
             memoryBlockTable = dataBlockTable;
-            memoryBlockAddress = (int)(address - DATA_BASE_ADDRESS + offset);
+            memoryBlockIndex = (int)(address - DATA_BASE_ADDRESS + offset);
         } else if (address <= STACK_BASE_ADDRESS && address >= STACK_LIMIT_ADDRESS) {
             memoryBlockTable = stackBlockTable;
-            memoryBlockAddress = (int)(STACK_BASE_ADDRESS - address + offset);
+            memoryBlockIndex = (int)(STACK_BASE_ADDRESS - address + offset);
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }
 
-        for (int i = 0; i < valueSize.getSize(); i++) {
-            memoryBlockTable[memoryBlockAddress + i] = (byte) (value >> (i * 8));
-        }
-    }
-
-    /**
-     * Apply the right sign to an unsigned value.
-     *
-     * @param value     the unsigned value
-     * @param valueSize the size of the value (BYTE, HALFWORD, WORD, DOUBLEWORD)
-     * @return the value with the right sign
-     */
-    private long signedValue(long value, MemoryValueSizes valueSize) {
-        switch (valueSize) {
-            case BYTE:
-                if(value > Byte.MAX_VALUE) {
-                    value = Byte.MIN_VALUE + (value - Byte.MAX_VALUE);
-                }
-                break;
-            case HALFWORD:
-                if(value > Short.MAX_VALUE) {
-                    value = Short.MIN_VALUE + (value - Short.MAX_VALUE);
-                }
-                break;
-            case WORD:
-                if(value > Integer.MAX_VALUE) {
-                    value = Integer.MIN_VALUE + (value - Integer.MAX_VALUE);
-                }
-                break;
-        }
-        return value;
-    }
-
-    /**
-     * Apply the correct mask to a value based on the size required.
-     *
-     * @param value     the value on which the mask has to be applied
-     * @param valueSize the size required (BYTE, HALFWORD, WORD, DOUBLEWORD)
-     * @return the value with the correct mask applied
-     */
-
-    private long maskedValue(long value, MemoryValueSizes valueSize) {
-        switch (valueSize) {
-            case BYTE:
-                value = value & 0xFF;
-                break;
-            case HALFWORD:
-                value = value & 0xFFFF;
-                break;
-            case WORD:
-                value = value & 0xFFFFFFFFL;
-                break;
-        }
-        return value;
+        return memoryBlockIndex;
     }
 }

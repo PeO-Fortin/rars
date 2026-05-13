@@ -38,4 +38,5 @@ abstract class InterpreterValues<V> {
     public abstract long asLong(V v);
     public abstract int asInt(V v);
     public abstract char asChar(V v);
+    public abstract BinaryValue asBinaryValue(V v);
 }

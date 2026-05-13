@@ -83,7 +83,7 @@ public abstract class GenericInterpreter<V> {
                 case "sh": sh(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sw": sw(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "sd": sd(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); setCurrentPc(DEFAULT_OFFSET); break;
-                case "lb": lb(registers[operands[1]], values.inject(operands[1]), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
+                case "lb": lb(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "lbu": lbu(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "lh": lh(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
                 case "lhu": lhu(values.inject(operands[1]), registers[operands[2]], operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
@@ -166,7 +166,7 @@ public abstract class GenericInterpreter<V> {
 
     void sb(V value, V offset, V MemAddress) {
         try {
-            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.BYTE);
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.BYTE);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -178,7 +178,7 @@ public abstract class GenericInterpreter<V> {
 
     void sh(V value, V offset, V MemAddress) {
         try {
-            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.HALFWORD);
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.HALFWORD);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -190,7 +190,7 @@ public abstract class GenericInterpreter<V> {
 
     void sw(V value, V offset, V MemAddress) {
         try {
-            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.WORD);
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.WORD);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -202,7 +202,7 @@ public abstract class GenericInterpreter<V> {
 
     void sd(V value, V offset, V MemAddress) {
         try {
-            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.DOUBLEWORD);
+            memory.storeMemory(values.asLong(value), values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.DOUBLEWORD);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -214,7 +214,7 @@ public abstract class GenericInterpreter<V> {
 
     void lb(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.BYTE, false));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.BYTE, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += e.getMessage() + " | ";
             exit = true;
@@ -226,7 +226,7 @@ public abstract class GenericInterpreter<V> {
 
     void lbu(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.BYTE, true));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.BYTE, true));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += e.getMessage() + " | ";
             exit = true;
@@ -238,7 +238,7 @@ public abstract class GenericInterpreter<V> {
 
     void lh(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.HALFWORD, false));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.HALFWORD, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -250,7 +250,7 @@ public abstract class GenericInterpreter<V> {
 
     void lhu(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.HALFWORD, true));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.HALFWORD, true));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -262,7 +262,7 @@ public abstract class GenericInterpreter<V> {
 
     void lw(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.WORD, false));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.WORD, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -274,7 +274,7 @@ public abstract class GenericInterpreter<V> {
 
     void lwu(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.WORD, true));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.WORD, true));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -286,7 +286,7 @@ public abstract class GenericInterpreter<V> {
 
     void ld(V offset, V MemAddress, int dst) {
         try {
-            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueSizes.DOUBLEWORD, false));
+            registers[dst] = values.inject(memory.accessMemory(values.asLong(MemAddress), values.asLong(offset), MemoryValueTypes.DOUBLEWORD, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
