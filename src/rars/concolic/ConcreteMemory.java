@@ -68,12 +68,12 @@ public class ConcreteMemory {
     /**
      * Gets the value at a specific address in memory, in a specific format.
      *
+     * @param value     the container for the value
      * @param address   the address of the memory block
      * @param offset    the offset to apply to the address
-     * @param value     the container for the value
      * @return the value at this address
      */
-    public void accessMemory(long address, long offset, BinaryValue value) throws AddressErrorException {
+    public void accessMemory(BinaryValue value, long address, long offset) throws AddressErrorException {
         long tempValue = 0;
         byte [] memoryBlockTable = null;
         int memoryBlockAddress;
