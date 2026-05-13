@@ -13,8 +13,15 @@ la t1, mot
 sw t0, 0(t1)
 lw a0, 0(t1)
 
-
 li a7, printInt
+ecall
+
+addi sp, sp, -1
+li t0, 44
+sb t0, 0(sp)
+lb a0, 0(sp)
+addi sp, sp, 1
+
 ecall
 
 li a7, exit
