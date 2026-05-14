@@ -24,7 +24,7 @@ public abstract class GenericInterpreter<V> {
 
     Map<Integer, ProgramStatement> instructionsMap = new HashMap<>();
     ArrayList<ProgramStatement> machineList;
-    static ConcreteMemory memory;
+    ConcreteMemory memory;
     public void prepare(String filename) throws Exception {
         try {
             RISCVprogram program = new RISCVprogram();
@@ -164,10 +164,10 @@ public abstract class GenericInterpreter<V> {
 
     void or(V left, V right, int dst) { registers[dst] = values.or(left, right); }
 
-    void sb(V value, V offset, V MemAddress) {
+    void sb(V value, V offset, V memAddress) {
         try {
             BinaryValue bValue = new BinaryValue(values.asLong(value), MemoryValueTypes.BYTE, true);
-            memory.storeMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -177,10 +177,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void sh(V value, V offset, V MemAddress) {
+    void sh(V value, V offset, V memAddress) {
         try {
             BinaryValue bValue = new BinaryValue(values.asLong(value), MemoryValueTypes.HALFWORD, true);
-            memory.storeMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -190,10 +190,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void sw(V value, V offset, V MemAddress) {
+    void sw(V value, V offset, V memAddress) {
         try {
             BinaryValue bValue = new BinaryValue(values.asLong(value), MemoryValueTypes.WORD, true);
-            memory.storeMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -203,10 +203,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void sd(V value, V offset, V MemAddress) {
+    void sd(V value, V offset, V memAddress) {
         try {
             BinaryValue bValue = new BinaryValue(values.asLong(value), MemoryValueTypes.DOUBLEWORD, true);
-            memory.storeMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -216,10 +216,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void lb(V offset, V MemAddress, int dst) {
+    void lb(V offset, V memAddress, int dst) {
         try {
             BinaryValue bValue = new BinaryValue(MemoryValueTypes.BYTE, false);
-            memory.accessMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
             registers[dst] = values.inject(bValue.getValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += e.getMessage() + " | ";
@@ -230,10 +230,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void lbu(V offset, V MemAddress, int dst) {
+    void lbu(V offset, V memAddress, int dst) {
         try {
             BinaryValue bValue = new BinaryValue(MemoryValueTypes.BYTE, true);
-            memory.accessMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
             registers[dst] = values.inject(bValue.getValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += e.getMessage() + " | ";
@@ -244,10 +244,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void lh(V offset, V MemAddress, int dst) {
+    void lh(V offset, V memAddress, int dst) {
         try {
             BinaryValue bValue = new BinaryValue(MemoryValueTypes.HALFWORD, false);
-            memory.accessMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
             registers[dst] = values.inject(bValue.getValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -258,10 +258,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void lhu(V offset, V MemAddress, int dst) {
+    void lhu(V offset, V memAddress, int dst) {
         try {
             BinaryValue bValue = new BinaryValue(MemoryValueTypes.HALFWORD, true);
-            memory.accessMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
             registers[dst] = values.inject(bValue.getValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -272,10 +272,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void lw(V offset, V MemAddress, int dst) {
+    void lw(V offset, V memAddress, int dst) {
         try {
             BinaryValue bValue = new BinaryValue(MemoryValueTypes.WORD, false);
-            memory.accessMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
             registers[dst] = values.inject(bValue.getValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -286,10 +286,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void lwu(V offset, V MemAddress, int dst) {
+    void lwu(V offset, V memAddress, int dst) {
         try {
             BinaryValue bValue = new BinaryValue(MemoryValueTypes.WORD, true);
-            memory.accessMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
             registers[dst] = values.inject(bValue.getValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -300,10 +300,10 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    void ld(V offset, V MemAddress, int dst) {
+    void ld(V offset, V memAddress, int dst) {
         try {
             BinaryValue bValue = new BinaryValue(MemoryValueTypes.DOUBLEWORD, false);
-            memory.accessMemory(bValue, values.asLong(MemAddress), values.asLong(offset));
+            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
             registers[dst] = values.inject(bValue.getValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -346,33 +346,39 @@ public abstract class GenericInterpreter<V> {
 
     protected abstract V readChar();
     protected abstract V readInt();
+    /* TODO
+    protected abstract V readString();
+     */
     public void ecall(int syscall) {
         switch (syscall) {
             // Register 10 = a0
-            case 1:  // PrintInt
+            case 1:     // PrintInt
                 output += values.asInt(registers[10]) + " | ";
                 return;
-            case 5:  // ReadInt
+            case 5:     // ReadInt
                 registers[10] = readInt();
                 input += values.asInt(registers[10]) + " | ";
                 return;
-            case 9: //Sbrk
+            case 8:     // ReadString
+                //TODO
+                return;
+            case 9:     //Sbrk
                 memory.sBrk(values.asInt(registers[10]));
                 return;
-            case 10: // Exit
+            case 10:    // Exit
                 exit = true;
                 return;
-            case 11: // PrintChar
+            case 11:    // PrintChar
                 output += values.asChar(registers[10]) + " | ";
                 return;
-            case 12: // ReadChar
+            case 12:    // ReadChar
                 registers[10] = readChar();
                 input += values.asChar(registers[10]) + " | ";
                 return;
-            case 34: // PrintIntHex
+            case 34:    // PrintIntHex
                 output += Integer.toHexString(values.asInt(registers[10])) + " | ";
                 return;
-            case 35: // PrintIntBinary
+            case 35:    // PrintIntBinary
                 output += Integer.toBinaryString(values.asInt(registers[10])) + " | ";
                 return;
         }

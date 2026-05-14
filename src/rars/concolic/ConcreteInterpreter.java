@@ -1,5 +1,7 @@
 package rars.concolic;
 
+import rars.riscv.hardware.AddressErrorException;
+
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -34,8 +36,9 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public boolean isTruthy(Long v) { return v != 0; }
     @Override public byte asByte(Long v) { return v.byteValue(); }
     @Override public int asInt(Long v) { return v.intValue(); }
-    @Override public char asChar(Long v) { return (char) v.byteValue(); }
+    @Override public short asShort(Long v) { return v.shortValue(); }
     @Override public long asLong(Long v) { return v.longValue(); }
+    @Override public char asChar(Long v) { return (char) v.byteValue(); }
     @Override public BinaryValue asBinaryValue(Long v) { return new BinaryValue(v); }
 }
 
@@ -60,5 +63,27 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
     protected Long readInt() {
         Scanner s = new Scanner(System.in);
         return (long)(s.nextInt());
+    }
+
+    protected void readString(long bufAddress, long length) throws AddressErrorException {
+        try {
+            if (length > 0) {
+                char c;
+                int i;
+                BinaryValue value;
+                for (i = 0; i < length - 1; ++i) {
+                    c = (char) System.in.read();
+                    if (c == -1 || c == '\n') {
+                        break;
+                    }
+                    value = new BinaryValue(c, MemoryValueTypes.BYTE, true);
+                    this.memory.storeMemory(value, bufAddress, i);
+                }
+                value = new BinaryValue(0, MemoryValueTypes.BYTE, true);
+                this.memory.storeMemory(value, bufAddress, i);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("cannot readChar: " + e);
+        }
     }
 }

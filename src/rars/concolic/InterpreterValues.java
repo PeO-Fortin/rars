@@ -35,8 +35,9 @@ abstract class InterpreterValues<V> {
     //Others
     public abstract boolean isTruthy(V v);
     public abstract byte asByte(V v);
-    public abstract long asLong(V v);
+    public abstract short asShort(V v);
     public abstract int asInt(V v);
+    public abstract long asLong(V v);
     public abstract char asChar(V v);
     public abstract BinaryValue asBinaryValue(V v);
 }

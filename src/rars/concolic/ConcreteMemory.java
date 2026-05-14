@@ -85,18 +85,8 @@ public class ConcreteMemory {
 
         memoryBlockAddress = getMemorySetup(memoryBlockTable, address, offset);
 
-        //Check if negative Doubleword
-        boolean dwNeg = (value.getType() == MemoryValueTypes.DOUBLEWORD &&
-                memoryBlockTable[memoryBlockAddress + (value.getSize() - 1)] < 0);
-
-        if (dwNeg) {
-            tempValue = Long.MIN_VALUE; //Prevents overflow
-        }
         for (int i = 0; i < value.getSize(); i++) {
             memoryBlockValue = memoryBlockTable[memoryBlockAddress + i];
-            if (dwNeg && i == value.getSize() - 1) {
-                memoryBlockAddress -= 0x80; //Remove the MSB
-            }
             memoryBlockValue = memoryBlockValue << (i * 8);
             tempValue += memoryBlockValue;
         }

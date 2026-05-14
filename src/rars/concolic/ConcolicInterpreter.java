@@ -46,11 +46,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String symbol = "readChar_" + lastReadCharacter++;
         // The result from readChar is between -1 (included) and 127 (included)
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicLong(31), new SymbolicVariable(symbol) }));
+                new SymbolicValue[]{ new SymbolicLong(-2), new SymbolicVariable(symbol) }));
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(127) }));
-        // To better deal with program reading from stdin until '.', we default to '.' as the value for readChar
-        return getFromModel(symbol, 46);
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(128) }));
+        return getFromModel(symbol, -1);
     }
 
     int lastReadInteger = 0;
@@ -59,13 +58,27 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String symbol = "readInt_" + lastReadInteger++;
 
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicLong(-100), new SymbolicVariable(symbol) }));
+                new SymbolicValue[]{ new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol) }));
 
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(100) }));
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L) }));
 
         return getFromModel(symbol, 0);
     }
+
+    /*
+     * TODO
+     *
+    int lastReadString = 0;
+    @Override
+    protected ConcolicValues.V readString() {
+        String symbol = "readString_" + lastReadString++;
+
+
+
+        return getFromModel(symbol, "");
+    }
+    */
 
     ConcolicValues.V getFromModel(String symbol, int defaultValue) {
         ConcolicValues.V v = ConcolicValues.variable(model.getOrDefault(symbol, defaultValue), symbol);

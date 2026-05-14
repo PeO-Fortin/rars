@@ -228,10 +228,13 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     public byte asByte(V v) {return (byte) v.concrete; }
 
     @Override
-    public long asLong(V v) { return v.concrete; }
+    public int asInt(V v) { return (int) v.concrete;}
 
     @Override
-    public int asInt(V v) { return (int) v.concrete;}
+    public short asShort(V v) { return (short) v.concrete;}
+
+    @Override
+    public long asLong(V v) { return v.concrete; }
 
     @Override
     public char asChar(V v) { return (char) v.concrete; }
