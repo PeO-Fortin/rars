@@ -6,6 +6,12 @@ import rars.RISCVprogram;
 import rars.assembler.Assembler;
 import rars.riscv.hardware.AddressErrorException;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -346,21 +352,22 @@ public abstract class GenericInterpreter<V> {
 
     protected abstract V readChar();
     protected abstract V readInt();
-    /* TODO
-    protected abstract V readString();
-     */
+    protected abstract void readString(V bufAddress, V length);
     public void ecall(int syscall) {
         switch (syscall) {
             // Register 10 = a0
             case 1:     // PrintInt
                 output += values.asInt(registers[10]) + " | ";
                 return;
+            case 4:     // PrintString
+                output += printString(values.asLong(registers[10])) + " | ";
+                return;
             case 5:     // ReadInt
                 registers[10] = readInt();
                 input += values.asInt(registers[10]) + " | ";
                 return;
             case 8:     // ReadString
-                //TODO
+                readString(registers[10], registers[11]);
                 return;
             case 9:     //Sbrk
                 memory.sBrk(values.asInt(registers[10]));
@@ -382,5 +389,36 @@ public abstract class GenericInterpreter<V> {
                 output += Integer.toBinaryString(values.asInt(registers[10])) + " | ";
                 return;
         }
+    }
+
+    private String printString(long bufAddress) {
+        String s = "";
+        ByteArrayOutputStream encodedChars = new ByteArrayOutputStream();
+        BinaryValue memoryValue = new BinaryValue(MemoryValueTypes.BYTE, true);
+        byte encodedChar;
+        int offset = 0;
+
+        try {
+            do {
+                memory.accessMemory(memoryValue, bufAddress, offset);
+                encodedChar = memoryValue.getValue().byteValue();
+                encodedChars.write(encodedChar);
+                ++offset;
+            } while (encodedChar != 0);
+
+            CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPLACE)
+                    .onUnmappableCharacter(CodingErrorAction.REPLACE);
+
+            s = decoder.decode(ByteBuffer.wrap(encodedChars.toByteArray())).toString();
+
+        } catch (AddressErrorException e){
+            output += e.getMessage() + " | ";
+            exit = true;
+        } catch (CharacterCodingException e) {
+            output += "Erreur d'encodage de caractère" + " | ";
+            exit = true;
+        }
+        return s;
     }
 }

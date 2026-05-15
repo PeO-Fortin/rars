@@ -66,19 +66,15 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         return getFromModel(symbol, 0);
     }
 
-    /*
+    /**
      * TODO
-     *
+     **/
     int lastReadString = 0;
     @Override
-    protected ConcolicValues.V readString() {
+    protected void readString(ConcolicValues.V bufAddress, ConcolicValues.V length) {
         String symbol = "readString_" + lastReadString++;
 
-
-
-        return getFromModel(symbol, "");
     }
-    */
 
     ConcolicValues.V getFromModel(String symbol, int defaultValue) {
         ConcolicValues.V v = ConcolicValues.variable(model.getOrDefault(symbol, defaultValue), symbol);

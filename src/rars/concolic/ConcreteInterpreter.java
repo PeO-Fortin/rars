@@ -65,7 +65,7 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
         return (long)(s.nextInt());
     }
 
-    protected void readString(long bufAddress, long length) throws AddressErrorException {
+    protected void readString(Long bufAddress, Long length) {
         try {
             if (length > 0) {
                 char c;
@@ -84,6 +84,8 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
             }
         } catch (IOException e) {
             throw new RuntimeException("cannot readChar: " + e);
+        } catch (AddressErrorException e) {
+            throw new RuntimeException("Address error: " + e.getMessage());
         }
     }
 }
