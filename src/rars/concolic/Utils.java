@@ -34,17 +34,17 @@ public class Utils {
         switch (valueSize) {
             case BYTE:
                 if(value > Byte.MAX_VALUE) {
-                    value = Byte.MIN_VALUE + (value - Byte.MAX_VALUE);
+                    value = Byte.MIN_VALUE + (value - (Byte.MAX_VALUE + 1L));
                 }
                 break;
             case HALFWORD:
                 if(value > Short.MAX_VALUE) {
-                    value = Short.MIN_VALUE + (value - Short.MAX_VALUE);
+                    value = Short.MIN_VALUE + (value - (Short.MAX_VALUE + 1L));
                 }
                 break;
             case WORD:
                 if(value > Integer.MAX_VALUE) {
-                    value = Integer.MIN_VALUE + (value - Integer.MAX_VALUE);
+                    value = Integer.MIN_VALUE + (value - (Integer.MAX_VALUE +1L));
                 }
                 break;
         }

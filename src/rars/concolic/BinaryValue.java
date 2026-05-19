@@ -52,8 +52,28 @@ public class BinaryValue {
         this.value = value;
     }
 
-    public void setSize(MemoryValueTypes type) {
+    public void setType (MemoryValueTypes type) {
         this.type = type;
+    }
+
+    public void setSize (int size) {
+        switch (size) {
+            case 1:
+                this.type = MemoryValueTypes.BYTE;
+                break;
+            case 2:
+                this.type = MemoryValueTypes.HALFWORD;
+                break;
+            case 4:
+                this.type = MemoryValueTypes.WORD;
+                break;
+            case 8:
+                this.type = MemoryValueTypes.DOUBLEWORD;
+                break;
+            default:
+                System.out.println("Error: Invalid value size");
+                break;
+        }
     }
 
     public void setUnsigned(boolean unsigned) {
