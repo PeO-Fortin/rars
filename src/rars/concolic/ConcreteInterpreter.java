@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long inject(long i) { return i; }
+    @Override public Long access(MemoryValue v) { return v.getConcreteValue(); }
 
     @Override public Long add(Long v1, Long v2) { return v1 + v2; }
     @Override public Long addw(Long v1, Long v2) { return (long)((v1.intValue() + v2.intValue())); }
@@ -39,7 +40,7 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public short asShort(Long v) { return v.shortValue(); }
     @Override public long asLong(Long v) { return v.longValue(); }
     @Override public char asChar(Long v) { return (char) v.byteValue(); }
-    @Override public BinaryValue asBinaryValue(Long v) { return new BinaryValue(v); }
+    @Override public MemoryValue asMemoryValue(Long v) { return new MemoryValue(v); }
 }
 
 public class ConcreteInterpreter extends GenericInterpreter<Long> {
@@ -70,16 +71,16 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
             if (length > 0) {
                 char c;
                 int i;
-                BinaryValue value;
+                MemoryValue value;
                 for (i = 0; i < length - 1; ++i) {
                     c = (char) System.in.read();
                     if (c == -1 || c == '\n') {
                         break;
                     }
-                    value = new BinaryValue(c, MemoryValueTypes.BYTE, true);
+                    value = new MemoryValue(c, MemoryValueTypes.BYTE, true);
                     this.memory.storeMemory(value, bufAddress, i);
                 }
-                value = new BinaryValue(0, MemoryValueTypes.BYTE, true);
+                value = new MemoryValue(0, MemoryValueTypes.BYTE, true);
                 this.memory.storeMemory(value, bufAddress, i);
             }
         } catch (IOException e) {

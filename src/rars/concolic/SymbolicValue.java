@@ -25,22 +25,20 @@ class SymbolicLong extends SymbolicValue {
     public int hashCode() {return Long.hashCode(value);}
 }
 
-class SymbolicInteger extends SymbolicValue {
-    int value;
-    public SymbolicInteger(int value) {
-        this.value = value;
-    }
+class SymbolicByte extends SymbolicValue {
+    byte value;
+    public SymbolicByte(byte value) { this.value = value; }
     public Set<String> variables() { return new HashSet<>(); }
     @Override public String toString() { return "" + value; }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SymbolicInteger)) return false;
-        return value == ((SymbolicInteger) o).value;
+        if (!(o instanceof SymbolicByte)) return false;
+        return value == ((SymbolicByte) o).value;
     }
 
     @Override
-    public int hashCode() {return Integer.hashCode(value);}
+    public int hashCode() {return Byte.hashCode(value);}
 }
 
 class SymbolicVariable extends SymbolicValue {

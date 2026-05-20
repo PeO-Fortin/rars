@@ -14,6 +14,10 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
             return new V(i, new SymbolicLong(i));
     }
 
+    public V access(MemoryValue v) {
+        return new V(v.getConcreteValue(), v.getSymbolicValue());
+    }
+
     public static V variable(long value, String name) {
         return new V(value, new SymbolicVariable(name));
     }
@@ -40,13 +44,13 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
         } else {
             long[] operands = new long[args.length];
             for (int i = 0; i < args.length; i++) {
-                operands[i] = (int)((SymbolicLong) args[i].symbolic).value;
+                operands[i] = ((SymbolicLong) args[i].symbolic).value;
             }
             symbolic = new SymbolicLong(op.apply(operands));
         }
         long[] concreteOperands = new long[args.length];
         for (int i = 0; i < args.length; i++) {
-            concreteOperands[i] = asInt(args[i]);
+            concreteOperands[i] = asLong(args[i]);
         }
         return new V(op.apply(concreteOperands), symbolic);
     }
@@ -228,10 +232,10 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     public byte asByte(V v) {return (byte) v.concrete; }
 
     @Override
-    public int asInt(V v) { return (int) v.concrete;}
+    public short asShort(V v) { return (short) v.concrete;}
 
     @Override
-    public short asShort(V v) { return (short) v.concrete;}
+    public int asInt(V v) { return (int) v.concrete;}
 
     @Override
     public long asLong(V v) { return v.concrete; }
@@ -240,8 +244,7 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     public char asChar(V v) { return (char) v.concrete; }
 
     @Override
-    public BinaryValue asBinaryValue(V v) {
-        return new BinaryValue(v.concrete);
+    public MemoryValue asMemoryValue(V v) {
+        return new MemoryValue(v.concrete);
     }
-
 }

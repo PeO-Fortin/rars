@@ -2,6 +2,7 @@ package rars.concolic;
 
 abstract class InterpreterValues<V> {
     public abstract V inject(long i);
+    public abstract V access(MemoryValue v1);
 
     //Arithmetic
     public abstract V add(V v1, V v2);
@@ -39,5 +40,5 @@ abstract class InterpreterValues<V> {
     public abstract int asInt(V v);
     public abstract long asLong(V v);
     public abstract char asChar(V v);
-    public abstract BinaryValue asBinaryValue(V v);
+    public abstract MemoryValue asMemoryValue(V v);
 }

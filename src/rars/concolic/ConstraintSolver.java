@@ -12,7 +12,7 @@ class ConstraintSolver {
     public Map<String, Integer> solve(Collection<SymbolicValue> constraints) {
         ctx = new Context();
         Collection<String> vars = collectVariables(constraints);
-        bvs = ctx.mkBitVecSort(32);
+        bvs = ctx.mkBitVecSort(64);
         varExprs = new HashMap<>();
         for (String var : vars) {
             varExprs.put(var, ctx.mkConst(var, bvs));
@@ -42,28 +42,28 @@ class ConstraintSolver {
                 case Not:
                     return ctx.mkNot(translateBool(op.operands[0]));
                 case Eq:
-                    Expr<BitVecSort> leftEq = translateInt(op.operands[0]);
-                    Expr<BitVecSort> rightEq = translateInt(op.operands[1]);
+                    Expr<BitVecSort> leftEq = translateLong(op.operands[0]);
+                    Expr<BitVecSort> rightEq = translateLong(op.operands[1]);
                     return ctx.mkEq(leftEq, rightEq);
                 case Neq:
-                    Expr<BitVecSort> leftNeq = translateInt(op.operands[0]);
-                    Expr<BitVecSort> rightNeq = translateInt(op.operands[1]);
+                    Expr<BitVecSort> leftNeq = translateLong(op.operands[0]);
+                    Expr<BitVecSort> rightNeq = translateLong(op.operands[1]);
                     return ctx.mkNot(ctx.mkEq(leftNeq, rightNeq));
                 case Geq:
-                    Expr<BitVecSort> leftGeq = translateInt(op.operands[0]);
-                    Expr<BitVecSort> rightGeq = translateInt(op.operands[1]);
+                    Expr<BitVecSort> leftGeq = translateLong(op.operands[0]);
+                    Expr<BitVecSort> rightGeq = translateLong(op.operands[1]);
                     return ctx.mkBVSGE(leftGeq, rightGeq);
                 case Lt:
-                    Expr<BitVecSort> leftLt = translateInt(op.operands[0]);
-                    Expr<BitVecSort> rightLt = translateInt(op.operands[1]);
+                    Expr<BitVecSort> leftLt = translateLong(op.operands[0]);
+                    Expr<BitVecSort> rightLt = translateLong(op.operands[1]);
                     return ctx.mkBVSLT(leftLt, rightLt);
             }
         }
         // Otherwise, we convert the int to a bool through a non-zero check
-        return ctx.mkNot(ctx.mkEq(translateInt(constraint), zero));
+        return ctx.mkNot(ctx.mkEq(translateLong(constraint), zero));
     }
 
-    Expr<BitVecSort> translateInt(SymbolicValue v) {
+    Expr<BitVecSort> translateLong(SymbolicValue v) {
         if (v instanceof SymbolicVariable) {
             SymbolicVariable var = (SymbolicVariable) v;
             Expr<BitVecSort> varExpr = varExprs.get(var.name);
@@ -73,25 +73,25 @@ class ConstraintSolver {
             SymbolicOperation op = (SymbolicOperation) v;
             switch (op.operator) {
                 case Add:
-                    return ctx.mkBVAdd(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVAdd(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case Sub:
-                    return ctx.mkBVSub(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVSub(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case Mul:
-                    return ctx.mkBVMul(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVMul(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case Div:
-                    return ctx.mkBVSDiv(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVSDiv(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case Xor:
-                    return ctx.mkBVXOR(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVXOR(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case And:
-                    return ctx.mkBVAND(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVAND(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case Or:
-                    return ctx.mkBVOR(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVOR(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case Sll:
-                    return ctx.mkBVSHL(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVSHL(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case Srl:
-                    return ctx.mkBVLSHR(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVLSHR(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 case Sra:
-                    return ctx.mkBVASHR(translateInt(op.operands[0]), translateInt(op.operands[1]));
+                    return ctx.mkBVASHR(translateLong(op.operands[0]), translateLong(op.operands[1]));
                 default:
                     throw new RuntimeException("type mismatch when generating constraint");
             }

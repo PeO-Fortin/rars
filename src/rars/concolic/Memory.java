@@ -1,10 +1,9 @@
 package rars.concolic;
 
-import rars.riscv.hardware.Memory;
 import rars.riscv.hardware.MemoryConfigurations;
 import rars.riscv.hardware.AddressErrorException;
 
-public class ConcreteMemory {
+public class Memory {
     public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
     public static final int DEFAULT_GLOBAL_POINTER = MemoryConfigurations.getDefaultGlobalPointer();
     public static final int DATA_SIZE = 4194304; //4MB
@@ -18,27 +17,25 @@ public class ConcreteMemory {
 
     private int heapAddress;
 
-    private byte[] dataBlockTable;
-    private byte[] stackBlockTable;
+    private byte[] concreteDataBlockTable;
+    private byte[] concreteStackBlockTable;
 
-    public ConcreteMemory() {
-        initialize();
-    }
+    public Memory() { initialize(); }
 
     private void initialize() {
         heapAddress = HEAP_BASE_ADDRESS;
-        dataBlockTable = new byte[DATA_SIZE];
-        stackBlockTable = new byte[STACK_SIZE];
+        concreteDataBlockTable = new byte[DATA_SIZE];
+        concreteStackBlockTable = new byte[STACK_SIZE];
         intializeData();
     }
 
     private void intializeData() {
-        Memory rarsMemory = Memory.getInstance();
+        rars.riscv.hardware.Memory rarsMemory = rars.riscv.hardware.Memory.getInstance();
         int base = MemoryConfigurations.getDefaultDataBaseAddress();
-        BinaryValue value = new BinaryValue(MemoryValueTypes.WORD, true);
-        for(int i = 0; i < dataBlockTable.length; i += 4){
+        MemoryValue value = new MemoryValue(MemoryValueTypes.WORD, true);
+        for(int i = 0; i < concreteDataBlockTable.length; i += 4){
             try {
-                value.setValue(rarsMemory.getRawWordOrNull(base + i));
+                value.setConcreteValue(rarsMemory.getRawWordOrNull(base + i));
                 if (value.getRawValue() == null) {
                     break;
                 }
@@ -73,7 +70,7 @@ public class ConcreteMemory {
      * @param offset    the offset to apply to the address
      * @return the value at this address
      */
-    public void accessMemory(BinaryValue value, long address, long offset) throws AddressErrorException {
+    public void accessMemory(MemoryValue value, long address, long offset) throws AddressErrorException {
         long tempValue = 0;
         byte [] memoryBlockTable = null;
         int memoryBlockAddress;
@@ -83,7 +80,8 @@ public class ConcreteMemory {
             throw new AddressErrorException("Load address not aligned", 4, (int)address);
         }
 
-        memoryBlockAddress = getMemorySetup(memoryBlockTable, address, offset);
+        memoryBlockAddress = getMemoryIndex(address, offset);
+        memoryBlockTable = getMemoryBlock(address, offset);
 
         for (int i = 0; i < value.getSize(); i++) {
             memoryBlockValue = memoryBlockTable[memoryBlockAddress + i];
@@ -91,7 +89,7 @@ public class ConcreteMemory {
             tempValue += memoryBlockValue;
         }
 
-        value.setValue(tempValue);
+        value.setConcreteValue(tempValue);
     }
 
     /**
@@ -102,7 +100,7 @@ public class ConcreteMemory {
      * @param address   the address where to store the value
      * @param offset    the offset to apply to the address
      */
-    public void storeMemory(BinaryValue value, long address, long offset) throws AddressErrorException {
+    public void storeMemory(MemoryValue value, long address, long offset) throws AddressErrorException {
         int memoryBlockAddress;
         byte[] memoryBlockTable = null;
 
@@ -110,26 +108,35 @@ public class ConcreteMemory {
             throw new AddressErrorException("Store address not aligned", 4, (int)address);
         }
 
-        memoryBlockAddress = getMemorySetup(memoryBlockTable, address, offset);
+        memoryBlockAddress = getMemoryIndex(address, offset);
+        memoryBlockTable = getMemoryBlock(address, offset);
 
         for (int i = 0; i < value.getSize(); i++) {
-            memoryBlockTable[memoryBlockAddress + i] = (byte) (value.getValue() >> (i * 8));
+            memoryBlockTable[memoryBlockAddress + i] = (byte) (value.getConcreteValue() >> (i * 8));
         }
     }
 
-    private int getMemorySetup(byte[] memoryBlockTable, long address, long offset) {
-        int memoryBlockIndex;
+    private int getMemoryIndex(long address, long offset) {
+        long realAddress = address + offset;
 
-        if (address >= DATA_BASE_ADDRESS && address <= DATA_LIMIT_ADDRESS) {
-            memoryBlockTable = dataBlockTable;
-            memoryBlockIndex = (int)(address - DATA_BASE_ADDRESS + offset);
-        } else if (address <= STACK_BASE_ADDRESS && address >= STACK_LIMIT_ADDRESS) {
-            memoryBlockTable = stackBlockTable;
-            memoryBlockIndex = (int)(STACK_BASE_ADDRESS - address + offset);
+        if (realAddress >= DATA_BASE_ADDRESS && realAddress <= DATA_LIMIT_ADDRESS) {
+            return (int)(realAddress - DATA_BASE_ADDRESS);
+        } else if (realAddress <= STACK_BASE_ADDRESS && realAddress >= STACK_LIMIT_ADDRESS) {
+            return (int)(STACK_BASE_ADDRESS - realAddress);
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }
+    }
 
-        return memoryBlockIndex;
+    private byte[] getMemoryBlock(long address, long offset) {
+        long realAddress = address + offset;
+
+        if (realAddress >= DATA_BASE_ADDRESS && realAddress <= DATA_LIMIT_ADDRESS) {
+            return concreteDataBlockTable;
+        } else if (realAddress <= STACK_BASE_ADDRESS && realAddress >= STACK_LIMIT_ADDRESS) {
+            return concreteStackBlockTable;
+        } else {
+            throw new ArrayIndexOutOfBoundsException();
+        }
     }
 }

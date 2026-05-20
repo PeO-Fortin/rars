@@ -1,29 +1,30 @@
 package rars.concolic;
 
-public class BinaryValue {
-    private Long value;
+public class MemoryValue {
+    private Long concreteValue;
     private MemoryValueTypes type;
     private boolean unsigned;
+    private SymbolicValue symbolicValue;
 
-    public BinaryValue(long value) {
-        this.value = value;
+    public MemoryValue(long value) {
+        this.concreteValue = value;
         this.type = MemoryValueTypes.DOUBLEWORD;
         this.unsigned = false;
     }
 
-    public BinaryValue(MemoryValueTypes type, boolean unsigned) {
+    public MemoryValue(MemoryValueTypes type, boolean unsigned) {
         this.type = type;
         this.unsigned = unsigned;
     }
 
-    public BinaryValue(long value, MemoryValueTypes type, boolean unsigned) {
-        this.value = value;
+    public MemoryValue(long value, MemoryValueTypes type, boolean unsigned) {
+        this.concreteValue = value;
         this.type = type;
         this.unsigned = unsigned;
     }
 
-    public Long getValue() {
-        long realValue = Utils.maskedValue(value, type);
+    public Long getConcreteValue() {
+        long realValue = Utils.maskedValue(concreteValue, type);
 
         if (!unsigned) {
             realValue = Utils.signedValue(realValue, type);
@@ -32,8 +33,12 @@ public class BinaryValue {
         return realValue;
     }
 
+    public SymbolicValue getSymbolicValue() {
+        return symbolicValue;
+    }
+
     public Long getRawValue() {
-        return value;
+        return concreteValue;
     }
 
     public MemoryValueTypes getType() {
@@ -48,8 +53,12 @@ public class BinaryValue {
         return unsigned;
     }
 
-    public void setValue(long value) {
-        this.value = value;
+    public void setConcreteValue(long value) {
+        this.concreteValue = value;
+    }
+
+    public void setSymbolicValue(SymbolicValue symbolicValue) {
+        this.symbolicValue = symbolicValue;
     }
 
     public void setType (MemoryValueTypes type) {

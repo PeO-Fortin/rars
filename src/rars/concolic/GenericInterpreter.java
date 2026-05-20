@@ -30,7 +30,7 @@ public abstract class GenericInterpreter<V> {
 
     Map<Integer, ProgramStatement> instructionsMap = new HashMap<>();
     ArrayList<ProgramStatement> machineList;
-    ConcreteMemory memory;
+    Memory memory;
     public void prepare(String filename) throws Exception {
         try {
             RISCVprogram program = new RISCVprogram();
@@ -42,7 +42,7 @@ public abstract class GenericInterpreter<V> {
             assembler.assemble(programs, true, false, program);
 
             machineList = program.getMachineList();
-            memory = new ConcreteMemory();
+            memory = new Memory();
 
             for (ProgramStatement ps : machineList) {
                 instructionsMap.put(ps.getAddress(), ps);
@@ -124,8 +124,8 @@ public abstract class GenericInterpreter<V> {
         for (int i = 0; i < registers.length; i++) {
             registers[i] = values.inject(0);
         }
-        registers[2] = values.inject(ConcreteMemory.DEFAULT_STACK_POINTER); //sp
-        registers[3] = values.inject(ConcreteMemory.DEFAULT_GLOBAL_POINTER); //gp
+        registers[2] = values.inject(Memory.DEFAULT_STACK_POINTER); //sp
+        registers[3] = values.inject(Memory.DEFAULT_GLOBAL_POINTER); //gp
         exit = false;
         run(machineList.get(0).getAddress());
     }
@@ -172,7 +172,7 @@ public abstract class GenericInterpreter<V> {
 
     void sb(V value, V offset, V memAddress) {
         try {
-            BinaryValue bValue = new BinaryValue(values.asLong(value), MemoryValueTypes.BYTE, true);
+            MemoryValue bValue = new MemoryValue(values.asLong(value), MemoryValueTypes.BYTE, true);
             memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -185,7 +185,7 @@ public abstract class GenericInterpreter<V> {
 
     void sh(V value, V offset, V memAddress) {
         try {
-            BinaryValue bValue = new BinaryValue(values.asLong(value), MemoryValueTypes.HALFWORD, true);
+            MemoryValue bValue = new MemoryValue(values.asLong(value), MemoryValueTypes.HALFWORD, true);
             memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -198,7 +198,7 @@ public abstract class GenericInterpreter<V> {
 
     void sw(V value, V offset, V memAddress) {
         try {
-            BinaryValue bValue = new BinaryValue(values.asLong(value), MemoryValueTypes.WORD, true);
+            MemoryValue bValue = new MemoryValue(values.asLong(value), MemoryValueTypes.WORD, true);
             memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -211,7 +211,7 @@ public abstract class GenericInterpreter<V> {
 
     void sd(V value, V offset, V memAddress) {
         try {
-            BinaryValue bValue = new BinaryValue(values.asLong(value), MemoryValueTypes.DOUBLEWORD, true);
+            MemoryValue bValue = new MemoryValue(values.asLong(value), MemoryValueTypes.DOUBLEWORD, true);
             memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
@@ -224,9 +224,9 @@ public abstract class GenericInterpreter<V> {
 
     void lb(V offset, V memAddress, int dst) {
         try {
-            BinaryValue bValue = new BinaryValue(MemoryValueTypes.BYTE, false);
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, false);
             memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getValue());
+            registers[dst] = values.inject(bValue.getConcreteValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += e.getMessage() + " | ";
             exit = true;
@@ -238,9 +238,9 @@ public abstract class GenericInterpreter<V> {
 
     void lbu(V offset, V memAddress, int dst) {
         try {
-            BinaryValue bValue = new BinaryValue(MemoryValueTypes.BYTE, true);
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, true);
             memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getValue());
+            registers[dst] = values.inject(bValue.getConcreteValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += e.getMessage() + " | ";
             exit = true;
@@ -252,9 +252,9 @@ public abstract class GenericInterpreter<V> {
 
     void lh(V offset, V memAddress, int dst) {
         try {
-            BinaryValue bValue = new BinaryValue(MemoryValueTypes.HALFWORD, false);
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, false);
             memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getValue());
+            registers[dst] = values.inject(bValue.getConcreteValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -266,9 +266,9 @@ public abstract class GenericInterpreter<V> {
 
     void lhu(V offset, V memAddress, int dst) {
         try {
-            BinaryValue bValue = new BinaryValue(MemoryValueTypes.HALFWORD, true);
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, true);
             memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getValue());
+            registers[dst] = values.inject(bValue.getConcreteValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -280,9 +280,9 @@ public abstract class GenericInterpreter<V> {
 
     void lw(V offset, V memAddress, int dst) {
         try {
-            BinaryValue bValue = new BinaryValue(MemoryValueTypes.WORD, false);
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, false);
             memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getValue());
+            registers[dst] = values.inject(bValue.getConcreteValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -294,9 +294,9 @@ public abstract class GenericInterpreter<V> {
 
     void lwu(V offset, V memAddress, int dst) {
         try {
-            BinaryValue bValue = new BinaryValue(MemoryValueTypes.WORD, true);
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, true);
             memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getValue());
+            registers[dst] = values.inject(bValue.getConcreteValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -308,9 +308,9 @@ public abstract class GenericInterpreter<V> {
 
     void ld(V offset, V memAddress, int dst) {
         try {
-            BinaryValue bValue = new BinaryValue(MemoryValueTypes.DOUBLEWORD, false);
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.DOUBLEWORD, false);
             memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getValue());
+            registers[dst] = values.inject(bValue.getConcreteValue());
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -394,14 +394,14 @@ public abstract class GenericInterpreter<V> {
     private String printString(long bufAddress) {
         String s = "";
         ByteArrayOutputStream encodedChars = new ByteArrayOutputStream();
-        BinaryValue memoryValue = new BinaryValue(MemoryValueTypes.BYTE, true);
+        MemoryValue memoryValue = new MemoryValue(MemoryValueTypes.BYTE, true);
         byte encodedChar;
         int offset = 0;
 
         try {
             do {
                 memory.accessMemory(memoryValue, bufAddress, offset);
-                encodedChar = memoryValue.getValue().byteValue();
+                encodedChar = memoryValue.getConcreteValue().byteValue();
                 encodedChars.write(encodedChar);
                 ++offset;
             } while (encodedChar != 0);
