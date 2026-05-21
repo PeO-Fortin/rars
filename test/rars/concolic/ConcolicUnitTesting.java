@@ -25,45 +25,101 @@ public class ConcreteMemoryUnitTesting {
     }
 
 //******************************************************
-//   TESTS BINARY VALUE
+//   TESTS MEMORY VALUE
 //******************************************************
     @Test
-    public void testBVRawValuePositiveInt() throws Exception{
-        int storedValue = 123456;
-        long rawValue;
+    public void testOverflowSigned() throws Exception{
+        int storedValue = 128;
+
+        MemoryValue value = new MemoryValue(storedValue, MemoryValueTypes.BYTE, false);
+
+        assertEquals(Byte.MIN_VALUE, value.getConcreteValue())
+    }
+    
+    @Test
+    public void testMVRawValuePositiveByte() throws Exception{
+        byte storedValue = 12;
+
+        MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.BYTE,true);
+
+        assertEquals(storedValue,value.getRawValue());
+    }
+
+    @Test
+    public void testMVRawValueNegativeByte() throws Exception{
+        byte storedValue = -12;
+
+        MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.BYTE,false);
+
+        assertEquals(storedValue,value.getRawValue());
+    }
+
+    @Test
+    public void testMVRawValuePositiveWord() throws Exception{
+        short storedValue = 543;
 
         MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.WORD,true);
-        rawValue = value.getRawValue();
 
-        assertEquals(storedValue,rawValue);
+        assertEquals(storedValue,value.getRawValue());
     }
 
     @Test
-    public void testBVRawValueNegativeInt() throws Exception{
+    public void testMVRawValueNegativeWord() throws Exception{
+        short storedValue = -543;
+
+        MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.WORD,false);
+
+        assertEquals(storedValue,value.getRawValue());
+    }
+
+    @Test
+    public void testMVRawValuePositiveWord() throws Exception{
+        int storedValue = 123456;
+
+        MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.WORD,true);
+
+        assertEquals(storedValue,value.getRawValue());
+    }
+
+    @Test
+    public void testMVRawValueNegativeWord() throws Exception{
         int storedValue = -123456;
-        long rawValue;
 
         MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.WORD,false);
-        rawValue = value.getRawValue();
 
-        assertEquals(storedValue,rawValue);
+        assertEquals(storedValue,value.getRawValue());
     }
 
     @Test
-    public void testBVRawValueOverflowInt() throws Exception{
-        long storedValue = Integer.MAX_VALUE + 1L;
-        long rawValue;
+    public void testMVRawValuePositiveDoubleword() throws Exception{
+        long storedValue = 123456789;
 
-        MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.WORD,false);
-        rawValue = value.getRawValue();
+        MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.DOUBLEWORD,true);
 
-        assertTrue(rawValue > 0);
+        assertEquals(storedValue,value.getRawValue());
     }
 
     @Test
-    public void testBVValueOverflowIntSigned() throws Exception{
+    public void testMVRawValueNegativeDoubleword() throws Exception{
+        long storedValue = -123456789;
+
+        MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.DOUBLEWORD,false);
+
+        assertEquals(storedValue,value.getRawValue());
+    }
+
+    @Test
+    public void testMVRawValueOverflowInt() throws Exception{
         long storedValue = Integer.MAX_VALUE + 1L;
-        long realValue;
+
+        MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.WORD,false);
+
+        assertTrue(value.getRawValue() > 0);
+    }
+
+    @Test
+    public void testMVValueOverflowIntSigned() throws Exception{
+        long storedValue = Integer.MAX_VALUE + 1L;
 
         MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.WORD,false);
 
@@ -71,121 +127,127 @@ public class ConcreteMemoryUnitTesting {
     }
 
     @Test
-    public void testBVValueOverflowIntUnsigned() throws Exception{
+    public void testMVValueOverflowIntUnsigned() throws Exception{
         long storedValue = Integer.MAX_VALUE + 1L;
 
         MemoryValue value = new MemoryValue(storedValue,MemoryValueTypes.WORD,true);
-
 
         assertTrue(value.getConcreteValue() > Integer.MAX_VALUE);
     }
 
     @Test
-    public void testBVGetType() throws Exception{
+    public void testMVGetType() throws Exception{
         long value = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
 
-        MemoryValue bValue = new MemoryValue(value,storedType,unsigned);
+        MemoryValue MValue = new MemoryValue(value,storedType,unsigned);
 
-        assertEquals(storedType,bValue.getType());
+        assertEquals(storedType,MValue.getType());
     }
 
     @Test
-    public void testBVGetSize() throws Exception{
+    public void testMVGetSize() throws Exception{
         long value = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
 
-        MemoryValue bValue = new MemoryValue(value,storedType,unsigned);
+        MemoryValue MValue = new MemoryValue(value,storedType,unsigned);
 
-        assertEquals(MemoryValueTypes.WORD.getSize(),bValue.getSize());
+        assertEquals(MemoryValueTypes.WORD.getSize(),MValue.getSize());
     }
 
     @Test
-    public void testBVIsUnsigned() throws Exception{
+    public void testMVIsUnsigned() throws Exception{
         long value = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
 
-        MemoryValue bValue = new MemoryValue(value,storedType,unsigned);
+        MemoryValue MValue = new MemoryValue(value,storedType,unsigned);
 
-        assertEquals(unsigned,bValue.isUnsigned());
+        assertEquals(unsigned,MValue.isUnsigned());
     }
 
     @Test
-    public void testBVGetType() throws Exception{
+    public void testMVGetType() throws Exception{
         long value = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
 
-        MemoryValue bValue = new MemoryValue(value,storedType,unsigned);
+        MemoryValue MValue = new MemoryValue(value,storedType,unsigned);
 
-        assertEquals(storedType,bValue.getType());
+        assertEquals(storedType,MValue.getType());
     }
 
     @Test
-    public void testBVSetValue() throws Exception{
+    public void testMVSetValue() throws Exception{
         long originalValue = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
         long newValue = 21;
 
-        MemoryValue bValue = new MemoryValue(originalValue,storedType,unsigned);
-        bValue.setConcreteValue(newValue);
+        MemoryValue MValue = new MemoryValue(originalValue,storedType,unsigned);
+        MValue.setConcreteValue(newValue);
 
-        assertEquals(newValue,bValue.getConcreteValue());
+        assertEquals(newValue,MValue.getConcreteValue());
     }
 
     @Test
-    public void testBVSetType() throws Exception{
+    public void testMVSetType() throws Exception{
         long originalValue = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
         MemoryValueTypes newType = MemoryValueTypes.HALFWORD;
 
-        MemoryValue bValue = new MemoryValue(originalValue,storedType,unsigned);
+        MemoryValue MValue = new MemoryValue(originalValue,storedType,unsigned);
 
-        bValue.setType(newType);
-        assertEquals(newType,bValue.getType());
+        MValue.setType(newType);
+        assertEquals(newType,MValue.getType());
     }
 
     @Test
-    public void testBVSetSize() throws Exception{
+    public void testMVSetSize() throws Exception{
         long originalValue = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
         int newSize = 8;
 
-        MemoryValue bValue = new MemoryValue(originalValue,storedType,unsigned);
-        bValue.setSize(newSize);
-        assertEquals(newSize,bValue.getSize());
+        MemoryValue MValue = new MemoryValue(originalValue,storedType,unsigned);
+        MValue.setSize(newSize);
+        assertEquals(newSize,MValue.getSize());
     }
 
     @Test
-    public void testBVSetWrongSize() throws Exception{
+    public void testMVSetWrongSize() throws Exception{
         long originalValue = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
         int newSize = 5;
 
-        MemoryValue bValue = new MemoryValue(originalValue,storedType,unsigned);
-        bValue.setSize(newSize);
+        MemoryValue MValue = new MemoryValue(originalValue,storedType,unsigned);
+        MValue.setSize(newSize);
 
         assertEquals("Error: Invalid value size",outputStreamCaptor.toString().trim());
     }
 
     @Test
-    public void testBVSetUnisgned() throws Exception{
-        long originalValue = 42;
+    public void testMVSetUnisgned() throws Exception{
+        long value = 42;
         MemoryValueTypes storedType = MemoryValueTypes.WORD;
         boolean unsigned = true;
         boolean newValue = false;
 
-        MemoryValue bValue = new MemoryValue(originalValue,storedType,unsigned);
-        bValue.setUnsigned(newValue);
+        MemoryValue MValue = new MemoryValue(originalValue,storedType,unsigned);
+        MValue.setUnsigned(newValue);
 
-        assertEquals(newValue,bValue.isUnsigned());
+        assertEquals(newValue,MValue.isUnsigned());
+    }
+
+    @Test
+    public void testMVNoValueBuilder() throws Exception{
+        MemoryValue value = new MemoryValue(MemoryValueTypes.WORD,true);
+
+        assertEquals(0,value.getConcreteValue());
     }
 
 //******************************************************
@@ -267,7 +329,7 @@ public class ConcreteMemoryUnitTesting {
     }
 
     @Test
-    public void testStoreWithOffset () throws Exception {
+    public void testStoreWithPositiveOffset () throws Exception {
         MemoryValue value = new MemoryValue(0x89ABCDEF, MemoryValueTypes.WORD, true);
         long address = 0x10010008;
         long offset = 3;
@@ -279,6 +341,25 @@ public class ConcreteMemoryUnitTesting {
         referenceDataBlockTable[65548] = 0xCD;
         referenceDataBlockTable[65549] = 0xAB;
         referenceDataBlockTable[65550] = 0x89;
+
+        Field dataBlockTableAttribute = Memory.class.getDeclaredField("dataBlockTable");
+        dataBlockTableAttribute.setAccessible(true);
+        assertArrayEquals(referenceDataBlockTable, (byte[]) dataBlockTableAttribute.get(memory));
+    }
+
+    @Test
+    public void testStoreWithNegativeOffset () throws Exception {
+        MemoryValue value = new MemoryValue(0x89ABCDEF, MemoryValueTypes.WORD, true);
+        long address = 0x10010008;
+        long offset = -3;
+
+        memory.storeMemory(value, address, offset);
+
+        byte[] referenceDataBlockTable = new byte[Memory.DATA_SIZE];
+        referenceDataBlockTable[65541] = 0xEF;
+        referenceDataBlockTable[65542] = 0xCD;
+        referenceDataBlockTable[65543] = 0xAB;
+        referenceDataBlockTable[65544] = 0x89;
 
         Field dataBlockTableAttribute = Memory.class.getDeclaredField("dataBlockTable");
         dataBlockTableAttribute.setAccessible(true);
@@ -343,7 +424,21 @@ public class ConcreteMemoryUnitTesting {
 
         assertEquals(storedValue.getConcreteValue(), accessValue.getConcreteValue());
     }
-    c
+
+    @Test
+    public void testStoreAndAccessWithOffset() throws Exception {
+        MemoryValue storedValue = new MemoryValue(0x89ABCDEF, MemoryValueTypes.WORD, true);
+        long address = 0x10010008;
+        long offset = 4;
+
+        memory.storeMemory(storedValue, address, offset);
+
+        MemoryValue accessValue = new MemoryValue(MemoryValueTypes.WORD, true);
+        memory.accessMemory(accessValue, address, offset);
+
+        assertEquals(storedValue.getConcreteValue(), accessValue.getConcreteValue());
+    }
+
     @Test
     public void testDefaultMemoryIsZero() throws Exception {
         MemoryValue accessValue = new MemoryValue(MemoryValueTypes.WORD, true);
@@ -424,20 +519,6 @@ public class ConcreteMemoryUnitTesting {
         MemoryValue storedValue = new MemoryValue(0x89ABCDEF, MemoryValueTypes.WORD, true);
         long address = 0x7FFFDFFC;
         long offset = 0;
-
-        memory.storeMemory(storedValue, address, offset);
-
-        MemoryValue accessValue = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(accessValue, address, offset);
-
-        assertEquals(storedValue.getConcreteValue(), accessValue.getConcreteValue());
-    }
-
-    @Test
-    public void testStoreAndAccessWithOffset() throws Exception {
-        MemoryValue storedValue = new MemoryValue(0x89ABCDEF, MemoryValueTypes.WORD, true);
-        long address = 0x10010008;
-        long offset = 4;
 
         memory.storeMemory(storedValue, address, offset);
 
