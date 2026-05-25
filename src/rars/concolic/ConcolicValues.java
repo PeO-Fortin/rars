@@ -2,7 +2,7 @@ package rars.concolic;
 
 public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     static class V {
-        long concrete;
+        Long concrete;
         SymbolicValue symbolic;
         public V(long concrete, SymbolicValue symbolic) {
             this.concrete = concrete;
@@ -29,7 +29,7 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     V op(Op op, V[] args) {
         boolean remainsSymbolic = false;
         for (V arg : args) {
-            if (!(arg.symbolic instanceof SymbolicLong)) {
+            if (!(arg.symbolic instanceof SymbolicLong || arg.symbolic instanceof SymbolicByte)) {
                 remainsSymbolic = true;
             }
         }
@@ -229,22 +229,22 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     }
 
     @Override
-    public byte asByte(V v) {return (byte) v.concrete; }
+    public byte asByte(V v) {return v.concrete.byteValue(); }
 
     @Override
-    public short asShort(V v) { return (short) v.concrete;}
+    public short asShort(V v) { return v.concrete.shortValue(); }
 
     @Override
-    public int asInt(V v) { return (int) v.concrete;}
+    public int asInt(V v) { return v.concrete.intValue(); }
 
     @Override
     public long asLong(V v) { return v.concrete; }
 
     @Override
-    public char asChar(V v) { return (char) v.concrete; }
+    public char asChar(V v) { return (char) v.concrete.byteValue(); }
 
     @Override
     public MemoryValue asMemoryValue(V v) {
-        return new MemoryValue(v.concrete);
+        return new MemoryValue(v);
     }
 }

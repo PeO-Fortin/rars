@@ -17,15 +17,15 @@ public class Memory {
 
     private int heapAddress;
 
-    private byte[] concreteDataBlockTable;
-    private byte[] concreteStackBlockTable;
+    private MemoryValue[] concreteDataBlockTable;
+    private MemoryValue[] concreteStackBlockTable;
 
     public Memory() { initialize(); }
 
     private void initialize() {
         heapAddress = HEAP_BASE_ADDRESS;
-        concreteDataBlockTable = new byte[DATA_SIZE];
-        concreteStackBlockTable = new byte[STACK_SIZE];
+        concreteDataBlockTable = new MemoryValue[DATA_SIZE];
+        concreteStackBlockTable = new MemoryValue[STACK_SIZE];
         intializeData();
     }
 
@@ -39,6 +39,7 @@ public class Memory {
                 if (value.getRawValue() == null) {
                     break;
                 }
+                value.setSymbolicValue(new SymbolicLong(value.getConcreteValue()));
                 storeMemory(value, (base + i), 0);
             } catch (AddressErrorException e) {
                 System.out.println("Data initialization failed: ");
@@ -71,25 +72,23 @@ public class Memory {
      * @return the value at this address
      */
     public void accessMemory(MemoryValue value, long address, long offset) throws AddressErrorException {
-        long tempValue = 0;
-        byte [] memoryBlockTable = null;
-        int memoryBlockAddress;
-        long memoryBlockValue;
-
         if (address % value.getSize() != 0) {
             throw new AddressErrorException("Load address not aligned", 4, (int)address);
         }
 
-        memoryBlockAddress = getMemoryIndex(address, offset);
-        memoryBlockTable = getMemoryBlock(address, offset);
+        ConcolicValues values = new ConcolicValues();
+        ConcolicValues.V concValue = values.inject(0);
+
+        int memoryBlockAddress = getMemoryIndex(address, offset);
+        MemoryValue[] memoryBlockTable = getMemoryBlock(address, offset);
 
         for (int i = 0; i < value.getSize(); i++) {
-            memoryBlockValue = memoryBlockTable[memoryBlockAddress + i];
-            memoryBlockValue = memoryBlockValue << (i * 8);
-            tempValue += memoryBlockValue;
-        }
+            ConcolicValues.V byteVal = values.access(memoryBlockTable[memoryBlockAddress + i]);
+            ConcolicValues.V shifted = values.sll(byteVal, values.inject(i * 8));
 
-        value.setConcreteValue(tempValue);
+            concValue = values.or(concValue, shifted);
+        }
+        value.setConcolicValue(concValue);
     }
 
     /**
@@ -101,18 +100,19 @@ public class Memory {
      * @param offset    the offset to apply to the address
      */
     public void storeMemory(MemoryValue value, long address, long offset) throws AddressErrorException {
-        int memoryBlockAddress;
-        byte[] memoryBlockTable = null;
-
         if (address % value.getSize() != 0) {
             throw new AddressErrorException("Store address not aligned", 4, (int)address);
         }
 
-        memoryBlockAddress = getMemoryIndex(address, offset);
-        memoryBlockTable = getMemoryBlock(address, offset);
+        int memoryBlockAddress = getMemoryIndex(address, offset);
+        MemoryValue[] memoryBlockTable = getMemoryBlock(address, offset);
+        ConcolicValues values = new ConcolicValues();
 
         for (int i = 0; i < value.getSize(); i++) {
-            memoryBlockTable[memoryBlockAddress + i] = (byte) (value.getConcreteValue() >> (i * 8));
+            ConcolicValues.V shifted = values.sra(value.getConcolicValue(), values.inject(8));
+            ConcolicValues.V masked  = values.and(shifted, values.inject(0xFF));
+            memoryBlockTable[memoryBlockAddress + i] =
+                    new MemoryValue(masked, MemoryValueTypes.BYTE, true);
         }
     }
 
@@ -128,7 +128,7 @@ public class Memory {
         }
     }
 
-    private byte[] getMemoryBlock(long address, long offset) {
+    private MemoryValue[] getMemoryBlock(long address, long offset) {
         long realAddress = address + offset;
 
         if (realAddress >= DATA_BASE_ADDRESS && realAddress <= DATA_LIMIT_ADDRESS) {

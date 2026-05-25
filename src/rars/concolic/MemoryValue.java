@@ -1,13 +1,16 @@
 package rars.concolic;
 
 public class MemoryValue {
-    private Long concreteValue;
+    private ConcolicValues.V value;
     private MemoryValueTypes type;
     private boolean unsigned;
-    private SymbolicValue symbolicValue;
 
     public MemoryValue(long value) {
-        this.concreteValue = value;
+        this.value = new ConcolicValues.V (value, new SymbolicLong(value));
+    }
+
+    public MemoryValue(ConcolicValues.V value) {
+        this.value = value;
         this.type = MemoryValueTypes.DOUBLEWORD;
         this.unsigned = false;
     }
@@ -17,14 +20,14 @@ public class MemoryValue {
         this.unsigned = unsigned;
     }
 
-    public MemoryValue(long value, MemoryValueTypes type, boolean unsigned) {
-        this.concreteValue = value;
+    public MemoryValue(ConcolicValues.V value, MemoryValueTypes type, boolean unsigned) {
+        this.value = value;
         this.type = type;
         this.unsigned = unsigned;
     }
 
     public Long getConcreteValue() {
-        long realValue = Utils.maskedValue(concreteValue, type);
+        long realValue = Utils.maskedValue(value.concrete, type);
 
         if (!unsigned) {
             realValue = Utils.signedValue(realValue, type);
@@ -34,11 +37,15 @@ public class MemoryValue {
     }
 
     public SymbolicValue getSymbolicValue() {
-        return symbolicValue;
+        return value.symbolic;
     }
 
     public Long getRawValue() {
-        return concreteValue;
+        return value.concrete;
+    }
+
+    public ConcolicValues.V getConcolicValue() {
+        return value;
     }
 
     public MemoryValueTypes getType() {
@@ -54,11 +61,15 @@ public class MemoryValue {
     }
 
     public void setConcreteValue(long value) {
-        this.concreteValue = value;
+        this.value.concrete = value;
     }
 
     public void setSymbolicValue(SymbolicValue symbolicValue) {
-        this.symbolicValue = symbolicValue;
+        this.value.symbolic = symbolicValue;
+    }
+
+    public void setConcolicValue(ConcolicValues.V value) {
+        this.value = value;
     }
 
     public void setType (MemoryValueTypes type) {

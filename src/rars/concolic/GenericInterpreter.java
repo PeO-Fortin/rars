@@ -170,6 +170,12 @@ public abstract class GenericInterpreter<V> {
 
     void or(V left, V right, int dst) { registers[dst] = values.or(left, right); }
 
+    protected abstract void sb(V value, V offset, V memAddress);
+    protected abstract void sh(V value, V offset, V memAddress);
+    protected abstract void sw(V value, V offset, V memAddress)
+    protected abstract void sd(V value, V offset, V memAddress);
+
+    /*
     void sb(V value, V offset, V memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(values.asLong(value), MemoryValueTypes.BYTE, true);
@@ -221,7 +227,7 @@ public abstract class GenericInterpreter<V> {
             exit = true;
         }
     }
-
+    */
     void lb(V offset, V memAddress, int dst) {
         try {
             MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, false);
