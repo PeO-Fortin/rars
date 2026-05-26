@@ -35,8 +35,8 @@ public abstract class GenericInterpreter<V> {
         try {
             RISCVprogram program = new RISCVprogram();
             ArrayList<String> filenames = new ArrayList<>();
-            filenames.add("test/rars/concolic/libs.s");
             filenames.add(filename);
+            filenames.add("test/rars/concolic/libs.s");
 
             ArrayList<RISCVprogram> programs = program.prepareFilesForAssembly(filenames, filename, null);
             Assembler assembler = new Assembler();
