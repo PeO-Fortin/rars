@@ -5,11 +5,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+
+import rars.Settings;
 import rars.riscv.hardware.AddressErrorException;
 
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static void main(String[] args) throws Exception {
         Globals.initialize();
+        Globals.getSettings().setBooleanSetting(Settings.Bool.RV64_ENABLED, true);
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(args[0]);
         interpreter.runConcolic(Integer.parseInt(args[1]));
