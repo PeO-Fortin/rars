@@ -65,14 +65,6 @@ public class MemoryValue extends ConcolicValues {
         return unsigned;
     }
 
-    public void setConcreteValue(long value) {
-        this.value.concrete = value;
-    }
-
-    public void setSymbolicValue(SymbolicValue symbolicValue) {
-        this.value.symbolic = symbolicValue;
-    }
-
     public void setConcolicValue(V value) {
         this.value = value;
     }

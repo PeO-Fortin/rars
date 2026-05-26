@@ -35,11 +35,12 @@ public class Memory {
         MemoryValue value = new MemoryValue(MemoryValueTypes.WORD, true);
         for(int i = 0; i < concreteDataBlockTable.length; i += 4){
             try {
-                value.setConcreteValue(rarsMemory.getRawWordOrNull(base + i));
-                if (value.getRawValue() == null) {
+                Integer concrete = rarsMemory.getRawWordOrNull(base + i);
+                if (concrete == null) {
                     break;
                 }
-                value.setSymbolicValue(new SymbolicLong(value.getConcreteValue()));
+                ConcolicValues.V concValue = new ConcolicValues.V (concrete, new SymbolicLong(concrete));
+                value.setConcolicValue(concValue);
                 storeMemory(value, (base + i), 0);
             } catch (AddressErrorException e) {
                 System.out.println("Data initialization failed: ");
