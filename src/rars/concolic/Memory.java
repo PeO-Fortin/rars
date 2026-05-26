@@ -76,17 +76,16 @@ public class Memory {
             throw new AddressErrorException("Load address not aligned", 4, (int)address);
         }
 
-        ConcolicValues values = new ConcolicValues();
-        ConcolicValues.V concValue = values.inject(0);
+        ConcolicValues.V concValue = value.inject(0);
 
         int memoryBlockAddress = getMemoryIndex(address, offset);
         MemoryValue[] memoryBlockTable = getMemoryBlock(address, offset);
 
         for (int i = 0; i < value.getSize(); i++) {
-            ConcolicValues.V byteVal = values.access(memoryBlockTable[memoryBlockAddress + i]);
-            ConcolicValues.V shifted = values.sll(byteVal, values.inject(i * 8));
+            ConcolicValues.V tempVal = value.access(memoryBlockTable[memoryBlockAddress + i]);
+            tempVal = value.sll(tempVal, value.inject(i * 8));
 
-            concValue = values.or(concValue, shifted);
+            concValue = value.or(concValue, tempVal);
         }
         value.setConcolicValue(concValue);
     }
@@ -106,13 +105,12 @@ public class Memory {
 
         int memoryBlockAddress = getMemoryIndex(address, offset);
         MemoryValue[] memoryBlockTable = getMemoryBlock(address, offset);
-        ConcolicValues values = new ConcolicValues();
 
         for (int i = 0; i < value.getSize(); i++) {
-            ConcolicValues.V shifted = values.sra(value.getConcolicValue(), values.inject(8));
-            ConcolicValues.V masked  = values.and(shifted, values.inject(0xFF));
+            ConcolicValues.V tempVal = value.sra(value.getConcolicValue(), value.inject(8));
+            tempVal  = value.and(tempVal, value.inject(0xFF));
             memoryBlockTable[memoryBlockAddress + i] =
-                    new MemoryValue(masked, MemoryValueTypes.BYTE, true);
+                    new MemoryValue(tempVal, MemoryValueTypes.BYTE, true);
         }
     }
 

@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+import rars.riscv.hardware.AddressErrorException;
 
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static void main(String[] args) throws Exception {
@@ -74,6 +75,62 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected void readString(ConcolicValues.V bufAddress, ConcolicValues.V length) {
         String symbol = "readString_" + lastReadString++;
 
+    }
+
+    @Override
+    protected void sb(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.BYTE, true);
+            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sh(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.HALFWORD, true);
+            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sw(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.WORD, true);
+            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sd(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.DOUBLEWORD, true);
+            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
     }
 
     ConcolicValues.V getFromModel(String symbol, int defaultValue) {

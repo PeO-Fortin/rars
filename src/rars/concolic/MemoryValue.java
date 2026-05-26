@@ -1,15 +1,15 @@
 package rars.concolic;
 
-public class MemoryValue {
-    private ConcolicValues.V value;
+public class MemoryValue extends ConcolicValues {
+    private V value;
     private MemoryValueTypes type;
     private boolean unsigned;
 
     public MemoryValue(long value) {
-        this.value = new ConcolicValues.V (value, new SymbolicLong(value));
+        this.value = new V (value, new SymbolicLong(value));
     }
 
-    public MemoryValue(ConcolicValues.V value) {
+    public MemoryValue(V value) {
         this.value = value;
         this.type = MemoryValueTypes.DOUBLEWORD;
         this.unsigned = false;
@@ -20,31 +20,36 @@ public class MemoryValue {
         this.unsigned = unsigned;
     }
 
-    public MemoryValue(ConcolicValues.V value, MemoryValueTypes type, boolean unsigned) {
+    public MemoryValue(V value, MemoryValueTypes type, boolean unsigned) {
         this.value = value;
         this.type = type;
         this.unsigned = unsigned;
     }
 
+    public MemoryValue(long value, MemoryValueTypes type, boolean unsigned) {
+        this.value = new V (value, new SymbolicLong(value));
+        this.type = type;
+        this.unsigned = unsigned;
+    }
+
     public Long getConcreteValue() {
-        long realValue = Utils.maskedValue(value.concrete, type);
-
-        if (!unsigned) {
-            realValue = Utils.signedValue(realValue, type);
-        }
-
-        return realValue;
+        return rawToRealValue(value.concrete);
     }
 
     public SymbolicValue getSymbolicValue() {
-        return value.symbolic;
+        SymbolicValue realSymb = value.symbolic;
+
+        if (realSymb instanceof SymbolicLong) {
+            realSymb = new SymbolicLong(rawToRealValue(value.concrete));
+        }
+        return realSymb;
     }
 
     public Long getRawValue() {
         return value.concrete;
     }
 
-    public ConcolicValues.V getConcolicValue() {
+    public V getConcolicValue() {
         return value;
     }
 
@@ -68,7 +73,7 @@ public class MemoryValue {
         this.value.symbolic = symbolicValue;
     }
 
-    public void setConcolicValue(ConcolicValues.V value) {
+    public void setConcolicValue(V value) {
         this.value = value;
     }
 
@@ -98,5 +103,15 @@ public class MemoryValue {
 
     public void setUnsigned(boolean unsigned) {
         this.unsigned = unsigned;
+    }
+
+    private long rawToRealValue(long value) {
+        value = Utils.maskedValue(value, type);
+
+        if (!unsigned) {
+            value = Utils.signedValue(value, type);
+        }
+
+        return value;
     }
 }

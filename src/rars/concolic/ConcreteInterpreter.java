@@ -89,4 +89,60 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
             throw new RuntimeException("Address error: " + e.getMessage());
         }
     }
+
+    @Override
+    protected void sb(Long value, Long offset, Long memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.BYTE, true);
+            memory.storeMemory(bValue, memAddress, offset);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sh(Long value, Long offset, Long memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.HALFWORD, true);
+            memory.storeMemory(bValue, memAddress, offset);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sw(Long value, Long offset, Long memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.WORD, true);
+            memory.storeMemory(bValue, memAddress, offset);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sd(Long value, Long offset, Long memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.DOUBLEWORD, true);
+            memory.storeMemory(bValue, memAddress, offset);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
 }

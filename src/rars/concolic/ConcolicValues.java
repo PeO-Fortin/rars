@@ -13,8 +13,10 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     public V inject(long i) {
             return new V(i, new SymbolicLong(i));
     }
-
     public V access(MemoryValue v) {
+        if(v == null) {
+            return inject(0);
+        }
         return new V(v.getConcreteValue(), v.getSymbolicValue());
     }
 
