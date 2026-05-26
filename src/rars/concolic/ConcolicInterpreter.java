@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-import rars.Settings;
+import rars.riscv.InstructionSet;
 import rars.riscv.hardware.AddressErrorException;
 
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static void main(String[] args) throws Exception {
         Globals.initialize();
-        Globals.getSettings().setBooleanSettingNonPersistent(Settings.Bool.RV64_ENABLED, true);
+        InstructionSet.rv64 = true;
         Globals.instructionSet.populate();
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(args[0]);
