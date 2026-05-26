@@ -37,7 +37,7 @@ jobs:
 
       - name: Run concolic tests
         run: |
-          TEST_DIR="./test/concolic"
+          TEST_DIR="./test/rars/concolic/examples/"
           FAIL=0
 
           for program in "$TEST_DIR"/*.s; do
