@@ -48,7 +48,8 @@ public abstract class GenericInterpreter<V> {
                 instructionsMap.put(ps.getAddress(), ps);
             }
         }catch (AssemblyException e) {
-            System.err.println("Assembly error: " + e.getMessage());
+            System.err.println("Assembly error: " + e.errors());
+            throw e;
         }
     }
 
