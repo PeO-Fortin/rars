@@ -40,5 +40,5 @@ abstract class InterpreterValues<V> {
     public abstract int asInt(V v);
     public abstract long asLong(V v);
     public abstract char asChar(V v);
-    public abstract MemoryValue asMemoryValue(V v);
+    public abstract MemoryValue<V> asMemoryValue(V v);
 }

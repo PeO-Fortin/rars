@@ -1,13 +1,13 @@
 package rars.concolic;
 
-public class MemoryValue extends ConcolicValues {
+import java.util.function.Function;
+
+public class MemoryValue<V> {
     private V value;
     private MemoryValueTypes type;
     private boolean unsigned;
-
-    public MemoryValue(long value) {
-        this.value = new V (value, new SymbolicLong(value));
-    }
+    private Function<V, Long> toConcreteValue;
+    private Function<V, SymbolicValue> toSymbolicValue;
 
     public MemoryValue(V value) {
         this.value = value;
@@ -26,30 +26,19 @@ public class MemoryValue extends ConcolicValues {
         this.unsigned = unsigned;
     }
 
-    public MemoryValue(long value, MemoryValueTypes type, boolean unsigned) {
-        this.value = new V (value, new SymbolicLong(value));
-        this.type = type;
-        this.unsigned = unsigned;
-    }
-
     public Long getConcreteValue() {
-        return rawToRealValue(value.concrete);
+        return rawToRealValue().concrete;
     }
 
-    public SymbolicValue getSymbolicValue() {
-        SymbolicValue realSymb = value.symbolic;
-
-        if (realSymb instanceof SymbolicLong) {
-            realSymb = new SymbolicLong(rawToRealValue(value.concrete));
-        }
-        return realSymb;
+    public SymbolicValue getSymbolicValue() {;
+        return rawToRealValue().symbolic;
     }
 
-    public Long getRawValue() {
-        return value.concrete;
+    public ConcolicValues.V getConcolicValue() {
+        return rawToRealValue();
     }
 
-    public V getConcolicValue() {
+    public V getRawValue() {
         return value;
     }
 
@@ -65,45 +54,14 @@ public class MemoryValue extends ConcolicValues {
         return unsigned;
     }
 
-    public void setConcolicValue(V value) {
-        this.value = value;
-    }
-
-    public void setType (MemoryValueTypes type) {
-        this.type = type;
-    }
-
-    public void setSize (int size) {
-        switch (size) {
-            case 1:
-                this.type = MemoryValueTypes.BYTE;
-                break;
-            case 2:
-                this.type = MemoryValueTypes.HALFWORD;
-                break;
-            case 4:
-                this.type = MemoryValueTypes.WORD;
-                break;
-            case 8:
-                this.type = MemoryValueTypes.DOUBLEWORD;
-                break;
-            default:
-                System.out.println("Error: Invalid value size");
-                break;
-        }
-    }
-
-    public void setUnsigned(boolean unsigned) {
-        this.unsigned = unsigned;
-    }
-
-    private long rawToRealValue(long value) {
-        value = Utils.maskedValue(value, type);
+    private ConcolicValues.V rawToRealValue() {
+        ConcolicValues.V realValue = new ConcolicValues.V(toConcreteValue.apply(value),  toSymbolicValue.apply(value));
+        realValue = Utils.maskedValue(realValue, type);
 
         if (!unsigned) {
-            value = Utils.signedValue(value, type);
+            realValue = Utils.signedValue(realValue, type);
         }
 
-        return value;
+        return realValue;
     }
 }
