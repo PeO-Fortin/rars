@@ -98,8 +98,8 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     @Override
     protected void sh(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
         try {
-            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.HALFWORD, true);
-            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
+            MemoryValue memValue = new MemoryValue(value, MemoryValueTypes.HALFWORD, true);
+            memory.storeMemory(memValue, offset, memAddress);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -143,8 +143,8 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     }
 
     Map<String, Integer> model = new HashMap<>();
-    public void runConcolic(int maxIterations) {
-        int iteration = 0;
+    public void runConcolic(int maxExecutions) {
+        int execution = 1;
         try {
             PrintWriter pw = new PrintWriter(new FileWriter("Results.txt"));
             do {
@@ -152,7 +152,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 lastReadCharacter = 0;
                 lastReadInteger = 0;
                 pw.println("***********************");
-                pw.println("Iteration: " + iteration);
+                pw.println("Execution: " + execution);
                 currentNode = executionTreeRoot;
                 computeNextModel();
                 super.output = "| ";
@@ -164,8 +164,8 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 pw.println("***********************");
                 pw.println();
                 pw.flush();
-                iteration++;
-            } while (iteration < maxIterations);
+                ++execution;
+            } while (execution < maxExecutions);
             pw.close();
         } catch (ExecutionDone e) {
             System.out.println("Execution completed");

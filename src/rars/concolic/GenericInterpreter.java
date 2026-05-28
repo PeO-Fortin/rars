@@ -58,12 +58,15 @@ public abstract class GenericInterpreter<V> {
     public String input = "";
     final int DEFAULT_OFFSET = 4;
     int currentProgramCounter;
+    int instructionCounter;
+    final int MAX_INSTRUCTIONS = 500;
     V[] registers;
     boolean exit = false;
     void run(int programCounter) {
         currentProgramCounter = programCounter;
+        instructionCounter = 0;
         ProgramStatement ps = instructionsMap.get(programCounter);
-        while (ps != null && !exit) {
+        while (ps != null && !exit && instructionCounter < MAX_INSTRUCTIONS) {
             String instructionName = ps.getInstruction().getName();
             int[] operands = ps.getOperands();
 
@@ -118,6 +121,10 @@ public abstract class GenericInterpreter<V> {
                 case "bne": ifneq(registers[operands[0]], registers[operands[1]], operands[2]); break;
             }
             ps = instructionsMap.get(currentProgramCounter);
+            ++instructionCounter;
+        }
+        if(instructionCounter == MAX_INSTRUCTIONS){
+            output += "Maximum number of instructions reached |";
         }
     }
 
@@ -176,6 +183,10 @@ public abstract class GenericInterpreter<V> {
     protected abstract void sh(V value, V offset, V memAddress);
     protected abstract void sw(V value, V offset, V memAddress);
     protected abstract void sd(V value, V offset, V memAddress);
+    protected abstract void lb(V value, V offset, V memAddress);
+    protected abstract void lh(V value, V offset, V memAddress);
+    protected abstract void lw(V value, V offset, V memAddress);
+    protected abstract void ld(V value, V offset, V memAddress);
 
     void lb(V offset, V memAddress, int dst) {
         try {

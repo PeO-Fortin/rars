@@ -3,7 +3,7 @@ package rars.concolic;
 import rars.riscv.hardware.MemoryConfigurations;
 import rars.riscv.hardware.AddressErrorException;
 
-public class Memory<V> {
+public class Memory {
     public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
     public static final int DEFAULT_GLOBAL_POINTER = MemoryConfigurations.getDefaultGlobalPointer();
     public static final int DATA_SIZE = 4194304; //4MB
@@ -14,6 +14,8 @@ public class Memory<V> {
     public static final int HEAP_BASE_ADDRESS = MemoryConfigurations.getDefaultHeapBaseAddress();
     public static final long STACK_BASE_ADDRESS = MemoryConfigurations.getDefaultStackBaseAddress();
     public static final long STACK_LIMIT_ADDRESS = STACK_BASE_ADDRESS - STACK_SIZE;
+
+    public final ConcolicValues.V DEFAULT_VALUE = new ConcolicValues.V(0, new SymbolicLong(0));
 
     private int heapAddress;
 
@@ -33,6 +35,8 @@ public class Memory<V> {
         rars.riscv.hardware.Memory rarsMemory = rars.riscv.hardware.Memory.getInstance();
         int base = MemoryConfigurations.getDefaultDataBaseAddress();
         MemoryValue memValue = new MemoryValue(MemoryValueTypes.WORD, true);
+        ConcolicValues.V address;
+
         for(int i = 0; i < dataBlockTable.length; i += 4){
             try {
                 Integer value = rarsMemory.getRawWordOrNull(base + i);
@@ -40,7 +44,8 @@ public class Memory<V> {
                     break;
                 }
                 memValue.setValue(new ConcolicValues.V(value.longValue(), new SymbolicLong(value.longValue())));
-                storeMemory(memValue, (base + i), 0);
+                address = new ConcolicValues.V(base + i, new SymbolicLong(base + i));
+                storeMemory(memValue, address, DEFAULT_VALUE);
             } catch (AddressErrorException e) {
                 System.out.println("Data initialization failed: ");
             }
@@ -71,13 +76,17 @@ public class Memory<V> {
      * @param offset    the offset to apply to the address
      * @return the value at this address
      */
-    public void accessMemory(MemoryValue value, long address, long offset) throws AddressErrorException {
-        if (address % value.getSize() != 0) {
-            throw new AddressErrorException("Load address not aligned", 4, (int)address);
+    public void accessMemory(MemoryValue value, ConcolicValues.V offset, ConcolicValues.V address) throws AddressErrorException {
+        if (!(address.symbolic instanceof  SymbolicLong) || !(offset.symbolic instanceof  SymbolicLong)) {
+            throw new AddressErrorException("Address ", 4, -1);
         }
 
-        int memoryBlockAddress = getMemoryIndex(address, offset);
-        ConcolicValues.V[] memoryBlockTable = getMemoryBlock(address, offset);
+        if (address.concrete % value.getSize() != 0) {
+            throw new AddressErrorException("Load address not aligned", 4, address.concrete.intValue());
+        }
+
+        int memoryBlockAddress = getMemoryIndex(address.concrete, offset.concrete);
+        ConcolicValues.V[] memoryBlockTable = getMemoryBlock(address.concrete, offset.concrete);
         ConcolicValues.V concValue = new ConcolicValues.V(0, new SymbolicLong(0));
 
         for (int i = 0; i < value.getSize(); i++) {
@@ -96,13 +105,17 @@ public class Memory<V> {
      * @param address   the address where to store the value
      * @param offset    the offset to apply to the address
      */
-    public void storeMemory(MemoryValue value, long address, long offset) throws AddressErrorException {
-        if (address % value.getSize() != 0) {
-            throw new AddressErrorException("Store address not aligned", 4, (int) address);
+    public void storeMemory(MemoryValue value, ConcolicValues.V offset, ConcolicValues.V address) throws AddressErrorException {
+        if (!(address.symbolic instanceof  SymbolicLong) || !(offset.symbolic instanceof  SymbolicLong)) {
+            throw new AddressErrorException("Address ", 4, -1);
         }
 
-        int memoryBlockAddress = getMemoryIndex(address, offset);
-        ConcolicValues.V[] memoryBlockTable = getMemoryBlock(address, offset);
+        if (address.concrete % value.getSize() != 0) {
+            throw new AddressErrorException("Store address not aligned", 4, address.concrete.intValue());
+        }
+
+        int memoryBlockAddress = getMemoryIndex(address.concrete, offset.concrete);
+        ConcolicValues.V[] memoryBlockTable = getMemoryBlock(address.concrete, offset.concrete);
 
         for (int i = 0; i < value.getSize(); i++) {
             ConcolicValues.V memVal = value.sra(value.getConcolicValue(), value.inject(i * 8));
