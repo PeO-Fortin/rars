@@ -3,7 +3,7 @@ package rars.concolic;
 import rars.riscv.hardware.MemoryConfigurations;
 import rars.riscv.hardware.AddressErrorException;
 
-public class Memory {
+public class Memory<V> {
     public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
     public static final int DEFAULT_GLOBAL_POINTER = MemoryConfigurations.getDefaultGlobalPointer();
     public static final int DATA_SIZE = 4194304; //4MB
@@ -17,31 +17,30 @@ public class Memory {
 
     private int heapAddress;
 
-    private MemoryValue[] concreteDataBlockTable;
-    private MemoryValue[] concreteStackBlockTable;
+    private ConcolicValues.V[] dataBlockTable;
+    private ConcolicValues.V[] stackBlockTable;
 
     public Memory() { initialize(); }
 
     private void initialize() {
         heapAddress = HEAP_BASE_ADDRESS;
-        concreteDataBlockTable = new MemoryValue[DATA_SIZE];
-        concreteStackBlockTable = new MemoryValue[STACK_SIZE];
+        dataBlockTable = new ConcolicValues.V[DATA_SIZE];
+        stackBlockTable = new ConcolicValues.V[STACK_SIZE];
         intializeData();
     }
 
     private void intializeData() {
         rars.riscv.hardware.Memory rarsMemory = rars.riscv.hardware.Memory.getInstance();
         int base = MemoryConfigurations.getDefaultDataBaseAddress();
-        MemoryValue value = new MemoryValue(MemoryValueTypes.WORD, true);
-        for(int i = 0; i < concreteDataBlockTable.length; i += 4){
+        MemoryValue memValue = new MemoryValue(MemoryValueTypes.WORD, true);
+        for(int i = 0; i < dataBlockTable.length; i += 4){
             try {
-                Integer concrete = rarsMemory.getRawWordOrNull(base + i);
-                if (concrete == null) {
+                Integer value = rarsMemory.getRawWordOrNull(base + i);
+                if (value == null) {
                     break;
                 }
-                ConcolicValues.V concValue = new ConcolicValues.V (concrete, new SymbolicLong(concrete));
-                value.setConcolicValue(concValue);
-                storeMemory(value, (base + i), 0);
+                memValue.setValue(new ConcolicValues.V(value.longValue(), new SymbolicLong(value.longValue())));
+                storeMemory(memValue, (base + i), 0);
             } catch (AddressErrorException e) {
                 System.out.println("Data initialization failed: ");
             }
@@ -77,18 +76,16 @@ public class Memory {
             throw new AddressErrorException("Load address not aligned", 4, (int)address);
         }
 
-        ConcolicValues.V concValue = value.inject(0);
-
         int memoryBlockAddress = getMemoryIndex(address, offset);
-        MemoryValue[] memoryBlockTable = getMemoryBlock(address, offset);
+        ConcolicValues.V[] memoryBlockTable = getMemoryBlock(address, offset);
+        ConcolicValues.V concValue = new ConcolicValues.V(0, new SymbolicLong(0));
 
         for (int i = 0; i < value.getSize(); i++) {
-            ConcolicValues.V tempVal = value.access(memoryBlockTable[memoryBlockAddress + i]);
+            ConcolicValues.V tempVal = memoryBlockTable[memoryBlockAddress + i];
             tempVal = value.sll(tempVal, value.inject(i * 8));
-
             concValue = value.or(concValue, tempVal);
         }
-        value.setConcolicValue(concValue);
+        value.setValue(concValue);
     }
 
     /**
@@ -101,17 +98,16 @@ public class Memory {
      */
     public void storeMemory(MemoryValue value, long address, long offset) throws AddressErrorException {
         if (address % value.getSize() != 0) {
-            throw new AddressErrorException("Store address not aligned", 4, (int)address);
+            throw new AddressErrorException("Store address not aligned", 4, (int) address);
         }
 
         int memoryBlockAddress = getMemoryIndex(address, offset);
-        MemoryValue[] memoryBlockTable = getMemoryBlock(address, offset);
+        ConcolicValues.V[] memoryBlockTable = getMemoryBlock(address, offset);
 
         for (int i = 0; i < value.getSize(); i++) {
-            ConcolicValues.V tempVal = value.sra(value.getConcolicValue(), value.inject(8));
-            tempVal  = value.and(tempVal, value.inject(0xFF));
-            memoryBlockTable[memoryBlockAddress + i] =
-                    new MemoryValue(tempVal, MemoryValueTypes.BYTE, true);
+            ConcolicValues.V memVal = value.sra(value.getConcolicValue(), value.inject(i * 8));
+            memVal = value.and(memVal, value.inject(0xFF));
+            memoryBlockTable[memoryBlockAddress + i] = memVal;
         }
     }
 
@@ -127,13 +123,13 @@ public class Memory {
         }
     }
 
-    private MemoryValue[] getMemoryBlock(long address, long offset) {
+    private ConcolicValues.V[] getMemoryBlock(long address, long offset) {
         long realAddress = address + offset;
 
         if (realAddress >= DATA_BASE_ADDRESS && realAddress <= DATA_LIMIT_ADDRESS) {
-            return concreteDataBlockTable;
+            return dataBlockTable;
         } else if (realAddress <= STACK_BASE_ADDRESS && realAddress >= STACK_LIMIT_ADDRESS) {
-            return concreteStackBlockTable;
+            return stackBlockTable;
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }

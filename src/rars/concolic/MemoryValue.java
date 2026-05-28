@@ -1,16 +1,18 @@
 package rars.concolic;
 
-import java.util.function.Function;
-
-public class MemoryValue<V> {
+public class MemoryValue extends ConcolicValues {
     private V value;
     private MemoryValueTypes type;
     private boolean unsigned;
-    private Function<V, Long> toConcreteValue;
-    private Function<V, SymbolicValue> toSymbolicValue;
 
-    public MemoryValue(V value) {
+    public MemoryValue(ConcolicValues.V value) {
         this.value = value;
+        this.type = MemoryValueTypes.DOUBLEWORD;
+        this.unsigned = false;
+    }
+
+    public MemoryValue(long value) {
+        this.value = new V(value, new SymbolicLong(value));
         this.type = MemoryValueTypes.DOUBLEWORD;
         this.unsigned = false;
     }
@@ -22,6 +24,12 @@ public class MemoryValue<V> {
 
     public MemoryValue(V value, MemoryValueTypes type, boolean unsigned) {
         this.value = value;
+        this.type = type;
+        this.unsigned = unsigned;
+    }
+
+    public MemoryValue(long value, MemoryValueTypes type, boolean unsigned) {
+        this.value = new V(value, new SymbolicLong(value));
         this.type = type;
         this.unsigned = unsigned;
     }
@@ -54,8 +62,12 @@ public class MemoryValue<V> {
         return unsigned;
     }
 
+    public void setValue(V value) {
+        this.value = value;
+    }
+
     private ConcolicValues.V rawToRealValue() {
-        ConcolicValues.V realValue = new ConcolicValues.V(toConcreteValue.apply(value),  toSymbolicValue.apply(value));
+        ConcolicValues.V realValue = new ConcolicValues.V(value.concrete, value.symbolic);
         realValue = Utils.maskedValue(realValue, type);
 
         if (!unsigned) {
