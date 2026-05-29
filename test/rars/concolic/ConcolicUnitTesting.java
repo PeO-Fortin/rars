@@ -1,5 +1,7 @@
 package rars.concolic;
 
+import rars.riscv.hardware.AddressErrorException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -10,11 +12,11 @@ import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ConcreteMemoryUnitTesting {
+public class ConcolicUnitTesting {
 
     Memory memory;
     private final PrintStream standardOut = System.out;
-    private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream()
+    private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
 
 //******************************************************
 //   SETUP
@@ -201,7 +203,8 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreMemoryDataByte() throws Exception {
         MemoryValue value = new MemoryValue(0xABL, MemoryValueTypes.BYTE, true);
         long address = 0x10010008L;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         Field field = Memory.class.getDeclaredField("dataBlockTable");
         field.setAccessible(true);
@@ -215,7 +218,8 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreMemoryHalfword() throws Exception {
         MemoryValue value = new MemoryValue(0xABCDL, MemoryValueTypes.HALFWORD, true);
         long address = 0x10010008L;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         Field field = Memory.class.getDeclaredField("dataBlockTable");
         field.setAccessible(true);
@@ -230,7 +234,8 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreMemoryWord() throws Exception {
         MemoryValue value = new MemoryValue(0x89ABCDEFL, MemoryValueTypes.WORD, true);
         long address = 0x10010008L;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         Field field = Memory.class.getDeclaredField("dataBlockTable");
         field.setAccessible(true);
@@ -247,7 +252,8 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreMemoryDoubleword() throws Exception {
         MemoryValue value = new MemoryValue(0x0123456789ABCDEFL, MemoryValueTypes.DOUBLEWORD, true);
         long address = 0x10010008L;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         Field field = Memory.class.getDeclaredField("dataBlockTable");
         field.setAccessible(true);
@@ -266,7 +272,8 @@ public class ConcreteMemoryUnitTesting {
         MemoryValue value = new MemoryValue(0x89ABCDEFL, MemoryValueTypes.WORD, true);
         long address = 0x10010008L;
         long offset = 4L;
-        memory.storeMemory(value, address, offset);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(offset));
 
         Field field = Memory.class.getDeclaredField("dataBlockTable");
         field.setAccessible(true);
@@ -284,7 +291,8 @@ public class ConcreteMemoryUnitTesting {
         MemoryValue value = new MemoryValue(0x89ABCDEFL, MemoryValueTypes.WORD, true);
         long address = 0x10010010L;
         long offset = -8L;
-        memory.storeMemory(value, address, offset);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(offset));
 
         Field field = Memory.class.getDeclaredField("dataBlockTable");
         field.setAccessible(true);
@@ -301,7 +309,8 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreStack() throws Exception {
         MemoryValue value = new MemoryValue(0x89ABCDEFL, MemoryValueTypes.WORD, true);
         long address = 0x7FFFDFFC;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         Field field = Memory.class.getDeclaredField("stackBlockTable");
         field.setAccessible(true);
@@ -320,10 +329,11 @@ public class ConcreteMemoryUnitTesting {
     public void testAccessMemoryByte() throws Exception {
         MemoryValue stored = new MemoryValue(0xABL, MemoryValueTypes.BYTE, true);
         long address = 0x10010008L;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.BYTE, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(stored.getConcreteValue(), read.getConcreteValue());
     }
@@ -332,10 +342,11 @@ public class ConcreteMemoryUnitTesting {
     public void testAccessMemoryHalfword() throws Exception {
         MemoryValue stored = new MemoryValue(0xABCDL, MemoryValueTypes.HALFWORD, true);
         long address = 0x10010008L;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.HALFWORD, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(stored.getConcreteValue(), read.getConcreteValue());
     }
@@ -344,10 +355,11 @@ public class ConcreteMemoryUnitTesting {
     public void testAccessMemoryWord() throws Exception {
         MemoryValue stored = new MemoryValue(0x89ABCDEFL, MemoryValueTypes.WORD, true);
         long address = 0x10010008L;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(stored.getConcreteValue(), read.getConcreteValue());
     }
@@ -356,10 +368,11 @@ public class ConcreteMemoryUnitTesting {
     public void testAccessMemoryDoubleword() throws Exception {
         MemoryValue stored = new MemoryValue(0x0123456789ABCDEFL, MemoryValueTypes.DOUBLEWORD, true);
         long address = 0x10010008L;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.DOUBLEWORD, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(stored.getConcreteValue(), read.getConcreteValue());
     }
@@ -368,10 +381,11 @@ public class ConcreteMemoryUnitTesting {
     public void testAccessMemoryStack() throws Exception {
         MemoryValue stored = new MemoryValue(0x89ABCDEFL, MemoryValueTypes.WORD, true);
         long address = 0x7FFFDFFC;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(stored.getConcreteValue(), read.getConcreteValue());
     }
@@ -385,10 +399,11 @@ public class ConcreteMemoryUnitTesting {
         long address = 0x10010008L;
         long offset = 4L;
 
-        memory.storeMemory(stored, address, offset);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(offset));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, address, offset);
+        memory.accessMemory(read, op.inject(address), op.inject(offset));
 
         assertEquals(stored.getConcreteValue(), read.getConcreteValue());
     }
@@ -400,10 +415,11 @@ public class ConcreteMemoryUnitTesting {
         long address = 0x10010010L;
         long offset = -8L;
 
-        memory.storeMemory(stored, address, offset);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(offset));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, address, offset);
+        memory.accessMemory(read, op.inject(address), op.inject(offset));
 
         assertEquals(stored.getConcreteValue(), read.getConcreteValue());
     }
@@ -414,7 +430,8 @@ public class ConcreteMemoryUnitTesting {
     @Test
     public void testDefaultMemoryIsZero() throws Exception {
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, Memory.DATA_BASE_ADDRESS + 1024, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.accessMemory(read, op.inject(Memory.DATA_BASE_ADDRESS + 1024), op.inject(0));
         assertEquals(0L, read.getConcreteValue());
     }
 
@@ -425,10 +442,11 @@ public class ConcreteMemoryUnitTesting {
     public void testAccessMemorySignedByte() throws Exception {
         MemoryValue stored = new MemoryValue(0xFFL, MemoryValueTypes.BYTE, false);
         long address = 0x10010008L;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.BYTE, false);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(-1L, read.getConcreteValue());
     }
@@ -437,10 +455,11 @@ public class ConcreteMemoryUnitTesting {
     public void testAccessMemorySignedHalfword() throws Exception {
         MemoryValue stored = new MemoryValue(0xFFFFL, MemoryValueTypes.HALFWORD, false);
         long address = 0x10010008L;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.HALFWORD, false);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(-1L, read.getConcreteValue());
     }
@@ -449,10 +468,11 @@ public class ConcreteMemoryUnitTesting {
     public void testAccessMemorySignedWord() throws Exception {
         MemoryValue stored = new MemoryValue(0xFFFFFFFFL, MemoryValueTypes.WORD, false);
         long address = 0x10010008L;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, false);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(-1L, read.getConcreteValue());
     }
@@ -464,10 +484,11 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreAndAccessStack() throws Exception {
         MemoryValue stored = new MemoryValue(0x89ABCDEFL, MemoryValueTypes.WORD, true);
         long address = 0x7FFFDFFC;
-        memory.storeMemory(stored, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(stored, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(stored.getConcreteValue(), read.getConcreteValue());
     }
@@ -476,7 +497,8 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreStackLittleEndian() throws Exception {
         MemoryValue value = new MemoryValue(0x89ABCDEFL, MemoryValueTypes.WORD, true);
         long address = 0x7FFFDFFC;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         Field field = Memory.class.getDeclaredField("stackBlockTable");
         field.setAccessible(true);
@@ -496,10 +518,11 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreAndAccessDataLowerBound() throws Exception {
         MemoryValue value = new MemoryValue(0x42L, MemoryValueTypes.WORD, true);
         long address = Memory.DATA_BASE_ADDRESS;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(value.getConcreteValue(), read.getConcreteValue());
     }
@@ -508,10 +531,11 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreAndAccessStackUpperBound() throws Exception {
         MemoryValue value = new MemoryValue(0x42L, MemoryValueTypes.WORD, true);
         long address = Memory.STACK_BASE_ADDRESS;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(value.getConcreteValue(), read.getConcreteValue());
     }
@@ -520,10 +544,11 @@ public class ConcreteMemoryUnitTesting {
     public void testStoreAndAccessStackLowerBound() throws Exception {
         MemoryValue value = new MemoryValue(0x42L, MemoryValueTypes.WORD, true);
         long address = Memory.STACK_LIMIT_ADDRESS;
-        memory.storeMemory(value, address, 0);
+        ConcolicValues op = new ConcolicValues();
+        memory.storeMemory(value, op.inject(address), op.inject(0));
 
         MemoryValue read = new MemoryValue(MemoryValueTypes.WORD, true);
-        memory.accessMemory(read, address, 0);
+        memory.accessMemory(read, op.inject(address), op.inject(0));
 
         assertEquals(value.getConcreteValue(), read.getConcreteValue());
     }
@@ -534,33 +559,37 @@ public class ConcreteMemoryUnitTesting {
     @Test
     public void testStoreAddressNotAligned() {
         MemoryValue value = new MemoryValue(0x42L, MemoryValueTypes.WORD, true);
-        long address = 0x10010001L; // non aligné sur 4 octets
+        long address = 0x10010001L; // not aligned on 4 bytes
+        ConcolicValues op = new ConcolicValues();
         assertThrows(AddressErrorException.class, () ->
-                memory.storeMemory(value, address, 0));
+            memory.storeMemory(value, op.inject(address), op.inject(0)));
     }
 
     @Test
     public void testAccessAddressNotAligned() {
         MemoryValue value = new MemoryValue(MemoryValueTypes.WORD, true);
-        long address = 0x10010001L; // non aligné sur 4 octets
+        long address = 0x10010001L; // not aligned on 4 bytes
+        ConcolicValues op = new ConcolicValues();
         assertThrows(AddressErrorException.class, () ->
-                memory.accessMemory(value, address, 0));
+                memory.accessMemory(value, op.inject(address), op.inject(0)));
     }
 
     @Test
     public void testStoreOutsideSegments() {
         MemoryValue value = new MemoryValue(0x42L, MemoryValueTypes.WORD, true);
-        long address = 0x00400000L; // segment .text — invalide
+        long address = 0x00400000L; // segment .text — invalid
+        ConcolicValues op = new ConcolicValues();
         assertThrows(ArrayIndexOutOfBoundsException.class, () ->
-                memory.storeMemory(value, address, 0));
+                memory.storeMemory(value, op.inject(address), op.inject(0)));
     }
 
     @Test
     public void testAccessOutsideSegments() {
         MemoryValue value = new MemoryValue(MemoryValueTypes.WORD, true);
         long address = 0x00400000L; // segment .text
+        ConcolicValues op = new ConcolicValues();
         assertThrows(ArrayIndexOutOfBoundsException.class, () ->
-                memory.accessMemory(value, address, 0));
+                memory.accessMemory(value, op.inject(address), op.inject(0)));
     }
 
     @Test

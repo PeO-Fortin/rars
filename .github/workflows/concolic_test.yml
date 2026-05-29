@@ -53,6 +53,31 @@ jobs:
         run: |
           chmod +x run.sh build.sh
 
+      - name: Download JUnit
+        run: |
+          curl -L -o junit.jar \
+            https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.12.2/junit-platform-console-standalone-1.12.2.jar
+
+      - name: Run JUnit unit tests
+        run: |
+          mkdir -p build
+
+          find src -name "*.java" | \
+            xargs javac --release 17 \
+            -d build \
+            -cp .:/usr/share/java/com.microsoft.z3.jar:lib/jsoftfloat.jar:junit.jar
+
+          find test -name "*.java" | \
+            xargs javac --release 17 \
+            -d build \
+            -cp build:/usr/share/java/com.microsoft.z3.jar:lib/jsoftfloat.jar:junit.jar
+
+          find src -type f -not -name "*.java" -exec cp --parents {} build \;
+
+          java -jar junit.jar \
+            --class-path build \
+            --select-class rars.concolic.ConcolicUnitTesting
+
       - name: Run concolic tests
         run: |
           TEST_DIR="./test/rars/concolic/examples"
