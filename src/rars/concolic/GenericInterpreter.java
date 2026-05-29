@@ -183,108 +183,13 @@ public abstract class GenericInterpreter<V> {
     protected abstract void sh(V value, V offset, V memAddress);
     protected abstract void sw(V value, V offset, V memAddress);
     protected abstract void sd(V value, V offset, V memAddress);
-    protected abstract void lb(V value, V offset, V memAddress);
-    protected abstract void lh(V value, V offset, V memAddress);
-    protected abstract void lw(V value, V offset, V memAddress);
-    protected abstract void ld(V value, V offset, V memAddress);
-
-    void lb(V offset, V memAddress, int dst) {
-        try {
-            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, false);
-            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getConcreteValue());
-        } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
-            exit = true;
-        } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
-            exit = true;
-        }
-    }
-
-    void lbu(V offset, V memAddress, int dst) {
-        try {
-            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, true);
-            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getConcreteValue());
-        } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
-            exit = true;
-        } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
-            exit = true;
-        }
-    }
-
-    void lh(V offset, V memAddress, int dst) {
-        try {
-            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, false);
-            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getConcreteValue());
-        } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
-            exit = true;
-        } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
-            exit = true;
-        }
-    }
-
-    void lhu(V offset, V memAddress, int dst) {
-        try {
-            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, true);
-            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getConcreteValue());
-        } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
-            exit = true;
-        } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
-            exit = true;
-        }
-    }
-
-    void lw(V offset, V memAddress, int dst) {
-        try {
-            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, false);
-            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getConcreteValue());
-        } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
-            exit = true;
-        } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
-            exit = true;
-        }
-    }
-
-    void lwu(V offset, V memAddress, int dst) {
-        try {
-            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, true);
-            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getConcreteValue());
-        } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
-            exit = true;
-        } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
-            exit = true;
-        }
-    }
-
-    void ld(V offset, V memAddress, int dst) {
-        try {
-            MemoryValue bValue = new MemoryValue(MemoryValueTypes.DOUBLEWORD, false);
-            memory.accessMemory(bValue, values.asLong(memAddress), values.asLong(offset));
-            registers[dst] = values.inject(bValue.getConcreteValue());
-        } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
-            exit = true;
-        } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
-            exit = true;
-        }
-    }
+    protected abstract void lb(V offset, V memAddress, int dst);
+    protected abstract void lbu(V offset, V memAddress, int dst);
+    protected abstract void lh(V offset, V memAddress, int dst);
+    protected abstract void lhu(V offset, V memAddress, int dst);
+    protected abstract void lw(V offset, V memAddress, int dst);
+    protected abstract void lwu(V offset, V memAddress, int dst);
+    protected abstract void ld(V offset, V memAddress, int dst);
 
     void sll(V left, V right, int dst) { registers[dst] = values.sll(left, right); }
 
@@ -361,12 +266,13 @@ public abstract class GenericInterpreter<V> {
         String s = "";
         ByteArrayOutputStream encodedChars = new ByteArrayOutputStream();
         MemoryValue memoryValue = new MemoryValue(MemoryValueTypes.BYTE, true);
+        ConcolicValues op = new ConcolicValues();
         byte encodedChar;
         int offset = 0;
 
         try {
             do {
-                memory.accessMemory(memoryValue, bufAddress, offset);
+                memory.accessMemory(memoryValue, op.inject(bufAddress), op.inject(offset));
                 encodedChar = memoryValue.getConcreteValue().byteValue();
                 encodedChars.write(encodedChar);
                 ++offset;

@@ -72,16 +72,17 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
                 char c;
                 int i;
                 MemoryValue value;
+                ConcolicValues op = new ConcolicValues();
                 for (i = 0; i < length - 1; ++i) {
                     c = (char) System.in.read();
                     if (c == -1 || c == '\n') {
                         break;
                     }
                     value = new MemoryValue(c, MemoryValueTypes.BYTE, true);
-                    this.memory.storeMemory(value, bufAddress, i);
+                    this.memory.storeMemory(value, op.inject(bufAddress), op.inject(i));
                 }
                 value = new MemoryValue(0, MemoryValueTypes.BYTE, true);
-                this.memory.storeMemory(value, bufAddress, i);
+                this.memory.storeMemory(value, op.inject(bufAddress), op.inject(i));
             }
         } catch (IOException e) {
             throw new RuntimeException("cannot readChar: " + e);
@@ -94,7 +95,8 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
     protected void sb(Long value, Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.BYTE, true);
-            memory.storeMemory(bValue, memAddress, offset);
+            ConcolicValues op = new ConcolicValues();
+            memory.storeMemory(bValue, op.inject(memAddress), op.inject(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -108,7 +110,8 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
     protected void sh(Long value, Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.HALFWORD, true);
-            memory.storeMemory(bValue, memAddress, offset);
+            ConcolicValues op = new ConcolicValues();
+            memory.storeMemory(bValue, op.inject(memAddress), op.inject(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -122,7 +125,8 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
     protected void sw(Long value, Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.WORD, true);
-            memory.storeMemory(bValue, memAddress, offset);
+            ConcolicValues op = new ConcolicValues();
+            memory.storeMemory(bValue, op.inject(memAddress), op.inject(offset));
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -136,7 +140,120 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
     protected void sd(Long value, Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.DOUBLEWORD, true);
-            memory.storeMemory(bValue, memAddress, offset);
+            ConcolicValues op = new ConcolicValues();
+            memory.storeMemory(bValue, op.inject(memAddress), op.inject(offset));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lb(Long offset, Long memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, false);
+            ConcolicValues op = new ConcolicValues();
+            memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
+            registers[dst] = bValue.getConcreteValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lbu(Long offset, Long memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, true);
+            ConcolicValues op = new ConcolicValues();
+            memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
+            registers[dst] = bValue.getConcreteValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lh(Long offset, Long memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, false);
+            ConcolicValues op = new ConcolicValues();
+            memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
+            registers[dst] = bValue.getConcreteValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lhu(Long offset, Long memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, true);
+            ConcolicValues op = new ConcolicValues();
+            memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
+            registers[dst] = bValue.getConcreteValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lw(Long offset, Long memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, false);
+            ConcolicValues op = new ConcolicValues();
+            memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
+            registers[dst] = bValue.getConcreteValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lwu(Long offset, Long memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, true);
+            ConcolicValues op = new ConcolicValues();
+            memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
+            registers[dst] = bValue.getConcreteValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void ld(Long offset, Long memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.DOUBLEWORD, false);
+            ConcolicValues op = new ConcolicValues();
+            memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
+            registers[dst] = bValue.getConcreteValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;

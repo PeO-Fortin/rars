@@ -85,7 +85,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected void sb(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.BYTE, true);
-            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
+            memory.storeMemory(bValue, memAddress, offset);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -113,7 +113,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected void sw(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.WORD, true);
-            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
+            memory.storeMemory(bValue, memAddress, offset);
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
@@ -127,7 +127,112 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected void sd(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.DOUBLEWORD, true);
-            memory.storeMemory(bValue, values.asLong(memAddress), values.asLong(offset));
+            memory.storeMemory(bValue, memAddress, offset);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lb(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, false);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lbu(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, true);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lh(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, false);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lhu(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, true);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lw(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, false);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lwu(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, true);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void ld(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.DOUBLEWORD, false);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
             exit = true;
