@@ -78,7 +78,7 @@ public class Memory {
      */
     public void accessMemory(MemoryValue value, ConcolicValues.V offset, ConcolicValues.V address) throws AddressErrorException {
         if (!(address.symbolic instanceof  SymbolicLong) || !(offset.symbolic instanceof  SymbolicLong)) {
-            throw new AddressErrorException("Address ", 4, -1);
+            throw new AddressErrorException("Load address is not a constant", 4, -1);
         }
 
         if (address.concrete % value.getSize() != 0) {
@@ -91,7 +91,7 @@ public class Memory {
 
         for (int i = 0; i < value.getSize(); i++) {
             ConcolicValues.V tempVal = memoryBlockTable[memoryBlockAddress + i];
-            tempVal = value.sll(tempVal, value.inject(i * 8));
+            tempVal = tempVal == null ? DEFAULT_VALUE : value.sll(tempVal, value.inject(i * 8));
             concValue = value.or(concValue, tempVal);
         }
         value.setValue(concValue);
@@ -107,7 +107,7 @@ public class Memory {
      */
     public void storeMemory(MemoryValue value, ConcolicValues.V offset, ConcolicValues.V address) throws AddressErrorException {
         if (!(address.symbolic instanceof  SymbolicLong) || !(offset.symbolic instanceof  SymbolicLong)) {
-            throw new AddressErrorException("Address ", 4, -1);
+            throw new AddressErrorException("Store address is not a constant", 4, -1);
         }
 
         if (address.concrete % value.getSize() != 0) {
@@ -130,7 +130,7 @@ public class Memory {
         if (realAddress >= DATA_BASE_ADDRESS && realAddress <= DATA_LIMIT_ADDRESS) {
             return (int)(realAddress - DATA_BASE_ADDRESS);
         } else if (realAddress <= STACK_BASE_ADDRESS && realAddress >= STACK_LIMIT_ADDRESS) {
-            return (int)(STACK_BASE_ADDRESS - realAddress);
+            return (int)(realAddress - STACK_LIMIT_ADDRESS);
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }

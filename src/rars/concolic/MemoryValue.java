@@ -35,10 +35,14 @@ public class MemoryValue extends ConcolicValues {
     }
 
     public Long getConcreteValue() {
+        if (value == null) return null;
+
         return rawToRealValue().concrete;
     }
 
     public SymbolicValue getSymbolicValue() {;
+        if (value == null) return null;
+
         return rawToRealValue().symbolic;
     }
 
