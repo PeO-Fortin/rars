@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
+import rars.ProgramStatement;
 import rars.riscv.InstructionSet;
 import rars.riscv.hardware.AddressErrorException;
 
@@ -27,10 +28,14 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public ExecutionTreeNode executionTreeRoot = new ExecutionTreeNode(0);
     public ExecutionTreeNode currentNode = executionTreeRoot;
     int nextId = 0;
+    Map<Integer, Integer> distanceToExit;
 
     @Override
     protected void if_(ConcolicValues.V cond, int condOffset) {
         currentNode.condition = cond.symbolic;
+        if (distanceToExit != null) {
+            currentNode.distanceToExit = distanceToExit.getOrDefault(currentProgramCounter, Integer.MAX_VALUE);
+        }
         if (!currentNode.hasChildren()) {
             currentNode.trueBranch = new ExecutionTreeNode(++nextId);
             currentNode.trueBranch.parent = currentNode;
@@ -249,6 +254,12 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     Map<String, Integer> model = new HashMap<>();
     public void runConcolic(int maxExecutions) {
+        this.distanceToExit = calculateDistanceToExit();
+        if (this.distanceToExit != null) {
+            executionTreeRoot.distanceToExit = this.distanceToExit.get(
+                    machineList.get(0).getAddress()
+            );
+        }
         int execution = 1;
         try {
             PrintWriter pw = new PrintWriter(new FileWriter("Results.txt"));
@@ -278,6 +289,36 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             System.out.println("IO Error");
         }
     }
+
+    Map<Integer, Integer> calculateDistanceToExit() {
+        Map<Integer, Integer> distances = new HashMap<>();
+        Queue<Integer> worklist = new LinkedList<>();
+
+        for (ProgramStatement ps : machineList) {
+            int[] operands = ps.getOperands();
+            // li a7, 10 -> prepare an ecall to exit
+            if (ps.getInstruction().getName().equals("addi") &&
+                    operands[0] == 17 && operands[1] == 0 && operands[2] == 10) {
+                distances.put(ps.getAddress(), 0);
+                worklist.add(ps.getAddress());
+            }
+        }
+
+        if (worklist.isEmpty()) return null;
+
+        while (!worklist.isEmpty()) {
+            int address = worklist.remove();
+            int currentDistance = distances.get(address);
+            int predecessor = address - DEFAULT_OFFSET;
+            if (instructionsMap.containsKey(predecessor) && !distances.containsKey(predecessor)) {
+                distances.put(predecessor, currentDistance + 1);
+                worklist.add(predecessor);
+            }
+        }
+
+        return distances;
+    }
+
 
     ConstraintSolver solver = new ConstraintSolver();
     public void computeNextModel() {
@@ -312,6 +353,7 @@ class ExecutionTreeNode {
     public boolean unsat = false;
     public Collection<SymbolicValue> extraConstraints = new HashSet<>();
     public boolean explored = false;
+    public Integer distanceToExit;
     public int id;
     public ExecutionTreeNode(int id) {
         this.id = id;
@@ -357,8 +399,44 @@ class ExecutionTreeNode {
         return null;
     }
 
+    public ExecutionTreeNode nextUnexploredExit() {
+        List<ExecutionTreeNode> candidates = new ArrayList<>();
+        Queue<ExecutionTreeNode> worklist = new LinkedList<>();
+        ExecutionTreeNode best = null;
+        worklist.add(this);
+        while (!worklist.isEmpty()) {
+            ExecutionTreeNode node = worklist.remove();
+            if (node.isUnexplored()) {
+                candidates.add(node);
+            } else {
+                if (node.trueBranch != null) worklist.add(node.trueBranch);
+                if (node.falseBranch != null) worklist.add(node.falseBranch);
+            }
+        }
+
+        int bestScore = Integer.MAX_VALUE;
+        for (ExecutionTreeNode candidate : candidates) {
+            int score;
+            if (candidate.parent == null) {
+                score = candidate.distanceToExit != null ? candidate.distanceToExit : Integer.MAX_VALUE;
+            } else {
+                score = candidate.parent.distanceToExit != null ? candidate.parent.distanceToExit : Integer.MAX_VALUE;
+            }
+            if (best == null || score < bestScore) {
+                best = candidate;
+                bestScore = score;
+            }
+        }
+        return best;
+    }
+
     public ExecutionTreeNode nextUnexplored() {
-        ExecutionTreeNode result = nextUnexploredBFS();
+        ExecutionTreeNode result;
+        if (distanceToExit != null) {
+            result = nextUnexploredExit();
+        } else {
+            result = nextUnexploredBFS();
+        }
         return result;
     }
 
