@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - memoire
+      - toExit
 
 jobs:
   concolic-tests:
