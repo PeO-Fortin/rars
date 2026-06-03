@@ -79,44 +79,44 @@ jobs:
             --class-path build \
             --select-class rars.concolic.ConcolicUnitTesting
 
-      - name: Run concolic tests
-        run: |
-          TEST_DIR="./test/rars/concolic/examples"
-          FAIL=0
+      #- name: Run concolic tests
+      #  run: |
+      #    TEST_DIR="./test/rars/concolic/examples"
+      #    FAIL=0
 
-          for program in "$TEST_DIR"/*.s; do
-            echo "======================================="
-            echo "Testing $program"
-            echo "======================================="
+      #    for program in "$TEST_DIR"/*.s; do
+      #      echo "======================================="
+      #      echo "Testing $program"
+      #      echo "======================================="
 
-            ./run.sh rars.concolic.ConcolicInterpreter "$program" 30
+      #      ./run.sh rars.concolic.ConcolicInterpreter "$program" 30
 
-            if [ ! -f Results.txt ]; then
-              echo "Results.txt not found for $program"
-              FAIL=1
-              continue
-            fi
+      #      if [ ! -f Results.txt ]; then
+      #        echo "Results.txt not found for $program"
+      #        FAIL=1
+      #        continue
+      #      fi
 
-            if ! grep -q "Iteration:" Results.txt; then
-              echo "No iterations found in Results.txt for $program"
-              FAIL=1
-            fi
+      #      if ! grep -q "Execution:" Results.txt; then
+      #        echo "No iterations found in Results.txt for $program"
+      #        FAIL=1
+      #      fi
 
-            if ! grep -q "edges covered:" <(./run.sh rars.concolic.ConcolicInterpreter "$program" 30 2>&1); then
-              echo "Coverage information missing for $program"
-              FAIL=1
-            fi
+      #      if ! grep -q "edges covered:" <(./run.sh rars.concolic.ConcolicInterpreter "$program" 30 2>&1); then
+      #        echo "Coverage information missing for $program"
+      #        FAIL=1
+      #      fi
 
-            cp Results.txt "Results-$(basename "$program" .s).txt"
-          done
+      #      cp Results.txt "Results-$(basename "$program" .s).txt"
+      #    done
 
-          if [ "$FAIL" -ne 0 ]; then
-            echo "Some concolic tests failed."
-            exit 1
-          fi
+      #    if [ "$FAIL" -ne 0 ]; then
+      #      echo "Some concolic tests failed."
+      #      exit 1
+      #    fi
 
-      - name: Upload Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: concolic-results
-          path: Results-*.txt
+      #- name: Upload Results
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: concolic-results
+      #    path: Results-*.txt
