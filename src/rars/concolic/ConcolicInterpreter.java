@@ -69,21 +69,44 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol) }));
-
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L) }));
 
         return getFromModel(symbol, 0);
     }
 
-    /**
-     * TODO
-     **/
     int lastReadString = 0;
     @Override
     protected void readString(ConcolicValues.V bufAddress, ConcolicValues.V length) {
-        String symbol = "readString_" + lastReadString++;
+        String lenSymbol = "readString_" + lastReadString + "_len";
+        String strSymbol = "readString_" + lastReadString++;
 
+        ConcolicValues.V modelLength = modelizedLength(lenSymbol, length);
+
+        int i = 0;
+        for(; i < modelLength.concrete - 1; ++i){
+            String charSymbol = strSymbol + "_char_" + i;
+            sb(readCharforString(charSymbol), values.inject(i), bufAddress);
+        }
+        sb(values.inject(0), values.inject(1), bufAddress);
+    }
+
+    private ConcolicValues.V readCharforString(String symbol) {
+        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicLong(31), new SymbolicVariable(symbol) }));
+        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(127) }));
+
+        return getFromModel(symbol, 32);
+    }
+
+    private ConcolicValues.V modelizedLength(String lenSymbol, ConcolicValues.V length) {
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Geq,
+                new SymbolicValue[]{ new SymbolicVariable(lenSymbol), new SymbolicLong(0) }));
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicVariable(lenSymbol), length.symbolic }));
+
+        return getFromModel(lenSymbol, 0);
     }
 
     @Override
