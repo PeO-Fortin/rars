@@ -281,7 +281,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 pw.println();
                 pw.flush();
                 ++execution;
-            } while (execution < maxExecutions);
+            } while (execution <= maxExecutions);
             pw.close();
         } catch (ExecutionDone e) {
             System.out.println("Execution completed");

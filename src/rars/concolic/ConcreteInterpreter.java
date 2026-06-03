@@ -1,5 +1,7 @@
 package rars.concolic;
 
+import rars.Globals;
+import rars.riscv.InstructionSet;
 import rars.riscv.hardware.AddressErrorException;
 
 import java.io.IOException;
@@ -18,10 +20,10 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long div(Long v1, Long v2) { return v1 / v2; }
     @Override public Long divw(Long v1, Long v2) { return (long)(v1.intValue() / v2.intValue()); }
 
-    @Override public Long eq(Long v1, Long v2) { return (long)(v1 == v2 ? 1 : 0); }
-    @Override public Long neq(Long v1, Long v2) { return (long)(v1 != v2 ? 1 : 0); }
-    @Override public Long geq(Long v1, Long v2) { return (long)(v1 >= v2 ? 1 : 0); }
-    @Override public Long lt(Long v1, Long v2) { return (long)(v1 < v2 ? 1 : 0); }
+    @Override public Long eq(Long v1, Long v2) { return v1.equals(v2) ? 1L : 0L; }
+    @Override public Long neq(Long v1, Long v2) { return !(v1.equals(v2)) ? 1L : 0L; }
+    @Override public Long geq(Long v1, Long v2) { return v1 >= v2 ? 1L : 0L; }
+    @Override public Long lt(Long v1, Long v2) { return v1 < v2 ? 1L : 0L; }
 
     @Override public Long xor(Long v1, Long v2) { return v1 ^ v2; }
     @Override public Long and(Long v1, Long v2) { return v1 & v2; }
@@ -34,7 +36,7 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long sra(Long v1, Long v2) { return v1 >> v2; }
     @Override public Long sraw(Long v1, Long v2) { return (long) (v1.intValue() >> v2.intValue()); }
 
-    @Override public boolean isTruthy(Long v) { return v != 0; }
+    @Override public boolean isTruthy(Long v) { return v != 0L; }
     @Override public byte asByte(Long v) { return v.byteValue(); }
     @Override public int asInt(Long v) { return v.intValue(); }
     @Override public short asShort(Long v) { return v.shortValue(); }
@@ -45,6 +47,9 @@ class ConcreteValues extends InterpreterValues<Long> {
 
 public class ConcreteInterpreter extends GenericInterpreter<Long> {
     public static void main(String[] args) throws Exception {
+        Globals.initialize();
+        InstructionSet.rv64 = true;
+        Globals.instructionSet.populate();
         ConcreteInterpreter interpreter = new ConcreteInterpreter();
         interpreter.runOn(args[0]);
     }

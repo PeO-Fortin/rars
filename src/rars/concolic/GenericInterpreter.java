@@ -69,6 +69,7 @@ public abstract class GenericInterpreter<V> {
         while (ps != null && !exit && instructionCounter < MAX_INSTRUCTIONS) {
             String instructionName = ps.getInstruction().getName();
             int[] operands = ps.getOperands();
+            registers[0] = values.inject(0); // Register zero = 0
 
             switch (instructionName) {
                 case "lui": lui(values.inject(operands[1] << 12), operands[0]); setCurrentPc(DEFAULT_OFFSET); break;
