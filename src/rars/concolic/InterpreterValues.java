@@ -11,8 +11,13 @@ abstract class InterpreterValues<V> {
     public abstract V subw(V v1, V v2);
     public abstract V mul(V v1, V v2);
     public abstract V mulw(V v1, V v2);
+    public abstract V mulh(V v1, V v2);
+    public abstract V mulhsu(V v1, V v2);
+    public abstract V mulhu(V v1, V v2);
     public abstract V div(V v1, V v2);
     public abstract V divw(V v1, V v2);
+    public abstract V divu(V v1, V v2);
+    public abstract V divuw(V v1, V v2);
 
     //Branches
     public abstract V eq(V v1, V v2);
