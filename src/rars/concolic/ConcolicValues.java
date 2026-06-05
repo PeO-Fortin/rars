@@ -146,12 +146,18 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
 
     @Override
     public V divu(V v1, V v2) {
-
+        return op(new Op() {
+            public long apply(long[] args) { return Long.divideUnsigned(args[0], args[1]); }
+            public SymbolicOperator operator() { return SymbolicOperator.Div; }
+        }, new V[]{ v1, v2 });
     }
 
     @Override
     public V divuw(V v1, V v2) {
+        V v1_correct = Utils.maskedValue(v1, MemoryValueTypes.WORD);
+        V v2_correct = Utils.maskedValue(v2, MemoryValueTypes.WORD);
 
+        return div(v1_correct, v2_correct);
     }
 
     @Override

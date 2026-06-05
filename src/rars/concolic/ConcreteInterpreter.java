@@ -17,8 +17,13 @@ class ConcreteValues extends InterpreterValues<Long> {
     @Override public Long subw(Long v1, Long v2) { return (long)(v1.intValue() - v2.intValue()); }
     @Override public Long mul(Long v1, Long v2) { return v1 * v2; }
     @Override public Long mulw(Long v1, Long v2) { return (long)(v1.intValue() * v2.intValue()); }
+    @Override public Long mulh(Long v1, Long v2) { return (v1 >> 32) * (v2 >> 32); }
+    @Override public Long mulhsu(Long v1, Long v2) { return (v1 >> 32) * (v2 >>> 32); }
+    @Override public Long mulhu(Long v1, Long v2) { return (v1 >>> 32) * (v2 >>> 32); }
     @Override public Long div(Long v1, Long v2) { return v1 / v2; }
     @Override public Long divw(Long v1, Long v2) { return (long)(v1.intValue() / v2.intValue()); }
+    @Override public Long divu(Long v1, Long v2) { return Long.divideUnsigned(v1, v2); }
+    @Override public Long divuw(Long v1, Long v2) { return Long.divideUnsigned(v1.intValue(), v2.intValue()); }
 
     @Override public Long eq(Long v1, Long v2) { return v1.equals(v2) ? 1L : 0L; }
     @Override public Long neq(Long v1, Long v2) { return !(v1.equals(v2)) ? 1L : 0L; }
