@@ -3,8 +3,6 @@ package rars.cfg;
 import rars.RISCVprogram;
 import rars.ProgramStatement;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 /** The control flow graph of a program.*/
@@ -34,7 +32,8 @@ public class CFG {
     }
 
     /** Sort blocks pseudo-topologically (topological but ignore back edges).
-     * This also removes unreachable blocks. */
+     * This also removes unreachable blocks.
+     */
     public void reorder() {
         blocks.clear();
         HashSet<BasicBlock> seen = new HashSet<>();
@@ -53,19 +52,88 @@ public class CFG {
         blocks.add(0, block);
     }
 
-    public void dump(String filename) {
-        try {
-            FileWriter fw = new FileWriter(filename);
-            fw.write(program.getFilename() + ":\n");
-            for (BasicBlock block : blocks) {
-                fw.write(block + ":\n");
-                for (ProgramStatement instruction : block.instructions) {
-                    fw.write("\t" + instruction + "\n");
-                }
+    public void build() {
+        List<ProgramStatement> machineList = program.getMachineList();
+        if (machineList.isEmpty()) return;
+
+        Set<Integer> blockEntryPoints = findEntryPoints(machineList);
+        Map<Integer, BasicBlock> blockMap = createBlocks(machineList, blockEntryPoints);
+        findSuccessors(blockMap);
+
+        entryBlock = blocks.get(0);
+        exitBlock = blocks.get(blocks.size() - 1);
+    }
+
+    private void add(ProgramStatement statement, BasicBlock currentBlock) {
+        if (currentBlock == null) return;
+        currentBlock.add(statement);
+    }
+
+    public void cleanUpCFG() {
+        reorder();
+        for (int i=0; i<blocks.size(); i++)
+            blocks.get(i).id = i;
+    }
+
+    private Set<Integer> findEntryPoints(List<ProgramStatement> machineList) {
+        Set<Integer> blockEntryPoints =  new HashSet<>();
+        blockEntryPoints.add(machineList.get(0).getAddress());
+
+        for (ProgramStatement ps : machineList) {
+            String instruction = ps.getInstruction().getName();
+            int[] operands = ps.getOperands();
+
+            if (isBranch(instruction)) {
+                blockEntryPoints.add(ps.getAddress() + operands[2]);    //block if true
+                blockEntryPoints.add(ps.getAddress() + 4);              //block if false
+            } else if (instruction.equals("jal")) {
+                blockEntryPoints.add(ps.getAddress() + operands[1]);
             }
-            fw.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
+
+        return blockEntryPoints;
+    }
+
+    private Map<Integer, BasicBlock> createBlocks(List<ProgramStatement> machineList, Set<Integer> blockEntryPoints) {
+        Map<Integer, BasicBlock> blockMap = new HashMap<>();
+
+        BasicBlock currentBlock = null;
+
+        for (ProgramStatement ps : machineList) {
+            if (blockEntryPoints.contains(ps.getAddress())) {
+                currentBlock = newBlock();
+                blocks.add(currentBlock);
+                blockMap.put(ps.getAddress(), currentBlock);
+            }
+            currentBlock.add(ps);
+        }
+
+        return blockMap;
+    }
+
+    private void findSuccessors(Map<Integer, BasicBlock> blockMap) {
+        for (BasicBlock block : blocks) {
+            ProgramStatement terminator = block.getTerminator();
+            String instruction = terminator.getInstruction().getName();
+            int[] operands = terminator.getOperands();
+            int pc = terminator.getAddress();
+
+            if (isBranch(instruction)) {
+                block.takenSuccessor = blockMap.get(pc + operands[2]);
+                block.fallthroughSuccessor = blockMap.get(pc + 4);
+            } else if (instruction.equals("jal")) {
+                block.takenSuccessor = blockMap.get(pc + operands[1]);
+            } else if (instruction.equals("jalr")) {
+                block.takenSuccessor = null;
+            } else {
+                block.fallthroughSuccessor = blockMap.get(pc + 4);
+            }
+        }
+    }
+
+    private boolean isBranch(String instruction) {
+        return instruction.equals("beq") || instruction.equals("bne") ||
+                instruction.equals("blt") || instruction.equals("bltu") ||
+                instruction.equals("bge") || instruction.equals("bgeu");
     }
 }
