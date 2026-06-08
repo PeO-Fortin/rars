@@ -98,7 +98,7 @@ jobs:
       #      fi
 
       #      if ! grep -q "Execution:" Results.txt; then
-      #        echo "No iterations found in Results.txt for $program"
+      #        echo "No executions found in Results.txt for $program"
       #        FAIL=1
       #      fi
 
