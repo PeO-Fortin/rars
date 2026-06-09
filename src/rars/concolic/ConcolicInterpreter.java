@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.*;
 
 import rars.ProgramStatement;
+import rars.cfg.BasicBlock;
 import rars.riscv.InstructionSet;
 import rars.riscv.hardware.AddressErrorException;
 
@@ -31,10 +32,11 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     Map<Integer, Integer> distanceToExit;
 
     @Override
-    protected void if_(ConcolicValues.V cond, int condOffset) {
+    protected void if_(ConcolicValues.V cond) {
         currentNode.condition = cond.symbolic;
+        currentNode.block = currentBlock;
         if (distanceToExit != null) {
-            currentNode.distanceToExit = distanceToExit.getOrDefault(currentProgramCounter, Integer.MAX_VALUE);
+            currentNode.distanceToExit = distanceToExit.getOrDefault(currentBlock, Integer.MAX_VALUE);
         }
         if (!currentNode.hasChildren()) {
             currentNode.trueBranch = new ExecutionTreeNode(++nextId);
@@ -47,7 +49,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         } else {
             currentNode = currentNode.falseBranch;
         }
-        super.if_(cond, condOffset);
+        super.if_(cond);
     }
 
     int lastReadCharacter = 0;
@@ -280,14 +282,13 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         this.distanceToExit = calculateDistanceToExit();
         if (this.distanceToExit != null) {
             executionTreeRoot.distanceToExit = this.distanceToExit.get(
-                    machineList.get(0).getAddress()
+                    cfg.entryBlock;
             );
         }
         int execution = 1;
         try {
             PrintWriter pw = new PrintWriter(new FileWriter("Results.txt"));
             do {
-                currentProgramCounter = machineList.get(0).getAddress();
                 lastReadCharacter = 0;
                 lastReadInteger = 0;
                 pw.println("***********************");
@@ -362,9 +363,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     public Collection<FuzzingEdge> edgesCovered = new HashSet<>();
     @Override
-    protected void setCurrentPcCond(int condOffset) {
-        edgesCovered.add(new FuzzingEdge(currentProgramCounter, currentProgramCounter + condOffset));
-        super.setCurrentPcCond(condOffset);
+    protected void setCurrentBlockCond(BasicBlock target) {
+        edgesCovered.add(new FuzzingEdge(currentBlock, target));
+        super.setCurrentBlock(target);
     }
 }
 
@@ -376,6 +377,7 @@ class ExecutionTreeNode {
     public boolean unsat = false;
     public Collection<SymbolicValue> extraConstraints = new HashSet<>();
     public boolean explored = false;
+    BasicBlock block;
     public Integer distanceToExit;
     public int id;
     public ExecutionTreeNode(int id) {

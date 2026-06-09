@@ -12,6 +12,7 @@ public class CFG {
     public BasicBlock entryBlock;
     public BasicBlock exitBlock;
     public List<BasicBlock> blocks = new ArrayList<>();
+    public Map<Integer, BasicBlock> blockMap;
 
     private int blockCount = 0;
 
@@ -57,8 +58,8 @@ public class CFG {
         if (machineList.isEmpty()) return;
 
         Set<Integer> blockEntryPoints = findEntryPoints(machineList);
-        Map<Integer, BasicBlock> blockMap = createBlocks(machineList, blockEntryPoints);
-        findSuccessors(blockMap);
+        createBlocks(machineList, blockEntryPoints);
+        findSuccessors();
 
         entryBlock = blocks.get(0);
         exitBlock = blocks.get(blocks.size() - 1);
@@ -94,8 +95,8 @@ public class CFG {
         return blockEntryPoints;
     }
 
-    private Map<Integer, BasicBlock> createBlocks(List<ProgramStatement> machineList, Set<Integer> blockEntryPoints) {
-        Map<Integer, BasicBlock> blockMap = new HashMap<>();
+    private void createBlocks(List<ProgramStatement> machineList, Set<Integer> blockEntryPoints) {
+        blockMap = new HashMap<>();
 
         BasicBlock currentBlock = null;
 
@@ -107,11 +108,9 @@ public class CFG {
             }
             currentBlock.add(ps);
         }
-
-        return blockMap;
     }
 
-    private void findSuccessors(Map<Integer, BasicBlock> blockMap) {
+    private void findSuccessors() {
         for (BasicBlock block : blocks) {
             ProgramStatement terminator = block.getTerminator();
             String instruction = terminator.getInstruction().getName();
