@@ -1,13 +1,23 @@
 package rars.concolic;
 
 abstract class InterpreterValues<V> {
-    public abstract V inject(int i);
+    public abstract V inject(long i);
+    public abstract V access(MemoryValue v1);
 
     //Arithmetic
     public abstract V add(V v1, V v2);
+    public abstract V addw(V v1, V v2);
     public abstract V sub(V v1, V v2);
+    public abstract V subw(V v1, V v2);
     public abstract V mul(V v1, V v2);
+    public abstract V mulw(V v1, V v2);
+    public abstract V mulh(V v1, V v2);
+    public abstract V mulhsu(V v1, V v2);
+    public abstract V mulhu(V v1, V v2);
     public abstract V div(V v1, V v2);
+    public abstract V divw(V v1, V v2);
+    public abstract V divu(V v1, V v2);
+    public abstract V divuw(V v1, V v2);
 
     //Branches
     public abstract V eq(V v1, V v2);
@@ -22,11 +32,18 @@ abstract class InterpreterValues<V> {
 
     //Shifts
     public abstract V sll(V v1, V v2);
+    public abstract V sllw(V v1, V v2);
     public abstract V srl(V v1, V v2);
+    public abstract V srlw(V v1, V v2);
     public abstract V sra(V v1, V v2);
+    public abstract V sraw(V v1, V v2);
 
     //Others
     public abstract boolean isTruthy(V v);
+    public abstract byte asByte(V v);
+    public abstract short asShort(V v);
     public abstract int asInt(V v);
+    public abstract long asLong(V v);
     public abstract char asChar(V v);
+    public abstract MemoryValue asMemoryValue(V v);
 }

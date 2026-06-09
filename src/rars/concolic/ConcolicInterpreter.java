@@ -6,9 +6,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
+import rars.ProgramStatement;
+import rars.riscv.InstructionSet;
+import rars.riscv.hardware.AddressErrorException;
+
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static void main(String[] args) throws Exception {
         Globals.initialize();
+        InstructionSet.rv64 = true;
+        Globals.instructionSet.populate();
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(args[0]);
         interpreter.runConcolic(Integer.parseInt(args[1]));
@@ -22,10 +28,14 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public ExecutionTreeNode executionTreeRoot = new ExecutionTreeNode(0);
     public ExecutionTreeNode currentNode = executionTreeRoot;
     int nextId = 0;
+    Map<Integer, Integer> distanceToExit;
 
     @Override
     protected void if_(ConcolicValues.V cond, int condOffset) {
         currentNode.condition = cond.symbolic;
+        if (distanceToExit != null) {
+            currentNode.distanceToExit = distanceToExit.getOrDefault(currentProgramCounter, Integer.MAX_VALUE);
+        }
         if (!currentNode.hasChildren()) {
             currentNode.trueBranch = new ExecutionTreeNode(++nextId);
             currentNode.trueBranch.parent = currentNode;
@@ -46,11 +56,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String symbol = "readChar_" + lastReadCharacter++;
         // The result from readChar is between -1 (included) and 127 (included)
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicInteger(31), new SymbolicVariable(symbol) }));
+                new SymbolicValue[]{ new SymbolicLong(-2), new SymbolicVariable(symbol) }));
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(127) }));
-        // To better deal with program reading from stdin until '.', we default to '.' as the value for readChar
-        return getFromModel(symbol, 46);
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(128) }));
+        return getFromModel(symbol, -1);
     }
 
     int lastReadInteger = 0;
@@ -59,12 +68,206 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String symbol = "readInt_" + lastReadInteger++;
 
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicInteger(-100), new SymbolicVariable(symbol) }));
-
+                new SymbolicValue[]{ new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol) }));
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicInteger(100) }));
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L) }));
 
         return getFromModel(symbol, 0);
+    }
+
+    int lastReadString = 0;
+    @Override
+    protected void readString(ConcolicValues.V bufAddress, ConcolicValues.V length) {
+        String lenSymbol = "readString_" + lastReadString + "_len";
+        String strSymbol = "readString_" + lastReadString++;
+
+        ConcolicValues.V modelLength = modelizedLength(lenSymbol, length);
+
+        int i = 0;
+        for(; i < modelLength.concrete - 1; ++i){
+            String charSymbol = strSymbol + "_char_" + i;
+            sb(readCharforString(charSymbol), values.inject(i), bufAddress);
+        }
+        sb(values.inject(0), values.inject(1), bufAddress);
+    }
+
+    private ConcolicValues.V readCharforString(String symbol) {
+        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicLong(31), new SymbolicVariable(symbol) }));
+        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(127) }));
+
+        return getFromModel(symbol, 32);
+    }
+
+    private ConcolicValues.V modelizedLength(String lenSymbol, ConcolicValues.V length) {
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Geq,
+                new SymbolicValue[]{ new SymbolicVariable(lenSymbol), new SymbolicLong(0) }));
+        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+                new SymbolicValue[]{ new SymbolicVariable(lenSymbol), length.symbolic }));
+
+        return getFromModel(lenSymbol, 0);
+    }
+
+    @Override
+    protected void sb(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.BYTE, true);
+            memory.storeMemory(bValue, memAddress, offset);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sh(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
+        try {
+            MemoryValue memValue = new MemoryValue(value, MemoryValueTypes.HALFWORD, true);
+            memory.storeMemory(memValue, offset, memAddress);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sw(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.WORD, true);
+            memory.storeMemory(bValue, memAddress, offset);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void sd(ConcolicValues.V value, ConcolicValues.V offset, ConcolicValues.V memAddress) {
+        try {
+            MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.DOUBLEWORD, true);
+            memory.storeMemory(bValue, memAddress, offset);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lb(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, false);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lbu(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, true);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lh(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, false);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lhu(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, true);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lw(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, false);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void lwu(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, true);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
+    }
+
+    @Override
+    protected void ld(ConcolicValues.V offset, ConcolicValues.V memAddress, int dst) {
+        try {
+            MemoryValue bValue = new MemoryValue(MemoryValueTypes.DOUBLEWORD, false);
+            memory.accessMemory(bValue, memAddress, offset);
+            registers[dst] = bValue.getConcolicValue();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            output += "Access outside memory | ";
+            exit = true;
+        } catch (AddressErrorException e) {
+            output += e.getMessage() + " | ";
+            exit = true;
+        }
     }
 
     ConcolicValues.V getFromModel(String symbol, int defaultValue) {
@@ -73,8 +276,14 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     }
 
     Map<String, Integer> model = new HashMap<>();
-    public void runConcolic(int maxIterations) {
-        int iteration = 0;
+    public void runConcolic(int maxExecutions) {
+        this.distanceToExit = calculateDistanceToExit();
+        if (this.distanceToExit != null) {
+            executionTreeRoot.distanceToExit = this.distanceToExit.get(
+                    machineList.get(0).getAddress()
+            );
+        }
+        int execution = 1;
         try {
             PrintWriter pw = new PrintWriter(new FileWriter("Results.txt"));
             do {
@@ -82,7 +291,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 lastReadCharacter = 0;
                 lastReadInteger = 0;
                 pw.println("***********************");
-                pw.println("Iteration: " + iteration);
+                pw.println("Execution: " + execution);
                 currentNode = executionTreeRoot;
                 computeNextModel();
                 super.output = "| ";
@@ -94,8 +303,8 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 pw.println("***********************");
                 pw.println();
                 pw.flush();
-                iteration++;
-            } while (iteration < maxIterations);
+                ++execution;
+            } while (execution <= maxExecutions);
             pw.close();
         } catch (ExecutionDone e) {
             System.out.println("Execution completed");
@@ -103,6 +312,36 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             System.out.println("IO Error");
         }
     }
+
+    Map<Integer, Integer> calculateDistanceToExit() {
+        Map<Integer, Integer> distances = new HashMap<>();
+        Queue<Integer> worklist = new LinkedList<>();
+
+        for (ProgramStatement ps : machineList) {
+            int[] operands = ps.getOperands();
+            // li a7, 10 -> prepare an ecall to exit
+            if (ps.getInstruction().getName().equals("addi") &&
+                    operands[0] == 17 && operands[1] == 0 && operands[2] == 10) {
+                distances.put(ps.getAddress(), 0);
+                worklist.add(ps.getAddress());
+            }
+        }
+
+        if (worklist.isEmpty()) return null;
+
+        while (!worklist.isEmpty()) {
+            int address = worklist.remove();
+            int currentDistance = distances.get(address);
+            int predecessor = address - DEFAULT_OFFSET;
+            if (instructionsMap.containsKey(predecessor) && !distances.containsKey(predecessor)) {
+                distances.put(predecessor, currentDistance + 1);
+                worklist.add(predecessor);
+            }
+        }
+
+        return distances;
+    }
+
 
     ConstraintSolver solver = new ConstraintSolver();
     public void computeNextModel() {
@@ -137,6 +376,7 @@ class ExecutionTreeNode {
     public boolean unsat = false;
     public Collection<SymbolicValue> extraConstraints = new HashSet<>();
     public boolean explored = false;
+    public Integer distanceToExit;
     public int id;
     public ExecutionTreeNode(int id) {
         this.id = id;
@@ -182,8 +422,44 @@ class ExecutionTreeNode {
         return null;
     }
 
+    public ExecutionTreeNode nextUnexploredExit() {
+        List<ExecutionTreeNode> candidates = new ArrayList<>();
+        Queue<ExecutionTreeNode> worklist = new LinkedList<>();
+        ExecutionTreeNode best = null;
+        worklist.add(this);
+        while (!worklist.isEmpty()) {
+            ExecutionTreeNode node = worklist.remove();
+            if (node.isUnexplored()) {
+                candidates.add(node);
+            } else {
+                if (node.trueBranch != null) worklist.add(node.trueBranch);
+                if (node.falseBranch != null) worklist.add(node.falseBranch);
+            }
+        }
+
+        int bestScore = Integer.MAX_VALUE;
+        for (ExecutionTreeNode candidate : candidates) {
+            int score;
+            if (candidate.parent == null) {
+                score = candidate.distanceToExit != null ? candidate.distanceToExit : Integer.MAX_VALUE;
+            } else {
+                score = candidate.parent.distanceToExit != null ? candidate.parent.distanceToExit : Integer.MAX_VALUE;
+            }
+            if (best == null || score < bestScore) {
+                best = candidate;
+                bestScore = score;
+            }
+        }
+        return best;
+    }
+
     public ExecutionTreeNode nextUnexplored() {
-        ExecutionTreeNode result = nextUnexploredBFS();
+        ExecutionTreeNode result;
+        if (distanceToExit != null) {
+            result = nextUnexploredExit();
+        } else {
+            result = nextUnexploredBFS();
+        }
         return result;
     }
 

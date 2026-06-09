@@ -1,0 +1,122 @@
+name: Concolic Tests
+
+on:
+  push:
+    branches:
+      - master
+      - memoire
+      - toExit
+
+jobs:
+  concolic-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y z3 libz3-java
+
+      - name: Set environment
+        run: |
+          echo "CLASSPATH=/usr/share/java/com.microsoft.z3.jar" >> $GITHUB_ENV
+
+      - name: Set RV64 preference
+        run: |
+          mkdir -p ~/.java/.userPrefs/rars
+          cat > ~/.java/.userPrefs/rars/prefs.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE preferences SYSTEM "http://java.sun.com/dtd/preferences.dtd">
+          <preferences EXTERNAL_XML_VERSION="1.0">
+            <root type="user">
+              <map/>
+              <node name="rars">
+                <map>
+                  <entry key="rv64Enabled" value="true"/>
+                </map>
+              </node>
+            </root>
+          </preferences>
+          EOF
+
+      - name: Prepare scripts
+        run: |
+          chmod +x run.sh build.sh
+
+      - name: Download JUnit
+        run: |
+          curl -L -o junit.jar \
+            https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.12.2/junit-platform-console-standalone-1.12.2.jar
+
+      - name: Run JUnit unit tests
+        run: |
+          mkdir -p build
+
+          find src -name "*.java" | \
+            xargs javac --release 17 \
+            -d build \
+            -cp .:/usr/share/java/com.microsoft.z3.jar:lib/jsoftfloat.jar:junit.jar
+
+          find test -name "*.java" | \
+            xargs javac --release 17 \
+            -d build \
+            -cp build:/usr/share/java/com.microsoft.z3.jar:lib/jsoftfloat.jar:junit.jar
+
+          find src -type f -not -name "*.java" -exec cp --parents {} build \;
+
+          java -jar junit.jar \
+            --class-path build \
+            --select-class rars.concolic.ConcolicUnitTesting
+
+      #- name: Run concolic tests
+      #  run: |
+      #    TEST_DIR="./test/rars/concolic/examples"
+      #    FAIL=0
+
+      #    for program in "$TEST_DIR"/*.s; do
+      #      echo "======================================="
+      #      echo "Testing $program"
+      #      echo "======================================="
+
+      #      ./run.sh rars.concolic.ConcolicInterpreter "$program" 30
+
+      #      if [ ! -f Results.txt ]; then
+      #        echo "Results.txt not found for $program"
+      #        FAIL=1
+      #        continue
+      #      fi
+
+      #      if ! grep -q "Execution:" Results.txt; then
+      #        echo "No executions found in Results.txt for $program"
+      #        FAIL=1
+      #      fi
+
+      #      if ! grep -q "edges covered:" <(./run.sh rars.concolic.ConcolicInterpreter "$program" 30 2>&1); then
+      #        echo "Coverage information missing for $program"
+      #        FAIL=1
+      #      fi
+
+      #      cp Results.txt "Results-$(basename "$program" .s).txt"
+      #    done
+
+      #    if [ "$FAIL" -ne 0 ]; then
+      #      echo "Some concolic tests failed."
+      #      exit 1
+      #    fi
+
+      #- name: Upload Results
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: concolic-results
+      #    path: Results-*.txt
