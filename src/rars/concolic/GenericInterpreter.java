@@ -67,6 +67,7 @@ public abstract class GenericInterpreter<V> {
         currentBlock = entryPoint;
         instructionCounter = 0;
         while (currentBlock!=null && !exit && instructionCounter < MAX_INSTRUCTIONS) {
+            BasicBlock executedBlock = currentBlock;
             for (ProgramStatement ps : currentBlock.instructions) {
                 int[] operands = ps.getOperands();
                 switch (ps.getInstruction().getName()) {
@@ -169,6 +170,9 @@ public abstract class GenericInterpreter<V> {
                 }
                 registers[0] = values.inject(0); // Register zero = 0
                 ++instructionCounter;
+            }
+            if(executedBlock == currentBlock){
+                currentBlock = executedBlock.fallthroughSuccessor;
             }
         }
         if(instructionCounter == MAX_INSTRUCTIONS){
