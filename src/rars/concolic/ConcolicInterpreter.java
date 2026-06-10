@@ -29,7 +29,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public ExecutionTreeNode executionTreeRoot = new ExecutionTreeNode(0);
     public ExecutionTreeNode currentNode = executionTreeRoot;
     int nextId = 0;
-    Map<Integer, Integer> distanceToExit;
+    Map<BasicBlock, Integer> distanceToExit;
 
     @Override
     protected void if_(ConcolicValues.V cond) {
@@ -282,7 +282,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         this.distanceToExit = calculateDistanceToExit();
         if (this.distanceToExit != null) {
             executionTreeRoot.distanceToExit = this.distanceToExit.get(
-                    cfg.entryBlock;
+                    cfg.entryBlock
             );
         }
         int execution = 1;
@@ -314,35 +314,36 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         }
     }
 
-    Map<Integer, Integer> calculateDistanceToExit() {
-        Map<Integer, Integer> distances = new HashMap<>();
-        Queue<Integer> worklist = new LinkedList<>();
+    Map<BasicBlock, Integer> calculateDistanceToExit() {
+        Map<BasicBlock, Integer> distances = new HashMap<>();
+        Queue<BasicBlock> worklist = new LinkedList<>();
 
-        for (ProgramStatement ps : machineList) {
-            int[] operands = ps.getOperands();
-            // li a7, 10 -> prepare an ecall to exit
-            if (ps.getInstruction().getName().equals("addi") &&
-                    operands[0] == 17 && operands[1] == 0 && operands[2] == 10) {
-                distances.put(ps.getAddress(), 0);
-                worklist.add(ps.getAddress());
+        for (BasicBlock block : cfg.blocks) {
+            for (ProgramStatement ps : block.instructions) {
+                int[] operands = ps.getOperands();
+                if (ps.getInstruction().getName().equals("addi") &&
+                        operands[0] == 17 && operands[1] == 0 && operands[2] == 10) {
+                    distances.put(block, 0);
+                    worklist.add(block);
+                }
             }
         }
 
         if (worklist.isEmpty()) return null;
 
         while (!worklist.isEmpty()) {
-            int address = worklist.remove();
-            int currentDistance = distances.get(address);
-            int predecessor = address - DEFAULT_OFFSET;
-            if (instructionsMap.containsKey(predecessor) && !distances.containsKey(predecessor)) {
-                distances.put(predecessor, currentDistance + 1);
-                worklist.add(predecessor);
+            BasicBlock block = worklist.remove();
+            int currentDistance = distances.get(block);
+            for (BasicBlock predecessor : block.getIn()) {
+                if (!distances.containsKey(predecessor)) {
+                    distances.put(predecessor, currentDistance + 1);
+                    worklist.add(predecessor);
+                }
             }
         }
 
         return distances;
     }
-
 
     ConstraintSolver solver = new ConstraintSolver();
     public void computeNextModel() {
