@@ -367,7 +367,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public Collection<FuzzingEdge> edgesCovered = new HashSet<>();
     @Override
     protected void setCurrentBlockCond(BasicBlock target) {
-        target = options.unrollingTarget(currentNode, target);
+        if(!options.iteratesDeeper(currentNode, target)){
+            exit = true;
+        }
         edgesCovered.add(new FuzzingEdge(currentBlock, target));
         super.setCurrentBlock(target);
     }
@@ -422,8 +424,8 @@ class ExecutionTreeNode {
         while (!worklist.isEmpty()) {
             ExecutionTreeNode node = worklist.remove();
             if (node.isUnexplored()) return node;
-            if (node.trueBranch != null) worklist.add(node.trueBranch);
             if (node.falseBranch != null) worklist.add(node.falseBranch);
+            if (node.trueBranch != null) worklist.add(node.trueBranch);
         }
         return null;
     }
@@ -438,8 +440,8 @@ class ExecutionTreeNode {
             if (node.isUnexplored()) {
                 candidates.add(node);
             } else {
-                if (node.trueBranch != null) worklist.add(node.trueBranch);
                 if (node.falseBranch != null) worklist.add(node.falseBranch);
+                if (node.trueBranch != null) worklist.add(node.trueBranch);
             }
         }
 
