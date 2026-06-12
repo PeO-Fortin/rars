@@ -3,38 +3,32 @@ package rars.concolic;
 
 import rars.cfg.BasicBlock;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class Options {
     private final String HELP = "Available options:\n" +
             "--help :\tDisplay available options\n" +
-            "--unrolling :\tActivate unrolling\n" +
+            "--iterative-deepening :\tActivate iterative deepening\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions";
 
 
-    boolean unrolling;
+    boolean iterativeDeepening = false;
     boolean dfs;
 
-    //Unrolling variables
-    private int maxLoopIterations;
-    private Map<Integer, Integer> loopIterations;
+    //Iterative deepening variables
+    private int loopLimit = -1;;
 
     private int maxExecutions = 300;
     private int maxInstructions = 500;
 
     Options(String[] args){
-        if (args.length < 2){
-            unrolling = false;
-        } else {
+        if (args.length >= 2){
             checkOptions(args);
         }
     }
 
     public void newExecution(){
-        if (unrolling){
-            ++maxLoopIterations;
+        if (iterativeDeepening){
+            ++loopLimit;
         }
     }
 
@@ -46,19 +40,19 @@ public class Options {
         return maxInstructions;
     }
 
-    public BasicBlock unrollingTarget(ExecutionTreeNode currentNode, BasicBlock target) {
-        if (unrolling){
-            if (currentNode.isBlockInPath(target)) {
-                int address = target.getStartAddress();
-                int iterations = loopIterations.getOrDefault(address, 0);
-                if (iterations >= maxLoopIterations) {
-                    target = currentNode.block.fallthroughSuccessor;
-                } else {
-                    loopIterations.put(address, iterations + 1);
+    public boolean iteratesDeeper(ExecutionTreeNode currentNode, BasicBlock target) {
+        if (iterativeDeepening){
+            int occurrence = 0;
+            ExecutionTreeNode node = currentNode;
+            while (node != null){
+                if(node.block == target){
+                    ++occurrence;
                 }
+                node = node.parent;
             }
+            return occurrence < loopLimit;
         }
-        return(target);
+        return true;
     }
 
     private void checkOptions(String[] args){
@@ -66,16 +60,20 @@ public class Options {
             switch (args[i]){
                 case "--help":
                     System.out.println(HELP);
-                case "--unrolling":
-                    unrolling = true;
-                    maxLoopIterations = -1;
-                    loopIterations = new HashMap<>();
+                    System.exit(0);
+                    break;
+                case "--iterative-deepening":
+                    iterativeDeepening = true;
+                    loopLimit = -1;
                     break;
                 case "--dfs":
                     dfs = true;
                     break;
                 case "--max-exec":
                     maxExecutions = Integer.parseInt(args[++i]);
+                    break;
+                case "--max-inst":
+                    maxInstructions = Integer.parseInt(args[++i]);
                     break;
                 default:
                     System.out.println("Unknown option: " + args[i]);

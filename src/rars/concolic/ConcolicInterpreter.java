@@ -369,9 +369,11 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected void setCurrentBlockCond(BasicBlock target) {
         if(!options.iteratesDeeper(currentNode, target)){
             exit = true;
+            input += "Iteration deepening reached | ";
+        } else {
+            edgesCovered.add(new FuzzingEdge(currentBlock, target));
+            super.setCurrentBlock(target);
         }
-        edgesCovered.add(new FuzzingEdge(currentBlock, target));
-        super.setCurrentBlock(target);
     }
 }
 
