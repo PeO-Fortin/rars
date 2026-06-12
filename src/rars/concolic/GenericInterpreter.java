@@ -17,6 +17,7 @@ import java.util.ArrayList;
 
 public abstract class GenericInterpreter<V> {
     InterpreterValues<V> values;
+    public static Options options;
 
     public GenericInterpreter(InterpreterValues<V> values) {
         this.values = values;
@@ -54,7 +55,7 @@ public abstract class GenericInterpreter<V> {
     public String input = "";
 
     int instructionCounter;
-    final int MAX_INSTRUCTIONS = 500;
+    int maxInstructions;
 
     final int DEFAULT_OFFSET = 4;
 
@@ -66,7 +67,8 @@ public abstract class GenericInterpreter<V> {
     void run(BasicBlock entryPoint) {
         currentBlock = entryPoint;
         instructionCounter = 0;
-        while (currentBlock!=null && !exit && instructionCounter < MAX_INSTRUCTIONS) {
+        maxInstructions = options.getMaxInstructions();
+        while (currentBlock!=null && !exit && instructionCounter < maxInstructions) {
             BasicBlock executedBlock = currentBlock;
             for (ProgramStatement ps : currentBlock.instructions) {
                 int[] operands = ps.getOperands();
@@ -175,7 +177,7 @@ public abstract class GenericInterpreter<V> {
                 currentBlock = executedBlock.fallthroughSuccessor;
             }
         }
-        if(instructionCounter == MAX_INSTRUCTIONS){
+        if(instructionCounter == maxInstructions){
             output += "Maximum number of instructions reached |";
         }
     }

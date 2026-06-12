@@ -12,13 +12,15 @@ import rars.riscv.InstructionSet;
 import rars.riscv.hardware.AddressErrorException;
 
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
+
     public static void main(String[] args) throws Exception {
         Globals.initialize();
         InstructionSet.rv64 = true;
         Globals.instructionSet.populate();
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(args[0]);
-        interpreter.runConcolic(Integer.parseInt(args[1]));
+        options = new Options(args);
+        interpreter.runConcolic(options.getMaxExecutions());
         System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
     }
 
@@ -291,6 +293,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             do {
                 lastReadCharacter = 0;
                 lastReadInteger = 0;
+                options.newExecution();
                 pw.println("***********************");
                 pw.println("Execution: " + execution);
                 currentNode = executionTreeRoot;
@@ -345,6 +348,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         return distances;
     }
 
+    private static class ExecutionDone extends RuntimeException {}
     ConstraintSolver solver = new ConstraintSolver();
     public void computeNextModel() {
         ExecutionTreeNode next = executionTreeRoot.nextUnexplored();
@@ -360,11 +364,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         }
     }
 
-    private static class ExecutionDone extends RuntimeException {}
-
     public Collection<FuzzingEdge> edgesCovered = new HashSet<>();
     @Override
     protected void setCurrentBlockCond(BasicBlock target) {
+        target = options.unrollingTarget(currentNode, target);
         edgesCovered.add(new FuzzingEdge(currentBlock, target));
         super.setCurrentBlock(target);
     }
@@ -405,10 +408,10 @@ class ExecutionTreeNode {
     public ExecutionTreeNode nextUnexploredDFS() {
         if (isUnexplored()) return this;
         if (trueBranch != null && falseBranch != null) {
-            ExecutionTreeNode t = trueBranch.nextUnexplored();
-            if (t != null) return t;
             ExecutionTreeNode f = falseBranch.nextUnexplored();
             if (f != null) return f;
+            ExecutionTreeNode t = trueBranch.nextUnexplored();
+            if (t != null) return t;
         }
         return null;
     }
@@ -458,7 +461,9 @@ class ExecutionTreeNode {
 
     public ExecutionTreeNode nextUnexplored() {
         ExecutionTreeNode result;
-        if (distanceToExit != null) {
+        if(ConcolicInterpreter.options.dfs) {
+            result = nextUnexploredDFS();
+        } else if (distanceToExit != null) {
             result = nextUnexploredExit();
         } else {
             result = nextUnexploredBFS();
@@ -490,5 +495,14 @@ class ExecutionTreeNode {
             }
         }
         return constraints;
+    }
+
+    public boolean isBlockInPath(BasicBlock target) {
+        ExecutionTreeNode cur = this;
+        while (cur != null) {
+            if (cur.block == target) return true;
+            cur = cur.parent;
+        }
+        return false;
     }
 }
