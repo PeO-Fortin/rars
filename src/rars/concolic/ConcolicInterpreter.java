@@ -63,7 +63,14 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 new SymbolicValue[]{ new SymbolicLong(-2), new SymbolicVariable(symbol) }));
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(128) }));
-        return getFromModel(symbol, -1);
+
+        ConcolicValues.V value = options.readCharFromFile();
+
+        if (value == null) {
+            value = getFromModel(symbol, -1);
+        }
+
+        return value;
     }
 
     int lastReadInteger = 0;
@@ -76,7 +83,13 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L) }));
 
-        return getFromModel(symbol, 0);
+        ConcolicValues.V value = options.readIntFromFile();
+
+        if (value == null) {
+            value = getFromModel(symbol, -1);
+        }
+
+        return value;
     }
 
     int lastReadString = 0;
