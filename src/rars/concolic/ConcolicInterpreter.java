@@ -98,14 +98,27 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String lenSymbol = "readString_" + lastReadString + "_len";
         String strSymbol = "readString_" + lastReadString++;
 
-        ConcolicValues.V modelLength = modelizedLength(lenSymbol, length);
+        String value = options.readStringFromFile(length.concrete);
+        long modelLength;
+
+        if(value != null) {
+            modelLength = value.length() + 1;
+        } else {
+            modelLength = modelizedLength(lenSymbol, length).concrete;
+        }
 
         int i = 0;
-        for(; i < modelLength.concrete - 1; ++i){
-            String charSymbol = strSymbol + "_char_" + i;
-            sb(readCharforString(charSymbol), values.inject(i), bufAddress);
+        for(; i < modelLength - 1; ++i){
+            ConcolicValues.V ch;
+            if(value != null) {
+                ch = values.inject(value.charAt(i));
+            } else {
+                String charSymbol = strSymbol + "_char_" + i;
+                ch = readCharforString(charSymbol);
+            }
+            sb(ch, values.inject(i), bufAddress);
         }
-        sb(values.inject(0), values.inject(1), bufAddress);
+        sb(values.inject(0), values.inject(i), bufAddress);
     }
 
     private ConcolicValues.V readCharforString(String symbol) {

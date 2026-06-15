@@ -114,6 +114,27 @@ public class Options {
         }
     }
 
+    public String readStringFromFile(long length) {
+        if(!userEntries || length <= 0){return null;}
+        String value = "";
+
+        try {
+            for(int i = 0; i < length - 1; ++i) {
+                if(!reader.ready()){
+                    reader.close();
+                    return null;
+                }
+                char ch = (char) reader.read();
+                if (ch == '\0') break;
+                value += ch;
+            }
+        }
+        catch (IOException e) {
+            return null;
+        }
+        return value;
+    }
+
     private void checkOptions(String[] args){
         for(int i = 1; i < args.length; ++i){
             switch (args[i]){
