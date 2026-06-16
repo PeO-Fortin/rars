@@ -1,12 +1,18 @@
 package rars.concolic;
 
 
+import rars.ProgramStatement;
 import rars.cfg.BasicBlock;
+import rars.cfg.CFG;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 
 public class Options {
     private final String HELP = "\nAvailable options:\n" +
@@ -14,12 +20,14 @@ public class Options {
             "--iterative-deepening :\tActivate iterative deepening\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions\n" +
-            "--user-entries [file] :\tUse entries from a file to start the symbolic execution";
+            "--user-entries [file] :\tUse entries from a file to start the symbolic execution\n" +
+            "--distance-exit :\tActivate distance to exit exploration";
 
 
     boolean iterativeDeepening = false;
     boolean dfs = false;
     boolean userEntries = false;
+    boolean distanceToExit = false;
 
     //Iterative deepening variables
     private int loopLimit = -1;
@@ -135,6 +143,40 @@ public class Options {
         return value;
     }
 
+    Map<BasicBlock, Integer> calculateDistanceToExit(CFG cfg) {
+
+        if(!distanceToExit) return null;
+
+        Map<BasicBlock, Integer> distances = new HashMap<>();
+        Queue<BasicBlock> worklist = new LinkedList<>();
+
+        for (BasicBlock block : cfg.blocks) {
+            for (ProgramStatement ps : block.instructions) {
+                int[] operands = ps.getOperands();
+                if (ps.getInstruction().getName().equals("addi") &&
+                        operands[0] == 17 && operands[1] == 0 && operands[2] == 10) {
+                    distances.put(block, 0);
+                    worklist.add(block);
+                }
+            }
+        }
+
+        if (worklist.isEmpty()) return null;
+
+        while (!worklist.isEmpty()) {
+            BasicBlock block = worklist.remove();
+            int currentDistance = distances.get(block);
+            for (BasicBlock predecessor : block.getIn()) {
+                if (!distances.containsKey(predecessor)) {
+                    distances.put(predecessor, currentDistance + 1);
+                    worklist.add(predecessor);
+                }
+            }
+        }
+
+        return distances;
+    }
+
     private void checkOptions(String[] args){
         for(int i = 1; i < args.length; ++i){
             switch (args[i]){
@@ -163,6 +205,9 @@ public class Options {
                         System.out.println("File not found");
                         System.exit(1);
                     }
+                    break;
+                case "--distance-exit":
+                    distanceToExit = true;
                     break;
                 default:
                     System.out.println("Unknown option: " + args[i]);

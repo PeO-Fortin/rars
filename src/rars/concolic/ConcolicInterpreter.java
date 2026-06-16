@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-import rars.ProgramStatement;
 import rars.cfg.BasicBlock;
 import rars.riscv.InstructionSet;
 import rars.riscv.hardware.AddressErrorException;
@@ -307,7 +306,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     Map<String, Integer> model = new HashMap<>();
     public void runConcolic(int maxExecutions) {
-        this.distanceToExit = calculateDistanceToExit();
+        this.distanceToExit = options.calculateDistanceToExit(cfg);
         if (this.distanceToExit != null) {
             executionTreeRoot.distanceToExit = this.distanceToExit.get(
                     cfg.entryBlock
@@ -341,37 +340,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         } catch (IOException e) {
             System.out.println("IO Error");
         }
-    }
-
-    Map<BasicBlock, Integer> calculateDistanceToExit() {
-        Map<BasicBlock, Integer> distances = new HashMap<>();
-        Queue<BasicBlock> worklist = new LinkedList<>();
-
-        for (BasicBlock block : cfg.blocks) {
-            for (ProgramStatement ps : block.instructions) {
-                int[] operands = ps.getOperands();
-                if (ps.getInstruction().getName().equals("addi") &&
-                        operands[0] == 17 && operands[1] == 0 && operands[2] == 10) {
-                    distances.put(block, 0);
-                    worklist.add(block);
-                }
-            }
-        }
-
-        if (worklist.isEmpty()) return null;
-
-        while (!worklist.isEmpty()) {
-            BasicBlock block = worklist.remove();
-            int currentDistance = distances.get(block);
-            for (BasicBlock predecessor : block.getIn()) {
-                if (!distances.containsKey(predecessor)) {
-                    distances.put(predecessor, currentDistance + 1);
-                    worklist.add(predecessor);
-                }
-            }
-        }
-
-        return distances;
     }
 
     private static class ExecutionDone extends RuntimeException {}
