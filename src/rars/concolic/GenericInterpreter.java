@@ -280,13 +280,18 @@ public abstract class GenericInterpreter<V> {
     protected abstract V readInt();
     protected abstract void readString(V bufAddress, V length);
     public void ecall(int syscall) {
+        String strOut;
         switch (syscall) {
             // Register 10 = a0
             case 1:     // PrintInt
-                output += values.asInt(registers[10]) + " | ";
+                int it = values.asInt(registers[10]);
+                options.compareIntOutput(it);
+                output += it + " | ";
                 return;
             case 4:     // PrintString
-                output += printString(values.asLong(registers[10])) + " | ";
+                strOut = printString(values.asLong(registers[10]));
+                options.compareStringOutput(strOut);
+                output +=  strOut + " | ";
                 return;
             case 5:     // ReadInt
                 registers[10] = readInt();
@@ -302,17 +307,23 @@ public abstract class GenericInterpreter<V> {
                 exit = true;
                 return;
             case 11:    // PrintChar
-                output += values.asChar(registers[10]) + " | ";
+                char ch = values.asChar(registers[10]);
+                options.compareCharOutput(ch);
+                output += ch + " | ";
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
                 input += values.asChar(registers[10]) + " | ";
                 return;
             case 34:    // PrintIntHex
-                output += Integer.toHexString(values.asInt(registers[10])) + " | ";
+                strOut = Integer.toHexString(values.asInt(registers[10]));
+                options.compareStringOutput(strOut);
+                output += strOut + " | ";
                 return;
             case 35:    // PrintIntBinary
-                output += Integer.toBinaryString(values.asInt(registers[10])) + " | ";
+                strOut = Integer.toBinaryString(values.asInt(registers[10]));
+                options.compareStringOutput(strOut);
+                output +=  strOut + " | ";
                 return;
         }
     }

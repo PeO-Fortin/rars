@@ -1,14 +1,10 @@
 package rars.concolic;
 
-
 import rars.ProgramStatement;
 import rars.cfg.BasicBlock;
 import rars.cfg.CFG;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -18,21 +14,26 @@ public class Options {
     private final String HELP = "\nAvailable options:\n" +
             "--help :\t\tDisplay available options\n" +
             "--iterative-deepening :\tActivate iterative deepening\n" +
+            "--distance-exit :\tActivate distance to exit exploration\n" +
+            "--dfs :\tActive Depth-first search exploration\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions\n" +
             "--user-entries [file] :\tUse entries from a file to start the symbolic execution\n" +
-            "--distance-exit :\tActivate distance to exit exploration";
+            "--compare-outputs [file] :\tCompare the outputs with the ones in the file";
 
 
     boolean iterativeDeepening = false;
     boolean dfs = false;
     boolean userEntries = false;
+    boolean compOutput = false;
     boolean distanceToExit = false;
 
     //Iterative deepening variables
     private int loopLimit = -1;
 
-    private BufferedReader reader;
+    private BufferedReader readerInput;
+    private BufferedReader readerOutput;
+    private PrintWriter writerOutput;
 
     private int maxExecutions = 300;
     private int maxInstructions = 500;
@@ -57,6 +58,7 @@ public class Options {
         return maxInstructions;
     }
 
+    //TODO
     public boolean iteratesDeeper(ExecutionTreeNode currentNode, BasicBlock target) {
         if (iterativeDeepening){
             int occurrence = 0;
@@ -75,7 +77,15 @@ public class Options {
     public ConcolicValues.V readCharFromFile() {
         if(!userEntries){return null;}
 
+        Character ch = readCharFromFile(readerInput);
+
+        return ch == null ? null : new ConcolicValues.V(ch, new SymbolicLong(ch));
+
+    }
+
+    private Character readCharFromFile(BufferedReader reader) {
         char ch;
+
         try {
             if(reader.ready()){
                 ch = (char) reader.read();
@@ -83,16 +93,24 @@ public class Options {
                 reader.close();
                 return null;
             }
-            return new ConcolicValues.V(ch, new SymbolicLong(ch));
         } catch (IOException e) {
             return null;
         }
+
+        return ch;
     }
 
     public ConcolicValues.V readIntFromFile() {
         if(!userEntries){return null;}
 
+        Integer value = readIntFromFile(readerInput);
+
+        return value==null ? null : new ConcolicValues.V(value, new SymbolicLong(value));
+    }
+
+    private Integer readIntFromFile(BufferedReader reader){
         int value;
+
         try {
             if(reader.ready()){
                 StringBuilder sb = new StringBuilder();
@@ -116,10 +134,12 @@ public class Options {
                 reader.close();
                 return null;
             }
-            return new ConcolicValues.V(value, new SymbolicLong(value));
+
         } catch (IOException e) {
             return null;
         }
+
+        return value;
     }
 
     public String readStringFromFile(long length) {
@@ -128,11 +148,11 @@ public class Options {
 
         try {
             for(int i = 0; i < length - 1; ++i) {
-                if(!reader.ready()){
-                    reader.close();
+                if(!readerInput.ready()){
+                    readerInput.close();
                     return null;
                 }
-                char ch = (char) reader.read();
+                char ch = (char) readerInput.read();
                 if (ch == '\0') break;
                 value += ch;
             }
@@ -141,6 +161,35 @@ public class Options {
             return null;
         }
         return value;
+    }
+
+    public void compareCharOutput(char output) {
+        if(!compOutput){return;}
+
+        Character userOutput = readCharFromFile(readerOutput);
+
+        if(userOutput != null && output == userOutput) {
+            writerOutput.print("SUCCESS");
+        } else {
+            writerOutput.print("FAILURE");
+        }
+    }
+
+    public void compareIntOutput(int output) {
+        if(!compOutput){return;}
+
+        Integer userOutput = readIntFromFile(readerOutput);
+
+        if(userOutput != null && output == userOutput) {
+            writerOutput.print("SUCCESS");
+        } else {
+            writerOutput.print("FAILURE");
+        }
+    }
+
+    //TODO
+    public void compareStringOutput(String output) {
+
     }
 
     Map<BasicBlock, Integer> calculateDistanceToExit(CFG cfg) {
@@ -200,10 +249,22 @@ public class Options {
                 case "--user-entries":
                     userEntries = true;
                     try {
-                        reader = new BufferedReader(new FileReader(args[++i]));
+                        readerInput = new BufferedReader(new FileReader(args[++i]));
                     } catch (FileNotFoundException e) {
-                        System.out.println("File not found");
+                        System.out.println("Input file not found");
                         System.exit(1);
+                    }
+                    break;
+                case "--compare-outputs":
+                    compOutput = true;
+                    try {
+                        readerOutput = new BufferedReader(new FileReader(args[++i]));
+                        writerOutput = new PrintWriter(new FileWriter("comparaison.txt"));
+                    } catch (FileNotFoundException e) {
+                        System.out.println("Output file not found");
+                        System.exit(1);
+                    } catch (IOException e) {
+                        System.out.println("Error writing comparison output file");
                     }
                     break;
                 case "--distance-exit":
