@@ -89,6 +89,9 @@ public class CFG {
                 blockEntryPoints.add(ps.getAddress() + 4);              //block if false
             } else if (instruction.equals("jal")) {
                 blockEntryPoints.add(ps.getAddress() + operands[1]);
+                blockEntryPoints.add(ps.getAddress() + 4);
+            } else if (instruction.equals("jalr")) {
+                blockEntryPoints.add(ps.getAddress() + 4);
             }
         }
 

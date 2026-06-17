@@ -162,114 +162,114 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
     }
 
     @Override
-    protected void lb(Long offset, Long memAddress, int dst) {
+    protected Long lb(Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, false);
             ConcolicValues op = new ConcolicValues();
             memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
-            registers[dst] = bValue.getConcreteValue();
+            return bValue.getConcreteValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
-            exit = true;
+            return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + " | ";
-            exit = true;
+            return null;
         }
     }
 
     @Override
-    protected void lbu(Long offset, Long memAddress, int dst) {
+    protected Long lbu(Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(MemoryValueTypes.BYTE, true);
             ConcolicValues op = new ConcolicValues();
             memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
-            registers[dst] = bValue.getConcreteValue();
+            return bValue.getConcreteValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
-            exit = true;
+            return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + " | ";
-            exit = true;
+            return null;
         }
     }
 
     @Override
-    protected void lh(Long offset, Long memAddress, int dst) {
+    protected Long lh(Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, false);
             ConcolicValues op = new ConcolicValues();
             memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
-            registers[dst] = bValue.getConcreteValue();
+            return bValue.getConcreteValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
-            exit = true;
+            return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + " | ";
-            exit = true;
+            return null;
         }
     }
 
     @Override
-    protected void lhu(Long offset, Long memAddress, int dst) {
+    protected Long lhu(Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(MemoryValueTypes.HALFWORD, true);
             ConcolicValues op = new ConcolicValues();
             memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
-            registers[dst] = bValue.getConcreteValue();
+            return bValue.getConcreteValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
-            exit = true;
+            return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + " | ";
-            exit = true;
+            return null;
         }
     }
 
     @Override
-    protected void lw(Long offset, Long memAddress, int dst) {
+    protected Long lw(Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, false);
             ConcolicValues op = new ConcolicValues();
             memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
-            registers[dst] = bValue.getConcreteValue();
+            return bValue.getConcreteValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
-            exit = true;
+            return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + " | ";
-            exit = true;
+            return null;
         }
     }
 
     @Override
-    protected void lwu(Long offset, Long memAddress, int dst) {
+    protected Long lwu(Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(MemoryValueTypes.WORD, true);
             ConcolicValues op = new ConcolicValues();
             memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
-            registers[dst] = bValue.getConcreteValue();
+            return bValue.getConcreteValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
-            exit = true;
+            return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + " | ";
-            exit = true;
+            return null;
         }
     }
 
     @Override
-    protected void ld(Long offset, Long memAddress, int dst) {
+    protected Long ld(Long offset, Long memAddress) {
         try {
             MemoryValue bValue = new MemoryValue(MemoryValueTypes.DOUBLEWORD, false);
             ConcolicValues op = new ConcolicValues();
             memory.accessMemory(bValue, op.inject(memAddress), op.inject(offset));
-            registers[dst] = bValue.getConcreteValue();
+            return bValue.getConcreteValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             output += "Access outside memory | ";
-            exit = true;
+            return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + " | ";
-            exit = true;
+            return null;
         }
     }
 }

@@ -76,7 +76,7 @@ public class Memory {
      * @param offset    the offset to apply to the address
      * @return the value at this address
      */
-    public void accessMemory(MemoryValue value, ConcolicValues.V offset, ConcolicValues.V address) throws AddressErrorException {
+    public void accessMemory(MemoryValue value, ConcolicValues.V address, ConcolicValues.V offset) throws AddressErrorException {
         if (!(address.symbolic instanceof  SymbolicLong) || !(offset.symbolic instanceof  SymbolicLong)) {
             throw new AddressErrorException("Load address is not a constant", 4, -1);
         }
@@ -105,7 +105,7 @@ public class Memory {
      * @param address   the address where to store the value
      * @param offset    the offset to apply to the address
      */
-    public void storeMemory(MemoryValue value, ConcolicValues.V offset, ConcolicValues.V address) throws AddressErrorException {
+    public void storeMemory(MemoryValue value, ConcolicValues.V address, ConcolicValues.V offset) throws AddressErrorException {
         if (!(address.symbolic instanceof  SymbolicLong) || !(offset.symbolic instanceof  SymbolicLong)) {
             throw new AddressErrorException("Store address is not a constant", 4, -1);
         }

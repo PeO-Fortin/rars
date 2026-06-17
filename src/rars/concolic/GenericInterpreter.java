@@ -237,13 +237,83 @@ public abstract class GenericInterpreter<V> {
     protected abstract void sh(V value, V offset, V memAddress);
     protected abstract void sw(V value, V offset, V memAddress);
     protected abstract void sd(V value, V offset, V memAddress);
-    protected abstract void lb(V offset, V memAddress, int dst);
-    protected abstract void lbu(V offset, V memAddress, int dst);
-    protected abstract void lh(V offset, V memAddress, int dst);
-    protected abstract void lhu(V offset, V memAddress, int dst);
-    protected abstract void lw(V offset, V memAddress, int dst);
-    protected abstract void lwu(V offset, V memAddress, int dst);
-    protected abstract void ld(V offset, V memAddress, int dst);
+
+    void lb(V offset, V memAddress, int dst) {
+        V value = lb(offset, memAddress);
+        if (value != null) {
+            registers[dst] = value;
+        } else {
+            exit = true;
+        }
+    }
+
+    protected abstract V lb(V offset, V memAddress);
+
+    void lbu(V offset, V memAddress, int dst) {
+        V value = lbu(offset, memAddress);
+        if (value != null) {
+            registers[dst] = value;
+        } else {
+            exit = true;
+        }
+    }
+
+    protected abstract V lbu(V offset, V memAddress);
+
+    void lh(V offset, V memAddress, int dst) {
+        V value = lh(offset, memAddress);
+        if (value != null) {
+            registers[dst] = value;
+        } else {
+            exit = true;
+        }
+    }
+
+    protected abstract V lh(V offset, V memAddress);
+
+    void lhu(V offset, V memAddress, int dst) {
+        V value = lhu(offset, memAddress);
+        if (value != null) {
+            registers[dst] = value;
+        } else {
+            exit = true;
+        }
+    }
+
+    protected abstract V lhu(V offset, V memAddress);
+
+    void lw(V offset, V memAddress, int dst) {
+        V value = lw(offset, memAddress);
+        if (value != null) {
+            registers[dst] = value;
+        } else {
+            exit = true;
+        }
+    }
+
+    protected abstract V lw(V offset, V memAddress);
+
+    void lwu(V offset, V memAddress, int dst) {
+        V value = lwu(offset, memAddress);
+        if (value != null) {
+            registers[dst] = value;
+        } else {
+            exit = true;
+        }
+    }
+
+    protected abstract V lwu(V offset, V memAddress);
+
+    void ld(V offset, V memAddress, int dst) {
+        V value = ld(offset, memAddress);
+        if (value != null) {
+            registers[dst] = value;
+        } else {
+            exit = true;
+        }
+    }
+
+    protected abstract V ld(V offset, V memAddress);
 
     void sll(V left, V right, int dst) { registers[dst] = values.sll(left, right); }
 
