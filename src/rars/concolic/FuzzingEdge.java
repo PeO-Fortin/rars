@@ -1,11 +1,13 @@
 package rars.concolic;
 
+import rars.cfg.BasicBlock;
+
 import java.util.Objects;
 
 public class FuzzingEdge {
-    public int from;
-    public int to;
-    public FuzzingEdge(int from, int to) {
+    public BasicBlock from;
+    public BasicBlock to;
+    public FuzzingEdge(BasicBlock from, BasicBlock to) {
         this.from = from;
         this.to = to;
     }
