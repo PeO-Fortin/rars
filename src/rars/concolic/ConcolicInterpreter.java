@@ -93,7 +93,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     int lastReadString = 0;
     @Override
-    protected void readString(ConcolicValues.V bufAddress, ConcolicValues.V length) {
+    protected String readString(ConcolicValues.V bufAddress, ConcolicValues.V length) {
         String lenSymbol = "readString_" + lastReadString + "_len";
         String strSymbol = "readString_" + lastReadString++;
 
@@ -118,6 +118,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             sb(ch, values.inject(i), bufAddress);
         }
         sb(values.inject(0), values.inject(i), bufAddress);
+        return value;
     }
 
     private ConcolicValues.V readCharforString(String symbol) {

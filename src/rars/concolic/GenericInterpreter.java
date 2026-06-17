@@ -348,7 +348,7 @@ public abstract class GenericInterpreter<V> {
 
     protected abstract V readChar();
     protected abstract V readInt();
-    protected abstract void readString(V bufAddress, V length);
+    protected abstract String readString(V bufAddress, V length);
     public void ecall(int syscall) {
         String strOut;
         switch (syscall) {
@@ -368,7 +368,7 @@ public abstract class GenericInterpreter<V> {
                 input += values.asInt(registers[10]) + " | ";
                 return;
             case 8:     // ReadString
-                readString(registers[10], registers[11]);
+                input += readString(registers[10], registers[11]) + " | ";
                 return;
             case 9:     //Sbrk
                 memory.sBrk(values.asInt(registers[10]));

@@ -76,29 +76,33 @@ public class ConcreteInterpreter extends GenericInterpreter<Long> {
         return (long)(s.nextInt());
     }
 
-    protected void readString(Long bufAddress, Long length) {
+    protected String readString(Long bufAddress, Long length) {
+        String value = "";
         try {
             if (length > 0) {
+
                 char c;
                 int i;
-                MemoryValue value;
+                MemoryValue memValue;
                 ConcolicValues op = new ConcolicValues();
                 for (i = 0; i < length - 1; ++i) {
                     c = (char) System.in.read();
                     if (c == -1 || c == '\n') {
                         break;
                     }
-                    value = new MemoryValue(c, MemoryValueTypes.BYTE, true);
-                    this.memory.storeMemory(value, op.inject(bufAddress), op.inject(i));
+                    memValue = new MemoryValue(c, MemoryValueTypes.BYTE, true);
+                    this.memory.storeMemory(memValue, op.inject(bufAddress), op.inject(i));
+                    value += c;
                 }
-                value = new MemoryValue(0, MemoryValueTypes.BYTE, true);
-                this.memory.storeMemory(value, op.inject(bufAddress), op.inject(i));
+                memValue = new MemoryValue(0, MemoryValueTypes.BYTE, true);
+                this.memory.storeMemory(memValue, op.inject(bufAddress), op.inject(i));
             }
         } catch (IOException e) {
             throw new RuntimeException("cannot readChar: " + e);
         } catch (AddressErrorException e) {
             throw new RuntimeException("Address error: " + e.getMessage());
         }
+        return value;
     }
 
     @Override
