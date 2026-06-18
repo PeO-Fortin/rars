@@ -4,7 +4,7 @@ import rars.riscv.hardware.MemoryConfigurations;
 import rars.riscv.hardware.AddressErrorException;
 
 public class Memory {
-    public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer();
+    public static final int DEFAULT_STACK_POINTER = MemoryConfigurations.getDefaultStackPointer() - 4; //Align sp for 64 bits architecture
     public static final int DEFAULT_GLOBAL_POINTER = MemoryConfigurations.getDefaultGlobalPointer();
     public static final int DATA_SIZE = 4194304; //4MB
     public static final int STACK_SIZE = 8192; //8KB
@@ -77,7 +77,7 @@ public class Memory {
      * @return the value at this address
      */
     public void accessMemory(MemoryValue value, ConcolicValues.V address, ConcolicValues.V offset) throws AddressErrorException {
-        if (!(address.symbolic instanceof  SymbolicLong) || !(offset.symbolic instanceof  SymbolicLong)) {
+        if (!(address.symbolic instanceof  SymbolicLong) || !(offset.symbolic instanceof SymbolicLong)) {
             throw new AddressErrorException("Load address is not a constant", 4, -1);
         }
 
