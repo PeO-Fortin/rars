@@ -305,10 +305,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         return v;
     }
 
-    public static final String EXEC_SEPARATOR = "***********************";
-    public static final String INPUT_FILE_NAME = "src/rars/concolic/results/inputs";
-    public static final String OUTPUT_FILE_NAME = "src/rars/concolic/results/outputs";
-
     Map<String, Integer> model = new HashMap<>();
     public void runConcolic(int maxExecutions) {
         this.distanceToExit = options.calculateDistanceToExit(cfg);
@@ -320,8 +316,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         int execution = 1;
         try {
             do {
-                PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FILE_NAME + execution));
-                PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FILE_NAME + execution));
                 lastReadCharacter = 0;
                 lastReadInteger = 0;
                 options.newExecution();
@@ -330,14 +324,30 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 super.input = "|"; super.output = "|";
                 runMain();
                 currentNode.explored = true;
-                pwInputs.println(super.input); pwOutputs.println(super.output);
-                pwInputs.println(EXEC_SEPARATOR); pwOutputs.println(EXEC_SEPARATOR);
-                pwInputs.flush(); pwOutputs.flush();
-                pwInputs.close(); pwOutputs.close();
+                printResults(execution);
                 ++execution;
             } while (execution <= maxExecutions);
         } catch (ExecutionDone e) {
             System.out.println("Execution completed");
+        }
+    }
+
+    public static final String EXEC_SEPARATOR = "***********************";
+    public static final String INPUT_FILE_NAME = "src/rars/concolic/results/inputs";
+    public static final String OUTPUT_FILE_NAME = "src/rars/concolic/results/outputs";
+
+    private void printResults(int execution) {
+        try {
+            PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FILE_NAME + execution));
+            PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FILE_NAME + execution));
+            pwInputs.println(super.input);
+            pwOutputs.println(super.output);
+            pwInputs.println(EXEC_SEPARATOR);
+            pwOutputs.println(EXEC_SEPARATOR);
+            pwInputs.flush();
+            pwOutputs.flush();
+            pwInputs.close();
+            pwOutputs.close();
         } catch (IOException e) {
             System.out.println("IO Error");
         }
