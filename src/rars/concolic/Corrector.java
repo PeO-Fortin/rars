@@ -2,31 +2,22 @@ package rars.concolic;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Corrector {
 
+    public static final int MAX_EXEC = 50;
+
     public static void concExecFile(String filename, List<String> arguments) {
         try {
-            ConcolicInterpreter.main(arguments.toArray(new String[arguments.size()]));
+            List<String> completeArgs = new ArrayList<>();
+            completeArgs.add(filename);
+            completeArgs.addAll(arguments);
+            ConcolicInterpreter.main(completeArgs.toArray(new String[0]));
         } catch (Exception e) {
             System.err.println("Error while executing " + filename + ": " + e.getMessage());
         }
-    }
-
-    public static String getInputs() {
-        String inputFile = "inputs.txt";
-
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("Results.txt"));
-            PrintWriter pw = new PrintWriter(inputFile);
-
-
-        } catch (IOException e) {
-            System.out.println("IO exception: " + e.getMessage());
-        }
-
-        return inputFile;
     }
 
     public static void main(String[] args) {
@@ -36,19 +27,20 @@ public class Corrector {
         }
 
         List<String> arguments = new ArrayList<>();
-        String inputs = "";
 
         arguments.add("--max-exec");
-        arguments.add("50");
+        arguments.add(String.valueOf(MAX_EXEC));
         concExecFile(args[0], arguments);
 
-        inputs = getInputs();
+        File inputFolder = new File(ConcolicInterpreter.INPUT_FOLDER_NAME);
+
+        List<File> masterInputs = new ArrayList<>(Arrays.asList(inputFolder.listFiles()));
 
         arguments.add("--user-entries");
-        arguments.add(inputs);
 
-        for (int i = 1; i < args.length; ++i) {
-            concExecFile(args[i], arguments);
+        for(File f : masterInputs){
+            arguments.add(inputFolder.getName() + f.getName());
         }
+
     }
 }
