@@ -332,7 +332,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         }
     }
 
-    public static final String EXEC_SEPARATOR = "***********************";
     public static final String INPUT_FILE_NAME = "src/rars/concolic/results/inputs";
     public static final String OUTPUT_FILE_NAME = "src/rars/concolic/results/outputs";
 
@@ -340,14 +339,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         try {
             PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FILE_NAME + execution));
             PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FILE_NAME + execution));
-            pwInputs.println(super.input);
-            pwOutputs.println(super.output);
-            pwInputs.println(EXEC_SEPARATOR);
-            pwOutputs.println(EXEC_SEPARATOR);
-            pwInputs.flush();
-            pwOutputs.flush();
-            pwInputs.close();
-            pwOutputs.close();
+            pwInputs.println(super.input); pwOutputs.println(super.output);
+            pwInputs.flush(); pwOutputs.flush();
+            pwInputs.close(); pwOutputs.close();
         } catch (IOException e) {
             System.out.println("IO Error");
         }

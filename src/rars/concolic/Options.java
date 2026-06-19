@@ -18,22 +18,21 @@ public class Options {
             "--dfs :\tActive Depth-first search exploration\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions\n" +
-            "--user-entries [file] :\tUse entries from a file to start the symbolic execution\n" +
-            "--compare-outputs [file] :\tCompare the outputs with the ones in the file";
+            "--user-entries [number of files] [files] :\tUse entries from files to start the symbolic execution";
 
 
     boolean iterativeDeepening = false;
     boolean dfs = false;
     boolean userEntries = false;
-    boolean compOutput = false;
     boolean distanceToExit = false;
 
     //Iterative deepening variables
     private int loopLimit = -1;
 
+    //User entries variable
     private BufferedReader readerInput;
-    private BufferedReader readerOutput;
-    private PrintWriter writerOutput;
+    private String[] files;
+    private int fileNumber;
 
     private int maxExecutions = 300;
     private int maxInstructions = 500;
@@ -44,9 +43,20 @@ public class Options {
         }
     }
 
-    public void newExecution(){
-        if (iterativeDeepening){
+    public void newExecution() {
+        if (iterativeDeepening) {
             ++loopLimit;
+        }
+        if (userEntries) {
+            try {
+                if (fileNumber < files.length) {
+                    readerInput = new BufferedReader(new FileReader(files[fileNumber]));
+                    ++fileNumber;
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println("Input file not found: " + files[fileNumber]);
+                System.exit(1);
+            }
         }
     }
 
@@ -163,35 +173,6 @@ public class Options {
         return value;
     }
 
-    public void compareCharOutput(char output) {
-        if(!compOutput){return;}
-
-        Character userOutput = readCharFromFile(readerOutput);
-
-        if(userOutput != null && output == userOutput) {
-            writerOutput.print("SUCCESS");
-        } else {
-            writerOutput.print("FAILURE");
-        }
-    }
-
-    public void compareIntOutput(int output) {
-        if(!compOutput){return;}
-
-        Integer userOutput = readIntFromFile(readerOutput);
-
-        if(userOutput != null && output == userOutput) {
-            writerOutput.print("SUCCESS");
-        } else {
-            writerOutput.print("FAILURE");
-        }
-    }
-
-    //TODO
-    public void compareStringOutput(String output) {
-
-    }
-
     Map<BasicBlock, Integer> calculateDistanceToExit(CFG cfg) {
 
         if(!distanceToExit) return null;
@@ -249,22 +230,15 @@ public class Options {
                 case "--user-entries":
                     userEntries = true;
                     try {
-                        readerInput = new BufferedReader(new FileReader(args[++i]));
-                    } catch (FileNotFoundException e) {
-                        System.out.println("Input file not found");
+                        files = new String[Integer.parseInt(args[++i])];
+                        for(int j = 0; j < files.length; ++j){
+                            files[j] = args[++i];
+                        }
+                        fileNumber = 0;
+                    } catch (NumberFormatException e) {
+                        System.out.println("Wrong parameter for option --user-entries: " + args[i]);
+                        System.out.println("Try option '--help'");
                         System.exit(1);
-                    }
-                    break;
-                case "--compare-outputs":
-                    compOutput = true;
-                    try {
-                        readerOutput = new BufferedReader(new FileReader(args[++i]));
-                        writerOutput = new PrintWriter(new FileWriter("comparaison.txt"));
-                    } catch (FileNotFoundException e) {
-                        System.out.println("Output file not found");
-                        System.exit(1);
-                    } catch (IOException e) {
-                        System.out.println("Error writing comparison output file");
                     }
                     break;
                 case "--distance-exit":
