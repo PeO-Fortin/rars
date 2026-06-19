@@ -145,10 +145,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.BYTE, true);
             memory.storeMemory(bValue, memAddress, offset);
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             exit = true;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             exit = true;
         }
     }
@@ -159,10 +159,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             MemoryValue memValue = new MemoryValue(value, MemoryValueTypes.HALFWORD, true);
             memory.storeMemory(memValue, offset, memAddress);
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             exit = true;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             exit = true;
         }
     }
@@ -173,10 +173,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.WORD, true);
             memory.storeMemory(bValue, memAddress, offset);
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             exit = true;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             exit = true;
         }
     }
@@ -187,10 +187,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.DOUBLEWORD, true);
             memory.storeMemory(bValue, memAddress, offset);
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             exit = true;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             exit = true;
         }
     }
@@ -202,10 +202,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             return null;
         }
     }
@@ -217,10 +217,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             return null;
         }
     }
@@ -232,10 +232,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             return null;
         }
     }
@@ -247,10 +247,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             return null;
         }
     }
@@ -262,10 +262,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             return null;
         }
     }
@@ -277,10 +277,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             return null;
         }
     }
@@ -292,10 +292,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory | ";
+            output += "Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             return null;
         }
     }
@@ -304,6 +304,10 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         ConcolicValues.V v = ConcolicValues.variable(model.getOrDefault(symbol, defaultValue), symbol);
         return v;
     }
+
+    public static final String EXEC_SEPARATOR = "***********************";
+    public static final String INPUT_FILE_NAME = "src/rars/concolic/results/inputs";
+    public static final String OUTPUT_FILE_NAME = "src/rars/concolic/results/outputs";
 
     Map<String, Integer> model = new HashMap<>();
     public void runConcolic(int maxExecutions) {
@@ -315,28 +319,23 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         }
         int execution = 1;
         try {
-            PrintWriter pw = new PrintWriter(new FileWriter("Results.txt"));
             do {
+                PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FILE_NAME + execution));
+                PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FILE_NAME + execution));
                 lastReadCharacter = 0;
                 lastReadInteger = 0;
                 options.newExecution();
-                pw.println("***********************");
-                pw.println("Execution: " + execution);
-                System.out.println("Execution: " + execution);
                 currentNode = executionTreeRoot;
                 computeNextModel();
-                super.output = "| ";
-                super.input = "| ";
+                super.input = "|"; super.output = "|";
                 runMain();
                 currentNode.explored = true;
-                pw.println("Input(s): " + super.input);
-                pw.println("Output(s): " + super.output);
-                pw.println("***********************");
-                pw.println();
-                pw.flush();
+                pwInputs.println(super.input); pwOutputs.println(super.output);
+                pwInputs.println(EXEC_SEPARATOR); pwOutputs.println(EXEC_SEPARATOR);
+                pwInputs.flush(); pwOutputs.flush();
+                pwInputs.close(); pwOutputs.close();
                 ++execution;
             } while (execution <= maxExecutions);
-            pw.close();
         } catch (ExecutionDone e) {
             System.out.println("Execution completed");
         } catch (IOException e) {
@@ -365,7 +364,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected void setCurrentBlockCond(BasicBlock target) {
         if(!options.iteratesDeeper(currentNode, target)){
             exit = true;
-            input += "Iteration deepening reached | ";
+            input += "Iteration deepening reached|";
         } else {
             edgesCovered.add(new FuzzingEdge(currentBlock, target));
             super.setCurrentBlock(target);

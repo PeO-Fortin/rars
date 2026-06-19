@@ -356,19 +356,19 @@ public abstract class GenericInterpreter<V> {
             case 1:     // PrintInt
                 int it = values.asInt(registers[10]);
                 options.compareIntOutput(it);
-                output += it + " | ";
+                output += it + "|";
                 return;
             case 4:     // PrintString
                 strOut = printString(values.asLong(registers[10]));
                 options.compareStringOutput(strOut);
-                output +=  strOut + " | ";
+                output +=  strOut + "|";
                 return;
             case 5:     // ReadInt
                 registers[10] = readInt();
-                input += values.asInt(registers[10]) + " | ";
+                input += values.asInt(registers[10]) + "|";
                 return;
             case 8:     // ReadString
-                input += readString(registers[10], registers[11]) + " | ";
+                input += readString(registers[10], registers[11]) + "|";
                 return;
             case 9:     //Sbrk
                 memory.sBrk(values.asInt(registers[10]));
@@ -379,21 +379,21 @@ public abstract class GenericInterpreter<V> {
             case 11:    // PrintChar
                 char ch = values.asChar(registers[10]);
                 options.compareCharOutput(ch);
-                output += ch + " | ";
+                output += ch + "|";
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
-                input += values.asChar(registers[10]) + " | ";
+                input += values.asChar(registers[10]) + "|";
                 return;
             case 34:    // PrintIntHex
                 strOut = Integer.toHexString(values.asInt(registers[10]));
                 options.compareStringOutput(strOut);
-                output += strOut + " | ";
+                output += strOut + "|";
                 return;
             case 35:    // PrintIntBinary
                 strOut = Integer.toBinaryString(values.asInt(registers[10]));
                 options.compareStringOutput(strOut);
-                output +=  strOut + " | ";
+                output +=  strOut + "|";
                 return;
         }
     }
@@ -421,10 +421,10 @@ public abstract class GenericInterpreter<V> {
             s = decoder.decode(ByteBuffer.wrap(encodedChars.toByteArray())).toString();
 
         } catch (AddressErrorException e){
-            output += e.getMessage() + " | ";
+            output += e.getMessage() + "|";
             exit = true;
         } catch (CharacterCodingException e) {
-            output += "Erreur d'encodage de caractère" + " | ";
+            output += "Erreur d'encodage de caractère" + "|";
             exit = true;
         }
         return s;
