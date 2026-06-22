@@ -49,12 +49,16 @@ public class Options {
         }
         if (userEntries) {
             try {
+                readerInput.close();
                 if (fileNumber < files.length) {
                     readerInput = new BufferedReader(new FileReader(files[fileNumber]));
                     ++fileNumber;
                 }
             } catch (FileNotFoundException e) {
                 System.out.println("Input file not found: " + files[fileNumber]);
+                System.exit(1);
+            } catch (IOException e) {
+                System.out.println("IO Error");
                 System.exit(1);
             }
         }

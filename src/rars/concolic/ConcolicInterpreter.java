@@ -332,13 +332,15 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         }
     }
 
-    public static final String INPUT_FILE_NAME = "src/rars/concolic/results/inputs";
-    public static final String OUTPUT_FILE_NAME = "src/rars/concolic/results/outputs";
+    public static final String INPUT_FOLDER_NAME = "src/rars/concolic/results/inputs/";
+    public static final String OUTPUT_FOLDER_NAME = "src/rars/concolic/results/outputs";
+    public static final String INPUT_FILE_NAME = "inputs";
+    public static final String OUTPUT_FILE_NAME = "outputs";
 
     private void printResults(int execution) {
         try {
-            PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FILE_NAME + execution));
-            PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FILE_NAME + execution));
+            PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FOLDER_NAME + INPUT_FILE_NAME + execution));
+            PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FOLDER_NAME + OUTPUT_FILE_NAME + execution));
             pwInputs.println(super.input); pwOutputs.println(super.output);
             pwInputs.flush(); pwOutputs.flush();
             pwInputs.close(); pwOutputs.close();
