@@ -4,7 +4,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Corrector {
@@ -13,6 +12,11 @@ public class Corrector {
     public static final String MASTER_FOLDER = "src/rars/concolic/results/master_results/";
     public static final FilenameFilter FILTER_INPUTS = (f, name) -> name.startsWith("input");
     public static final FilenameFilter FILTER_OUTPUTS = (f, name) -> name.startsWith("output");
+    public static final String CORRECTION_FILE = "Correction.txt";
+    public static final String STUDENT_HEADER =
+            "****************************************\n" +
+            "Fichier : %s\n" +
+            "****************************************\n";
 
     public static int topIndex = 1;
     public static String masterFileName;
@@ -83,16 +87,30 @@ public class Corrector {
     }
 
     public static void compareOutputs(File[] studentOutputs) {
+        File[] masterInputs = getFiles(MASTER_FOLDER, FILTER_INPUTS);
         File[] masterOutputs = getFiles(MASTER_FOLDER, FILTER_OUTPUTS);
+
         try {
+        PrintWriter pw = new PrintWriter(new FileWriter(CORRECTION_FILE, true));
+        boolean success = true;
             for (int i = 0; i < masterOutputs.length; ++i) {
                 String studentOutput = Files.readString(studentOutputs[i].toPath());
                 String masterOutput = Files.readString(masterOutputs[i].toPath());
 
                 if (!studentOutput.equals(masterOutput)) {
-                    System.out.println("FAIL");
+                    pw.println("FAIL");
+                    pw.println("Inputs : " + Files.readString(masterInputs[i].toPath()));
+                    pw.println("Teacher Outputs : " + Files.readString(masterOutputs[i].toPath()));
+                    pw.println("Student Outputs : " + Files.readString(studentOutputs[i].toPath()));
+                    success = false;
                 }
             }
+
+            if (success) {
+                pw.println("SUCCESS");
+            }
+            pw.flush();
+            pw.close();
         } catch (IOException e) {
             System.out.println("Error while reading output: " + e.getMessage());
         }
@@ -146,8 +164,15 @@ public class Corrector {
             ++topIndex;
         }
 
-        for(int j = 1; j < args.length; ++j){
-            testStudent(args[j]);
+        try {
+            for (int j = 1; j < args.length; ++j) {
+                PrintWriter pw = new PrintWriter(new FileWriter(CORRECTION_FILE, true));
+                pw.printf(STUDENT_HEADER, args[j]);
+                pw.close();
+                testStudent(args[j]);
+            }
+        } catch (IOException e) {
+            System.out.println("Error while writing results: " + e.getMessage());
         }
 
     }
