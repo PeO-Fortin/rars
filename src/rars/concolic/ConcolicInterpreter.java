@@ -313,7 +313,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                     cfg.entryBlock
             );
         }
-        int execution = 1;
+        int execution = 0;
         try {
             do {
                 lastReadCharacter = 0;

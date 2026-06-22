@@ -31,7 +31,7 @@ public class Options {
 
     //User entries variable
     private BufferedReader readerInput;
-    private String[] files;
+    private String[] filesName;
     private int fileNumber;
 
     private int maxExecutions = 300;
@@ -49,13 +49,15 @@ public class Options {
         }
         if (userEntries) {
             try {
-                readerInput.close();
-                if (fileNumber < files.length) {
-                    readerInput = new BufferedReader(new FileReader(files[fileNumber]));
+                if(readerInput != null) {
+                    readerInput.close();
+                }
+                if (fileNumber < filesName.length) {
+                    readerInput = new BufferedReader(new FileReader(filesName[fileNumber]));
                     ++fileNumber;
                 }
             } catch (FileNotFoundException e) {
-                System.out.println("Input file not found: " + files[fileNumber]);
+                System.out.println("Input file not found: " + filesName[fileNumber]);
                 System.exit(1);
             } catch (IOException e) {
                 System.out.println("IO Error");
@@ -234,9 +236,9 @@ public class Options {
                 case "--user-entries":
                     userEntries = true;
                     try {
-                        files = new String[Integer.parseInt(args[++i])];
-                        for(int j = 0; j < files.length; ++j){
-                            files[j] = args[++i];
+                        filesName = new String[Integer.parseInt(args[++i])];
+                        for(int j = 0; j < filesName.length; ++j){
+                            filesName[j] = args[++i];
                         }
                         fileNumber = 0;
                     } catch (NumberFormatException e) {
