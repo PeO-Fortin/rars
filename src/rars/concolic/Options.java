@@ -60,7 +60,7 @@ public class Options {
                 System.out.println("Input file not found: " + filesName[fileNumber]);
                 System.exit(1);
             } catch (IOException e) {
-                System.out.println("IO Error");
+                System.out.println("IO Error new Execution");
                 System.exit(1);
             }
         }
@@ -93,18 +93,20 @@ public class Options {
     public ConcolicValues.V readCharFromFile() {
         if(!userEntries){return null;}
 
-        Character ch = readCharFromFile(readerInput);
+        Integer ch = readCharFromFile(readerInput);
 
         return ch == null ? null : new ConcolicValues.V(ch, new SymbolicLong(ch));
 
     }
 
-    private Character readCharFromFile(BufferedReader reader) {
-        char ch;
+    private Integer readCharFromFile(BufferedReader reader) {
+        int ch;
 
         try {
             if(reader.ready()){
-                ch = (char) reader.read();
+                do {
+                    ch = (char) reader.read();
+                } while (ch != '|');
             } else {
                 reader.close();
                 return null;
@@ -119,23 +121,26 @@ public class Options {
     public ConcolicValues.V readIntFromFile() {
         if(!userEntries){return null;}
 
-        Integer value = readIntFromFile(readerInput);
+        Long value = readIntFromFile(readerInput);
 
         return value==null ? null : new ConcolicValues.V(value, new SymbolicLong(value));
     }
 
-    private Integer readIntFromFile(BufferedReader reader){
-        int value;
+    private Long readIntFromFile(BufferedReader reader){
+        long value;
 
         try {
             if(reader.ready()){
-                StringBuilder sb = new StringBuilder();
+                String sb = "";
+                int c;
 
-                reader.mark(1);
-                int c = reader.read();
+                do {
+                    reader.mark(1);
+                    c = reader.read();
+                } while (c != '|');
 
                 while (c != -1 && Character.isDigit(c)) {
-                    sb.append((char) c);
+                    sb += (char) c;
 
                     reader.mark(1);
                     c = reader.read();
@@ -145,7 +150,11 @@ public class Options {
                     reader.reset();
                 }
 
-                value = Integer.parseInt(sb.toString());
+                if(sb.length() == 0){
+                    return null;
+                }
+
+                value = Long.parseLong(sb.toString());
             } else {
                 reader.close();
                 return null;
