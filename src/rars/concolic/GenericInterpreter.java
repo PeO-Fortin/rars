@@ -355,12 +355,10 @@ public abstract class GenericInterpreter<V> {
             // Register 10 = a0
             case 1:     // PrintInt
                 int it = values.asInt(registers[10]);
-                options.compareIntOutput(it);
                 output += it + "|";
                 return;
             case 4:     // PrintString
                 strOut = printString(values.asLong(registers[10]));
-                options.compareStringOutput(strOut);
                 output +=  strOut + "|";
                 return;
             case 5:     // ReadInt
@@ -378,21 +376,18 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 11:    // PrintChar
                 char ch = values.asChar(registers[10]);
-                options.compareCharOutput(ch);
-                output += ch + "|";
+                output += (int) ch + "|";  // stocker comme nombre, pas comme caractère brut
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
-                input += values.asChar(registers[10]) + "|";
+                input += (int) values.asChar(registers[10]) + "|";  // idem
                 return;
             case 34:    // PrintIntHex
                 strOut = Integer.toHexString(values.asInt(registers[10]));
-                options.compareStringOutput(strOut);
                 output += strOut + "|";
                 return;
             case 35:    // PrintIntBinary
                 strOut = Integer.toBinaryString(values.asInt(registers[10]));
-                options.compareStringOutput(strOut);
                 output +=  strOut + "|";
                 return;
         }
