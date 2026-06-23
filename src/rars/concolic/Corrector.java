@@ -10,8 +10,8 @@ public class Corrector {
 
     public static final int MAX_EXEC = 50;
     public static final String MASTER_FOLDER = "src/rars/concolic/results/master_results/";
-    public static final FilenameFilter FILTER_INPUTS = (f, name) -> name.startsWith("input");
-    public static final FilenameFilter FILTER_OUTPUTS = (f, name) -> name.startsWith("output");
+    public static final FilenameFilter FILTER_INPUTS = (f, name) -> name.startsWith("inputs");
+    public static final FilenameFilter FILTER_OUTPUTS = (f, name) -> name.startsWith("outputs");
     public static final String CORRECTION_FILE = "Correction.txt";
     public static final String STUDENT_HEADER =
             "****************************************\n" +
@@ -28,7 +28,8 @@ public class Corrector {
             completeArgs.addAll(arguments);
             ConcolicInterpreter.main(completeArgs.toArray(new String[0]));
         } catch (Exception e) {
-            System.err.println("Error while executing " + filename + ": " + e.getMessage());
+            System.err.println("Error while executing " + filename);
+            e.printStackTrace();
         }
     }
 
@@ -42,8 +43,8 @@ public class Corrector {
             String inputContent = Files.readString(inputFile.toPath());
             String outputContent = Files.readString(outputFile.toPath());
 
-            Files.writeString(Paths.get(destinationFolder, "input" + index), inputContent);
-            Files.writeString(Paths.get(destinationFolder, "output" + index), outputContent);
+            Files.writeString(Paths.get(destinationFolder, "inputs" + index), inputContent);
+            Files.writeString(Paths.get(destinationFolder, "outputs" + index), outputContent);
         } catch (IOException e) {
             System.out.println("Error while saving execution result to " + destinationFolder + ": " + e.getMessage());
             System.exit(1);
@@ -56,8 +57,14 @@ public class Corrector {
     }
 
     public static File[] findNewInputs(File[] studentInputs, File[] knownInputs) {
-        File[] newInputs = new File[studentInputs.length - knownInputs.length];
-        if (studentInputs.length != knownInputs.length) {
+        File[] newInputs;
+        if (studentInputs.length - knownInputs.length > 0) {
+            newInputs = new File[studentInputs.length - knownInputs.length];
+        } else {
+            newInputs = new File[0];
+        }
+
+        if (studentInputs.length > knownInputs.length) {
             int i = 0;
             int j = knownInputs.length;
             while (j < studentInputs.length) {
@@ -72,6 +79,7 @@ public class Corrector {
         List<String> masterArgs = new ArrayList<>();
         addMaxExecArg(masterArgs);
         masterArgs.add("--user-entries");
+        masterArgs.add("" + newInputs.length);
         for (File f : newInputs) {
             masterArgs.add(f.getPath());
         }
@@ -93,7 +101,7 @@ public class Corrector {
         try {
         PrintWriter pw = new PrintWriter(new FileWriter(CORRECTION_FILE, true));
         boolean success = true;
-            for (int i = 0; i < masterOutputs.length; ++i) {
+            for (int i = 0; i < masterOutputs.length && i < studentOutputs.length; ++i) {
                 String studentOutput = Files.readString(studentOutputs[i].toPath());
                 String masterOutput = Files.readString(masterOutputs[i].toPath());
 
@@ -124,6 +132,7 @@ public class Corrector {
             addMaxExecArg(studentArgs);
             studentArgs.add("--user-entries");
             File[] knownInputs = getFiles(MASTER_FOLDER, FILTER_INPUTS);
+            studentArgs.add("" + knownInputs.length);
             for (File f : knownInputs) {
                 studentArgs.add(f.getPath());
             }
@@ -158,18 +167,17 @@ public class Corrector {
         File[] inputs = getFiles(ConcolicInterpreter.INPUT_FOLDER_NAME, FILTER_INPUTS);
         File[] outputs = getFiles(ConcolicInterpreter.OUTPUT_FOLDER_NAME,  FILTER_OUTPUTS);
 
-        int i = 0;
-        while (i < inputs.length) {
+        for(int i = 0; i < inputs.length; ++i) {
             saveExecutionResult(inputs[i], outputs[i], MASTER_FOLDER, topIndex);
             ++topIndex;
         }
 
         try {
-            for (int j = 1; j < args.length; ++j) {
+            for (int i = 1; i < args.length; ++i) {
                 PrintWriter pw = new PrintWriter(new FileWriter(CORRECTION_FILE, true));
-                pw.printf(STUDENT_HEADER, args[j]);
+                pw.printf(STUDENT_HEADER, args[i]);
                 pw.close();
-                testStudent(args[j]);
+                testStudent(args[i]);
             }
         } catch (IOException e) {
             System.out.println("Error while writing results: " + e.getMessage());
