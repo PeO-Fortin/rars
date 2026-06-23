@@ -326,14 +326,14 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 currentNode.explored = true;
                 printResults(execution);
                 ++execution;
-            } while (execution <= maxExecutions);
+            } while (execution < maxExecutions);
         } catch (ExecutionDone e) {
             System.out.println("Execution completed");
         }
     }
 
     public static final String INPUT_FOLDER_NAME = "src/rars/concolic/results/inputs/";
-    public static final String OUTPUT_FOLDER_NAME = "src/rars/concolic/results/outputs";
+    public static final String OUTPUT_FOLDER_NAME = "src/rars/concolic/results/outputs/";
     public static final String INPUT_FILE_NAME = "inputs";
     public static final String OUTPUT_FILE_NAME = "outputs";
 
@@ -345,7 +345,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             pwInputs.flush(); pwOutputs.flush();
             pwInputs.close(); pwOutputs.close();
         } catch (IOException e) {
-            System.out.println("IO Error");
+            System.out.println("IO Error Print Results" + execution);
         }
     }
 
