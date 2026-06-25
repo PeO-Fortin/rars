@@ -4,11 +4,13 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class Corrector {
 
-    public static final int MAX_EXEC = 50;
+    public static final int MAX_EXEC = 2;
     public static final String MASTER_FOLDER = "src/rars/concolic/results/master_results/";
     public static final FilenameFilter FILTER_INPUTS = (f, name) -> name.startsWith("inputs");
     public static final FilenameFilter FILTER_OUTPUTS = (f, name) -> name.startsWith("outputs");
@@ -18,7 +20,7 @@ public class Corrector {
             "Fichier : %s\n" +
             "****************************************\n";
 
-    public static int topIndex = 1;
+    public static int topIndex = 0;
     public static String masterFileName;
 
     public static void concExecFile(String filename, List<String> arguments) {
@@ -87,6 +89,7 @@ public class Corrector {
         concExecFile(masterFileName, masterArgs);
 
         File[] newOutputs = getFiles(ConcolicInterpreter.OUTPUT_FOLDER_NAME, FILTER_OUTPUTS);
+        Arrays.sort(newOutputs, Comparator.comparing(File::getName));
 
         for (int i = 0; i < newInputs.length; ++i) {
             saveExecutionResult(newInputs[i],newOutputs[i],MASTER_FOLDER,topIndex);
@@ -96,7 +99,11 @@ public class Corrector {
 
     public static void compareOutputs(File[] studentOutputs) {
         File[] masterInputs = getFiles(MASTER_FOLDER, FILTER_INPUTS);
+        File[] studentInputs = getFiles(ConcolicInterpreter.INPUT_FOLDER_NAME, FILTER_INPUTS);
         File[] masterOutputs = getFiles(MASTER_FOLDER, FILTER_OUTPUTS);
+        Arrays.sort(masterInputs, Comparator.comparing(File::getName));
+        Arrays.sort(masterOutputs, Comparator.comparing(File::getName));
+        Arrays.sort(studentInputs, Comparator.comparing(File::getName));
 
         try {
         PrintWriter pw = new PrintWriter(new FileWriter(CORRECTION_FILE, true));
@@ -107,7 +114,8 @@ public class Corrector {
 
                 if (!studentOutput.equals(masterOutput)) {
                     pw.println("FAIL");
-                    pw.println("Inputs : " + Files.readString(masterInputs[i].toPath()));
+                    pw.println("Master Inputs : " + Files.readString(masterInputs[i].toPath()));
+                    pw.println("Student Inputs : " + Files.readString(studentInputs[i].toPath()));
                     pw.println("Teacher Outputs : " + Files.readString(masterOutputs[i].toPath()));
                     pw.println("Student Outputs : " + Files.readString(studentOutputs[i].toPath()));
                     success = false;
@@ -132,6 +140,7 @@ public class Corrector {
             addMaxExecArg(studentArgs);
             studentArgs.add("--user-entries");
             File[] knownInputs = getFiles(MASTER_FOLDER, FILTER_INPUTS);
+            Arrays.sort(knownInputs, Comparator.comparing(File::getName));
             studentArgs.add("" + knownInputs.length);
             for (File f : knownInputs) {
                 studentArgs.add(f.getPath());
@@ -140,7 +149,9 @@ public class Corrector {
             concExecFile(studentFile,studentArgs);
 
             File[] studentInputs = getFiles(ConcolicInterpreter.INPUT_FOLDER_NAME, FILTER_INPUTS);
+            Arrays.sort(studentInputs, Comparator.comparing(File::getName));
             File[] newInputs = findNewInputs(studentInputs, knownInputs);
+            Arrays.sort(newInputs, Comparator.comparing(File::getName));
 
             if (newInputs.length == 0) {
                 stableInputs = true;
@@ -150,7 +161,31 @@ public class Corrector {
         }
 
         File[] studentOutputs = getFiles(ConcolicInterpreter.OUTPUT_FOLDER_NAME, FILTER_OUTPUTS);
+        Arrays.sort(studentOutputs, Comparator.comparing(File::getName));
         compareOutputs(studentOutputs);
+    }
+
+    private static void cleanFolders() {
+        File[] dir = {
+                new File(ConcolicInterpreter.OUTPUT_FOLDER_NAME),
+                new File(ConcolicInterpreter.INPUT_FOLDER_NAME),
+                new File(MASTER_FOLDER),
+        };
+
+        try {
+            for (File d : dir) {
+                for (File file : d.listFiles())
+                    if (!file.isDirectory())
+                        file.delete();
+            }
+
+            File c = new File(CORRECTION_FILE);
+            c.delete();
+        } catch (NullPointerException e) {
+            return;
+        }
+
+
     }
 
     public static void main(String[] args) {
@@ -159,13 +194,17 @@ public class Corrector {
             System.exit(1);
         }
 
+        cleanFolders();
+
         masterFileName = args[0];
         List<String> arguments = new ArrayList<>();
         addMaxExecArg(arguments);
         concExecFile(masterFileName, arguments);
 
         File[] inputs = getFiles(ConcolicInterpreter.INPUT_FOLDER_NAME, FILTER_INPUTS);
+        Arrays.sort(inputs, Comparator.comparing(File::getName));
         File[] outputs = getFiles(ConcolicInterpreter.OUTPUT_FOLDER_NAME,  FILTER_OUTPUTS);
+        Arrays.sort(outputs, Comparator.comparing(File::getName));
 
         for(int i = 0; i < inputs.length; ++i) {
             saveExecutionResult(inputs[i], outputs[i], MASTER_FOLDER, topIndex);
