@@ -106,7 +106,7 @@ public class Options {
             if(reader.ready()){
                 do {
                     ch = (char) reader.read();
-                } while (ch != '|');
+                } while (ch == '|');
             } else {
                 reader.close();
                 return null;
@@ -128,6 +128,7 @@ public class Options {
 
     private Long readIntFromFile(BufferedReader reader){
         long value;
+        boolean negative = false;
 
         try {
             if(reader.ready()){
@@ -137,7 +138,17 @@ public class Options {
                 do {
                     reader.mark(1);
                     c = reader.read();
+                    if (c == -1) return null;
                 } while (c != '|');
+
+                reader.mark(1);
+                c = reader.read();
+
+                if (c == '-') {
+                    negative = true;
+                    reader.mark(1);
+                    c = reader.read();
+                }
 
                 while (c != -1 && Character.isDigit(c)) {
                     sb += (char) c;
@@ -150,11 +161,13 @@ public class Options {
                     reader.reset();
                 }
 
-                if(sb.length() == 0){
+                if(sb.length() == 0) {
                     return null;
                 }
 
                 value = Long.parseLong(sb.toString());
+                if (negative) { value = -value; }
+
             } else {
                 reader.close();
                 return null;
