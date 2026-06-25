@@ -10,7 +10,7 @@ import java.util.List;
 
 public class Corrector {
 
-    public static final int MAX_EXEC = 2;
+    public static final int MAX_EXEC = 50;
     public static final String MASTER_FOLDER = "src/rars/concolic/results/master_results/";
     public static final FilenameFilter FILTER_INPUTS = (f, name) -> name.startsWith("inputs");
     public static final FilenameFilter FILTER_OUTPUTS = (f, name) -> name.startsWith("outputs");
