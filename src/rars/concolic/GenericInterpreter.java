@@ -380,7 +380,7 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
-                input += (char) values.asChar(registers[10]) + "|";  // idem
+                input += values.asInt(registers[10]) + "|";  // idem
                 return;
             case 34:    // PrintIntHex
                 strOut = Integer.toHexString(values.asInt(registers[10]));

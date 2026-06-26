@@ -10,7 +10,7 @@ import java.util.List;
 
 public class Corrector {
 
-    public static final int MAX_EXEC = 50;
+    public static final int MAX_EXEC = 20;
     public static final String MASTER_FOLDER = "src/rars/concolic/results/master_results/";
     public static final FilenameFilter FILTER_INPUTS = (f, name) -> name.startsWith("inputs");
     public static final FilenameFilter FILTER_OUTPUTS = (f, name) -> name.startsWith("outputs");
@@ -114,9 +114,13 @@ public class Corrector {
 
                 if (!studentOutput.equals(masterOutput)) {
                     pw.println("FAIL");
-                    pw.println("Master Inputs : " + Files.readString(masterInputs[i].toPath()));
+                    pw.println(masterInputs[i].getName());
+                    pw.println("Teacher Inputs : " + Files.readString(masterInputs[i].toPath()));
+                    pw.println(studentInputs[i].getName());
                     pw.println("Student Inputs : " + Files.readString(studentInputs[i].toPath()));
+                    pw.println(masterOutputs[i].getName());
                     pw.println("Teacher Outputs : " + Files.readString(masterOutputs[i].toPath()));
+                    pw.println(studentOutputs[i].getName());
                     pw.println("Student Outputs : " + Files.readString(studentOutputs[i].toPath()));
                     success = false;
                 }

@@ -63,7 +63,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(128) }));
 
-        ConcolicValues.V value = options.readCharFromFile();
+        ConcolicValues.V value = options.readFromFile();
 
         if (value == null) {
             value = getFromModel(symbol, -1);
@@ -82,7 +82,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L) }));
 
-        ConcolicValues.V value = options.readIntFromFile();
+        ConcolicValues.V value = options.readFromFile();
 
         if (value == null) {
             value = getFromModel(symbol, -1);

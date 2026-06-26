@@ -90,35 +90,7 @@ public class Options {
         return true;
     }
 
-    public ConcolicValues.V readCharFromFile() {
-        if(!userEntries){return null;}
-
-        Integer ch = readCharFromFile(readerInput);
-
-        return ch == null ? null : new ConcolicValues.V(ch, new SymbolicLong(ch));
-
-    }
-
-    private Integer readCharFromFile(BufferedReader reader) {
-        int ch;
-
-        try {
-            if(reader.ready()){
-                do {
-                    ch = (char) reader.read();
-                } while (ch == '|');
-            } else {
-                reader.close();
-                return null;
-            }
-        } catch (IOException e) {
-            return null;
-        }
-
-        return ch;
-    }
-
-    public ConcolicValues.V readIntFromFile() {
+    public ConcolicValues.V readFromFile() {
         if(!userEntries){return null;}
 
         Long value = readIntFromFile(readerInput);
