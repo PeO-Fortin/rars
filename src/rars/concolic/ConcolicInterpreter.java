@@ -339,8 +339,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     private void printResults(int execution) {
         try {
-            PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FOLDER_NAME + INPUT_FILE_NAME + execution));
-            PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FOLDER_NAME + OUTPUT_FILE_NAME + execution));
+            String paddedExexution = String.format("%05d", execution);
+            PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FOLDER_NAME + INPUT_FILE_NAME + paddedExexution));
+            PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FOLDER_NAME + OUTPUT_FILE_NAME + paddedExexution));
             pwInputs.println(super.input); pwOutputs.println(super.output);
             pwInputs.flush(); pwOutputs.flush();
             pwInputs.close(); pwOutputs.close();

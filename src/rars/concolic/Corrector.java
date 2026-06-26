@@ -45,8 +45,10 @@ public class Corrector {
             String inputContent = Files.readString(inputFile.toPath());
             String outputContent = Files.readString(outputFile.toPath());
 
-            Files.writeString(Paths.get(destinationFolder, "inputs" + index), inputContent);
-            Files.writeString(Paths.get(destinationFolder, "outputs" + index), outputContent);
+            String paddedIndex = String.format("%05d", index);
+
+            Files.writeString(Paths.get(destinationFolder, "inputs" + paddedIndex), inputContent);
+            Files.writeString(Paths.get(destinationFolder, "outputs" + paddedIndex), outputContent);
         } catch (IOException e) {
             System.out.println("Error while saving execution result to " + destinationFolder + ": " + e.getMessage());
             System.exit(1);
