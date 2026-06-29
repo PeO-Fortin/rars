@@ -11,4 +11,4 @@ shift_args() {
 
 ./build.sh
 
-shift_args rars.concolic.Corrector "$@"
+shift_args rars.corrector.Corrector "$@"
