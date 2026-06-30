@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class Corrector {
 
-    public static final int MAX_EXEC = 20;
+    public static Options opt;
 
     /**
      * Executes a source file through ConcolicInterpreter, passing it the
@@ -62,7 +62,7 @@ public class Corrector {
      */
     public static void addMaxExecArg(List<String> args) {
         args.add("--max-exec");
-        args.add(String.valueOf(MAX_EXEC));
+        args.add(String.valueOf(opt.getMaxExecutions()));
     }
 
     /**
@@ -138,17 +138,19 @@ public class Corrector {
      * @param files     file manager holding the master file
      */
     public static void updateMasterList(File[] newInputs, FilesManager files) {
-        List<String> masterArgs = new ArrayList<>();
-        addMaxExecArg(masterArgs);
-        masterArgs.add("--user-entries");
-        masterArgs.add("" + newInputs.length);
-        for (File f : newInputs) {
-            masterArgs.add(f.getPath());
+        if(newInputs != null && newInputs.length != 0) {
+            List<String> masterArgs = new ArrayList<>();
+            addMaxExecArg(masterArgs);
+            masterArgs.add("--user-entries");
+            masterArgs.add("" + newInputs.length);
+            for (File f : newInputs) {
+                masterArgs.add(f.getPath());
+            }
+
+            concExecFile(files.MASTER_FILE, masterArgs);
+
+            files.saveExecutionResults();
         }
-
-        concExecFile(files.MASTER_FILE, masterArgs);
-
-        files.saveExecutionResults();
     }
 
     /**
@@ -225,14 +227,19 @@ public class Corrector {
      *             args[1..n-1]: the paths of the students
      *             files to correct
      */
-
     public static void main(String[] args) {
         if (args.length < 2) {
             System.out.println("Invalid number of arguments");
             System.exit(1);
         }
 
-        FilesManager files = new FilesManager(args);
+        opt = new Options();
+
+        String[] cleanArgs = opt.checkOptions(args);
+
+        FilesManager files = new FilesManager(cleanArgs);
+
+        updateMasterList(opt.getUserTests(), files);
 
         generateTestFiles(files);
 
