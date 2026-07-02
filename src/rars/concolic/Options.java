@@ -74,22 +74,6 @@ public class Options {
         return maxInstructions;
     }
 
-    //TODO
-    public boolean iteratesDeeper(ExecutionTreeNode currentNode, BasicBlock target) {
-        if (iterativeDeepening){
-            int occurrence = 0;
-            ExecutionTreeNode node = currentNode;
-            while (node != null){
-                if(node.block == target){
-                    ++occurrence;
-                }
-                node = node.parent;
-            }
-            return occurrence < loopLimit;
-        }
-        return true;
-    }
-
     public ConcolicValues.V readFromFile() {
         if(!userEntries){return null;}
 
@@ -205,6 +189,21 @@ public class Options {
         }
 
         return distances;
+    }
+    
+    public boolean iteratesDeeper(ExecutionTreeNode currentNode, BasicBlock target) {
+        if (iterativeDeepening){
+            int occurrence = 0;
+            ExecutionTreeNode node = currentNode;
+            while (node != null){
+                if(node.block == target){
+                    ++occurrence;
+                }
+                node = node.parent;
+            }
+            return occurrence < loopLimit;
+        }
+        return true;
     }
 
     private void checkOptions(String[] args){
