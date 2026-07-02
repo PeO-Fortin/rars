@@ -21,10 +21,10 @@ public class Options {
             "--user-entries [number of files] [files] :\tUse entries from files to start the symbolic execution";
 
 
+    Heuristics heuristic = Heuristics.BFS;
     boolean iterativeDeepening = false;
-    boolean dfs = false;
+
     boolean userEntries = false;
-    boolean distanceToExit = false;
 
     //Iterative deepening variables
     private int loopLimit = -1;
@@ -64,6 +64,10 @@ public class Options {
                 System.exit(1);
             }
         }
+    }
+
+    public Heuristics getHeuristic() {
+        return heuristic;
     }
 
     public int getMaxExecutions(){
@@ -159,7 +163,7 @@ public class Options {
 
     Map<BasicBlock, Integer> calculateDistanceToExit(CFG cfg) {
 
-        if(!distanceToExit) return null;
+        if(heuristic != Heuristics.TO_EXIT) return null;
 
         Map<BasicBlock, Integer> distances = new HashMap<>();
         Queue<BasicBlock> worklist = new LinkedList<>();
@@ -218,7 +222,7 @@ public class Options {
                     loopLimit = -1;
                     break;
                 case "--dfs":
-                    dfs = true;
+                    heuristic = Heuristics.DFS;
                     break;
                 case "--max-exec":
                     maxExecutions = Integer.parseInt(args[++i]);
@@ -241,7 +245,10 @@ public class Options {
                     }
                     break;
                 case "--distance-exit":
-                    distanceToExit = true;
+                    heuristic = Heuristics.TO_EXIT;
+                    break;
+                case "--random":
+                    heuristic = Heuristics.RANDOM;
                     break;
                 default:
                     System.out.println("Unknown option: " + args[i]);

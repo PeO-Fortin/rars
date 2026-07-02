@@ -465,14 +465,41 @@ class ExecutionTreeNode {
         return best;
     }
 
+    public ExecutionTreeNode nextUnexploredRandom() {
+        ExecutionTreeNode node = this;
+        Random rand = new Random();
+
+        while (!node.isUnexplored()) {
+            List<ExecutionTreeNode> availableBranches = new ArrayList<>();
+            if (node.trueBranch != null) availableBranches.add(node.trueBranch);
+            if (node.falseBranch != null) availableBranches.add(node.falseBranch);
+
+            if (availableBranches.isEmpty()) return null;
+
+            node = availableBranches.get(rand.nextInt(availableBranches.size()));
+        }
+
+        return node;
+
+    }
+
     public ExecutionTreeNode nextUnexplored() {
         ExecutionTreeNode result;
-        if(ConcolicInterpreter.options.dfs) {
-            result = nextUnexploredDFS();
-        } else if (distanceToExit != null) {
-            result = nextUnexploredExit();
-        } else {
-            result = nextUnexploredBFS();
+        Heuristics heur = ConcolicInterpreter.options.getHeuristic();
+        switch (heur) {
+            case BFS:
+            default:
+                result = nextUnexploredBFS();
+                break;
+            case DFS:
+                result = nextUnexploredDFS();
+                break;
+            case TO_EXIT:
+                result = nextUnexploredExit();
+                break;
+            case RANDOM:
+                result = nextUnexploredRandom();
+                break;
         }
         return result;
     }
