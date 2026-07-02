@@ -222,8 +222,12 @@ public class Options {
                     loopLimit = -1;
                     break;
                 case "--dfs":
-                    heuristic = Heuristics.DFS;
-                    break;
+                    if(heuristic != Heuristics.BFS) {
+                        heuristic = Heuristics.DFS;
+                        break;
+                    } else {
+                        errorHeuristic();
+                    }
                 case "--max-exec":
                     maxExecutions = Integer.parseInt(args[++i]);
                     break;
@@ -245,16 +249,29 @@ public class Options {
                     }
                     break;
                 case "--distance-exit":
-                    heuristic = Heuristics.TO_EXIT;
-                    break;
+                    if(heuristic != Heuristics.BFS) {
+                        heuristic = Heuristics.TO_EXIT;
+                        break;
+                    } else {
+                        errorHeuristic();
+                    }
                 case "--random":
-                    heuristic = Heuristics.RANDOM;
-                    break;
+                    if(heuristic != Heuristics.BFS) {
+                        heuristic = Heuristics.RANDOM;
+                        break;
+                    } else {
+                        errorHeuristic();
+                    }
                 default:
                     System.out.println("Unknown option: " + args[i]);
                     System.out.println("Try option '--help'");
                     System.exit(1);
             }
         }
+    }
+
+    public void errorHeuristic(){
+        System.out.println("Please choose no more than one heuristic");
+        System.exit(1);
     }
 }
