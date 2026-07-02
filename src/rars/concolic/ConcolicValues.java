@@ -23,6 +23,7 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     public static V variable(long value, String name) {
         return new V(value, new SymbolicVariable(name));
     }
+
     interface Op {
         public long apply(long[] args);
         public SymbolicOperator operator();
@@ -31,7 +32,7 @@ public class ConcolicValues extends InterpreterValues<ConcolicValues.V> {
     V op(Op op, V[] args) {
         boolean remainsSymbolic = false;
         for (V arg : args) {
-            if (!(arg.symbolic instanceof SymbolicLong || arg.symbolic instanceof SymbolicByte)) {
+            if (!(arg.symbolic instanceof SymbolicLong)) {
                 remainsSymbolic = true;
             }
         }
