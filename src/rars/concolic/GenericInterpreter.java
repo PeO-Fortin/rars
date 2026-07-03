@@ -68,117 +68,131 @@ public abstract class GenericInterpreter<V> {
         currentBlock = entryPoint;
         instructionCounter = 0;
         maxInstructions = options.getMaxInstructions();
-        while (currentBlock!=null && !exit && instructionCounter < maxInstructions) {
+        while (currentBlock != null) {
+            options.countCoverage(currentBlock);
+
             BasicBlock executedBlock = currentBlock;
+
             for (ProgramStatement ps : currentBlock.instructions) {
-                int[] operands = ps.getOperands();
-                switch (ps.getInstruction().getName()) {
-                    case "lui":
-                        lui(values.inject(operands[1] << 12), operands[0]); break;
-                    case "add":
-                        add(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "addw":
-                        addw(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "addi":
-                        add(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "addiw":
-                        addw(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "sub":
-                        sub(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "subw":
-                        subw(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "mul":
-                        mul(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "mulw":
-                        mulw(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "div":
-                        div(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "divw":
-                        divw(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "auipc":
-                        add(values.inject(ps.getAddress()), values.inject(operands[1] << 12), operands[0]); break;
-                    case "ecall":
-                        ecall(values.asInt(registers[17])); break; // Register a7
-                    case "xor":
-                        xor(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "xori":
-                        xor(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "and":
-                        and(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "andi":
-                        and(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "or":
-                        or(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "ori":
-                        or(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "sb":
-                        sb(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); break;
-                    case "sh":
-                        sh(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); break;
-                    case "sw":
-                        sw(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); break;
-                    case "sd":
-                        sd(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); break;
-                    case "lb":
-                        lb(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
-                    case "lbu":
-                        lbu(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
-                    case "lh":
-                        lh(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
-                    case "lhu":
-                        lhu(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
-                    case "lw":
-                        lw(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
-                    case "lwu":
-                        lwu(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
-                    case "ld":
-                        ld(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
-                    case "sll":
-                        sll(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "slli":
-                        sll(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "sllw":
-                        sllw(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "slliw":
-                        sllw(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "srl":
-                        srl(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "srli":
-                        srl(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "srlw":
-                        srlw(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "srliw":
-                        srlw(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "sra":
-                        sra(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "srai":
-                        sra(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "sraw":
-                        sraw(registers[operands[1]], registers[operands[2]], operands[0]); break;
-                    case "sraiw":
-                        sraw(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
-                    case "jal":
-                        jal(ps.getAddress(), operands[0]); break;
-                    case "jalr":
-                        jalr(registers[operands[1]], ps.getAddress(), operands[2], operands[0]); break;
-                    case "bge":
-                        ifgeq(registers[operands[0]], registers[operands[1]]); break;
-                    case "blt":
-                        iflt(registers[operands[0]], registers[operands[1]]); break;
-                    case "beq":
-                        ifeq(registers[operands[0]], registers[operands[1]]); break;
-                    case "bne":
-                        ifneq(registers[operands[0]], registers[operands[1]]); break;
-                }
-                registers[0] = values.inject(0); // Register zero = 0
+                executePs(ps);
+
+                registers[0] = values.inject(0);
                 ++instructionCounter;
+
+                if (exit)
+                    return;
+
+                if (instructionCounter >= maxInstructions) {
+                    output += "Maximum number of instructions reached |";
+                    return;
+                }
             }
-            if(executedBlock == currentBlock){
+
+            if (executedBlock == currentBlock) {
                 currentBlock = executedBlock.fallthroughSuccessor;
             }
         }
-        if(instructionCounter == maxInstructions){
-            output += "Maximum number of instructions reached |";
+    }
+
+    public void executePs(ProgramStatement ps) {
+        int[] operands = ps.getOperands();
+        switch (ps.getInstruction().getName()) {
+            case "lui":
+                lui(values.inject(operands[1] << 12), operands[0]); break;
+            case "add":
+                add(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "addw":
+                addw(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "addi":
+                add(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "addiw":
+                addw(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "sub":
+                sub(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "subw":
+                subw(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "mul":
+                mul(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "mulw":
+                mulw(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "div":
+                div(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "divw":
+                divw(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "auipc":
+                add(values.inject(ps.getAddress()), values.inject(operands[1] << 12), operands[0]); break;
+            case "ecall":
+                ecall(values.asInt(registers[17])); break; // Register a7
+            case "xor":
+                xor(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "xori":
+                xor(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "and":
+                and(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "andi":
+                and(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "or":
+                or(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "ori":
+                or(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "sb":
+                sb(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); break;
+            case "sh":
+                sh(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); break;
+            case "sw":
+                sw(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); break;
+            case "sd":
+                sd(registers[operands[0]], values.inject(operands[1]), registers[operands[2]]); break;
+            case "lb":
+                lb(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
+            case "lbu":
+                lbu(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
+            case "lh":
+                lh(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
+            case "lhu":
+                lhu(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
+            case "lw":
+                lw(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
+            case "lwu":
+                lwu(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
+            case "ld":
+                ld(values.inject(operands[1]), registers[operands[2]], operands[0]); break;
+            case "sll":
+                sll(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "slli":
+                sll(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "sllw":
+                sllw(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "slliw":
+                sllw(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "srl":
+                srl(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "srli":
+                srl(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "srlw":
+                srlw(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "srliw":
+                srlw(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "sra":
+                sra(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "srai":
+                sra(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "sraw":
+                sraw(registers[operands[1]], registers[operands[2]], operands[0]); break;
+            case "sraiw":
+                sraw(registers[operands[1]], values.inject(operands[2]), operands[0]); break;
+            case "jal":
+                jal(ps.getAddress(), operands[0]); break;
+            case "jalr":
+                jalr(registers[operands[1]], ps.getAddress(), operands[2], operands[0]); break;
+            case "bge":
+                ifgeq(registers[operands[0]], registers[operands[1]]); break;
+            case "blt":
+                iflt(registers[operands[0]], registers[operands[1]]); break;
+            case "beq":
+                ifeq(registers[operands[0]], registers[operands[1]]); break;
+            case "bne":
+                ifneq(registers[operands[0]], registers[operands[1]]); break;
         }
     }
 

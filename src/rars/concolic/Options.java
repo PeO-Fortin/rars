@@ -18,11 +18,15 @@ public class Options {
             "--dfs :\tActive Depth-first search exploration\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions\n" +
-            "--user-entries [number of files] [files] :\tUse entries from files to start the symbolic execution";
+            "--user-entries [number of files] [files] :\tUse entries from files to start the symbolic execution" +
+            "--random :\tActive random paths exploration" +
+            "--coverage :\tActive coverage-guided exploration";
 
 
     Heuristics heuristic = Heuristics.BFS;
     boolean iterativeDeepening = false;
+
+    private Map<BasicBlock, Integer> coverageCounter;
 
     boolean userEntries = false;
 
@@ -194,6 +198,12 @@ public class Options {
 
         return distances;
     }
+
+    public void countCoverage(BasicBlock block) {
+        if(heuristic == Heuristics.COVERAGE) {
+            coverageCounter.merge(block, 1, Integer::sum);
+        }
+    }
     
     public boolean iteratesDeeper(ExecutionTreeNode currentNode, BasicBlock target) {
         if (iterativeDeepening){
@@ -258,6 +268,14 @@ public class Options {
                 case "--random":
                     if(heuristic != Heuristics.BFS) {
                         heuristic = Heuristics.RANDOM;
+                        break;
+                    } else {
+                        errorHeuristic();
+                    }
+                case "--coverage":
+                    if(heuristic != Heuristics.BFS) {
+                        heuristic = Heuristics.COVERAGE;
+                        coverageCounter = new HashMap<>();
                         break;
                     } else {
                         errorHeuristic();

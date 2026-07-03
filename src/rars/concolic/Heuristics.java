@@ -4,5 +4,6 @@ public enum Heuristics {
     BFS,
     DFS,
     TO_EXIT,
-    RANDOM
+    RANDOM,
+    COVERAGE
 }
