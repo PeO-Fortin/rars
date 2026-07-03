@@ -10,21 +10,19 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
-public class Options {
+public class InterpreterOptions {
     private final String HELP = "\nAvailable options:\n" +
             "--help :\t\tDisplay available options\n" +
-            "--iterative-deepening :\tActivate iterative deepening\n" +
-            "--distance-exit :\tActivate distance to exit exploration\n" +
-            "--dfs :\tActive Depth-first search exploration\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions\n" +
             "--user-entries [number of files] [files] :\tUse entries from files to start the symbolic execution" +
+            "--dfs :\tActive Depth-first search exploration\n" +
+            "--distance-exit :\tActivate distance to exit exploration\n" +
             "--random :\tActive random paths exploration" +
             "--coverage :\tActive coverage-guided exploration";
 
 
     Heuristics heuristic = Heuristics.BFS;
-    boolean iterativeDeepening = false;
 
     private Map<BasicBlock, Integer> coverageCounter;
 
@@ -41,16 +39,13 @@ public class Options {
     private int maxExecutions = 300;
     private int maxInstructions = 500;
 
-    Options(String[] args){
+    InterpreterOptions(String[] args){
         if (args.length > 0) {
             checkOptions(args);
         }
     }
 
     public void newExecution() {
-        if (iterativeDeepening) {
-            ++loopLimit;
-        }
         if (userEntries) {
             try {
                 if(readerInput != null) {
@@ -208,40 +203,14 @@ public class Options {
     public int getCoverage(BasicBlock block) {
         return  coverageCounter.getOrDefault(block, 0);
     }
-    
-    public boolean iteratesDeeper(ExecutionTreeNode currentNode, BasicBlock target) {
-        if (iterativeDeepening){
-            int occurrence = 0;
-            ExecutionTreeNode node = currentNode;
-            while (node != null){
-                if(node.block == target){
-                    ++occurrence;
-                }
-                node = node.parent;
-            }
-            return occurrence < loopLimit;
-        }
-        return true;
-    }
 
-    private void checkOptions(String[] args){
+    public void checkOptions(String[] args){
         for(int i = 1; i < args.length; ++i){
             switch (args[i]){
                 case "--help":
                     System.out.println(HELP);
                     System.exit(0);
                     break;
-                case "--iterative-deepening":
-                    iterativeDeepening = true;
-                    loopLimit = -1;
-                    break;
-                case "--dfs":
-                    if(heuristic != Heuristics.BFS) {
-                        heuristic = Heuristics.DFS;
-                        break;
-                    } else {
-                        errorHeuristic();
-                    }
                 case "--max-exec":
                     maxExecutions = Integer.parseInt(args[++i]);
                     break;
@@ -262,6 +231,13 @@ public class Options {
                         System.exit(1);
                     }
                     break;
+                case "--dfs":
+                    if(heuristic != Heuristics.BFS) {
+                        heuristic = Heuristics.DFS;
+                        break;
+                    } else {
+                        errorHeuristic();
+                    }
                 case "--distance-exit":
                     if(heuristic != Heuristics.BFS) {
                         heuristic = Heuristics.TO_EXIT;

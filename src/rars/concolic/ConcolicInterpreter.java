@@ -13,12 +13,22 @@ import rars.riscv.hardware.AddressErrorException;
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     public static void main(String[] args) throws Exception {
+        InterpreterOptions opt = new InterpreterOptions(args);
+        initRars();
+
+        runInterpreter(args[0], opt);
+    }
+
+    public static void initRars() {
         Globals.initialize();
         InstructionSet.rv64 = true;
         Globals.instructionSet.populate();
+    }
+
+    public static void runInterpreter(String program, InterpreterOptions options) throws Exception {
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
-        interpreter.prepare(args[0]);
-        options = new Options(args);
+        interpreter.prepare(program);
+        interpreter.options = options;
         interpreter.runConcolic(options.getMaxExecutions());
         System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
     }
@@ -369,13 +379,8 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public Collection<FuzzingEdge> edgesCovered = new HashSet<>();
     @Override
     protected void setCurrentBlockCond(BasicBlock target) {
-        if(!options.iteratesDeeper(currentNode, target)){
-            exit = true;
-            input += "Iteration deepening reached|";
-        } else {
-            edgesCovered.add(new FuzzingEdge(currentBlock, target));
-            super.setCurrentBlock(target);
-        }
+        edgesCovered.add(new FuzzingEdge(currentBlock, target));
+        super.setCurrentBlock(target);
     }
 }
 

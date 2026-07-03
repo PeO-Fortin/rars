@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 public abstract class GenericInterpreter<V> {
     InterpreterValues<V> values;
-    public static Options options;
+    public static InterpreterOptions options;
 
     public GenericInterpreter(InterpreterValues<V> values) {
         this.values = values;
