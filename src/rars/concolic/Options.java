@@ -204,6 +204,10 @@ public class Options {
             coverageCounter.merge(block, 1, Integer::sum);
         }
     }
+
+    public int getCoverage(BasicBlock block) {
+        return  coverageCounter.getOrDefault(block, 0);
+    }
     
     public boolean iteratesDeeper(ExecutionTreeNode currentNode, BasicBlock target) {
         if (iterativeDeepening){

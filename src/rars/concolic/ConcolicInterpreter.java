@@ -483,6 +483,33 @@ class ExecutionTreeNode {
 
     }
 
+    public ExecutionTreeNode nextUnexploredCoverage() {
+        List<ExecutionTreeNode> candidates = new ArrayList<>();
+        Queue<ExecutionTreeNode> worklist = new LinkedList<>();
+        ExecutionTreeNode best = null;
+        worklist.add(this);
+        while (!worklist.isEmpty()) {
+            ExecutionTreeNode node = worklist.remove();
+            if (node.isUnexplored()) {
+                candidates.add(node);
+            } else {
+                if (node.falseBranch != null) worklist.add(node.falseBranch);
+                if (node.trueBranch != null) worklist.add(node.trueBranch);
+            }
+        }
+
+        int minCoverage = 0;
+        for (ExecutionTreeNode candidate : candidates) {
+            int coverage = ConcolicInterpreter.options.getCoverage(candidate.block);
+
+            if (coverage <= minCoverage) {
+                minCoverage = coverage;
+                best = candidate;
+            }
+        }
+        return best;
+    }
+
     public ExecutionTreeNode nextUnexplored() {
         ExecutionTreeNode result;
         Heuristics heur = ConcolicInterpreter.options.getHeuristic();
@@ -499,6 +526,9 @@ class ExecutionTreeNode {
                 break;
             case RANDOM:
                 result = nextUnexploredRandom();
+                break;
+            case COVERAGE:
+                result = nextUnexploredCoverage();
                 break;
         }
         return result;

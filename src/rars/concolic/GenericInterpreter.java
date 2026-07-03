@@ -74,7 +74,7 @@ public abstract class GenericInterpreter<V> {
             BasicBlock executedBlock = currentBlock;
 
             for (ProgramStatement ps : currentBlock.instructions) {
-                executePs(ps);
+                executePS(ps);
 
                 registers[0] = values.inject(0);
                 ++instructionCounter;
@@ -94,7 +94,7 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    public void executePs(ProgramStatement ps) {
+    public void executePS(ProgramStatement ps) {
         int[] operands = ps.getOperands();
         switch (ps.getInstruction().getName()) {
             case "lui":
