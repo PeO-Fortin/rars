@@ -20,17 +20,16 @@ public class InterpreterOptions implements OptionsChecker{
             "--dfs :\tActive Depth-first search exploration\n" +
             "--distance-exit :\tActivate distance to exit exploration\n" +
             "--random :\tActive random paths exploration" +
-            "--coverage :\tActive coverage-guided exploration";
+            "--coverage :\tActive coverage-guided exploration" +
+            "--rand-cov :\tActive combination of random and coverage-guided exploration";
 
 
     Heuristics heuristic = Heuristics.BFS;
+    boolean randCov;
 
     private Map<BasicBlock, Integer> coverageCounter;
 
     boolean userEntries = false;
-
-    //Iterative deepening variables
-    private int loopLimit = -1;
 
     //User entries variable
     private BufferedReader readerInput;
@@ -63,6 +62,11 @@ public class InterpreterOptions implements OptionsChecker{
     }
 
     public Heuristics getHeuristic() {
+        if(heuristic==Heuristics.RANDOM_COVERAGE) {
+            randCov = !randCov;
+            return randCov ? Heuristics.COVERAGE : Heuristics.RANDOM;
+        }
+
         return heuristic;
     }
 
@@ -260,6 +264,15 @@ public class InterpreterOptions implements OptionsChecker{
             case "--coverage":
                 if(heuristic != Heuristics.BFS) {
                     heuristic = Heuristics.COVERAGE;
+                    coverageCounter = new HashMap<>();
+                    break;
+                } else {
+                    errorHeuristic();
+                }
+            case "--rand-cov":
+                if(heuristic != Heuristics.BFS) {
+                    heuristic = Heuristics.RANDOM_COVERAGE;
+                    randCov = true;
                     coverageCounter = new HashMap<>();
                     break;
                 } else {

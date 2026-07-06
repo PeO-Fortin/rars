@@ -115,6 +115,11 @@ public class Corrector {
         files.saveExecutionResults();
     }
 
+    /**
+     * Updates the list of files used as user entries by the interpreter.
+     *
+     * @param inputs inputs to use as userEntries
+     */
     private static void updateUserEntries(File[] inputs) {
         if(inputs != null && inputs.length != 0) {
             int i = 0;

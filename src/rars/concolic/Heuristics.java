@@ -5,5 +5,6 @@ public enum Heuristics {
     DFS,
     TO_EXIT,
     RANDOM,
-    COVERAGE
+    COVERAGE,
+    RANDOM_COVERAGE
 }
