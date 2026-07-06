@@ -1,8 +1,4 @@
-package rars.corrector;
-
-import rars.api.Options;
-import rars.concolic.InterpreterOptions;
-import rars.concolic.OptionsChecker;
+package rars.options;
 
 import java.io.File;
 import java.util.ArrayList;

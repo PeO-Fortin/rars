@@ -1,11 +1,10 @@
 package rars.corrector;
 
 import rars.concolic.ConcolicInterpreter;
+import rars.options.CorrectorOptions;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Entry point of the automatic correction process for RARS assignments.

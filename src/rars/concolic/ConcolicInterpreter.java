@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.*;
 
 import rars.cfg.BasicBlock;
+import rars.options.InterpreterOptions;
 import rars.riscv.InstructionSet;
 import rars.riscv.hardware.AddressErrorException;
 
@@ -74,13 +75,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(128) }));
 
-        ConcolicValues.V value = options.readFromFile();
-
-        if (value == null) {
-            value = getFromModel(symbol, -1);
-        }
-
-        return value;
+        return generateValue(symbol);
     }
 
     int lastReadInteger = 0;
@@ -93,13 +88,19 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L) }));
 
-        ConcolicValues.V value = options.readFromFile();
+        return generateValue(symbol);
+    }
 
-        if (value == null) {
-            value = getFromModel(symbol, -1);
+    private ConcolicValues.V generateValue(String symbol) {
+        Long value = options.readFromFile();
+        ConcolicValues.V concValue;
+
+        if (value != null) {
+            concValue = new ConcolicValues.V(value, new SymbolicLong(value));
+        } else {
+            concValue = getFromModel(symbol, -1);
         }
-
-        return value;
+        return concValue;
     }
 
     int lastReadString = 0;

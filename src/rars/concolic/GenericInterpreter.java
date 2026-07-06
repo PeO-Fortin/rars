@@ -4,6 +4,7 @@ import rars.AssemblyException;
 import rars.ProgramStatement;
 import rars.RISCVprogram;
 import rars.assembler.Assembler;
+import rars.options.InterpreterOptions;
 import rars.riscv.hardware.AddressErrorException;
 import rars.cfg.*;
 

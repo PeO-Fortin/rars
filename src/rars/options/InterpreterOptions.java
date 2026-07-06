@@ -1,8 +1,9 @@
-package rars.concolic;
+package rars.options;
 
 import rars.ProgramStatement;
 import rars.cfg.BasicBlock;
 import rars.cfg.CFG;
+import rars.concolic.Heuristics;
 
 import java.io.*;
 import java.util.HashMap;
@@ -73,12 +74,10 @@ public class InterpreterOptions implements OptionsChecker{
         return maxInstructions;
     }
 
-    public ConcolicValues.V readFromFile() {
+    public Long readFromFile() {
         if(!userEntries){return null;}
 
-        Long value = readIntFromFile(readerInput);
-
-        return value==null ? null : new ConcolicValues.V(value, new SymbolicLong(value));
+        return readIntFromFile(readerInput);
     }
 
     private Long readIntFromFile(BufferedReader reader){
@@ -156,7 +155,7 @@ public class InterpreterOptions implements OptionsChecker{
         return value;
     }
 
-    Map<BasicBlock, Integer> calculateDistanceToExit(CFG cfg) {
+    public Map<BasicBlock, Integer> calculateDistanceToExit(CFG cfg) {
 
         if(heuristic != Heuristics.TO_EXIT) return null;
 
