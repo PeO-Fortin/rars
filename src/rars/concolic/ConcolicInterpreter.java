@@ -13,7 +13,8 @@ import rars.riscv.hardware.AddressErrorException;
 public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     public static void main(String[] args) throws Exception {
-        InterpreterOptions opt = new InterpreterOptions(args);
+        InterpreterOptions opt = new InterpreterOptions();
+        opt.checkOptions(args);c
         initRars();
 
         runInterpreter(args[0], opt);

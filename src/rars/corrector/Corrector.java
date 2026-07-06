@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class Corrector {
 
-    public static Options opt;
+    public static CorrectorOptions opt;
 
     /**
      * Executes a source file through ConcolicInterpreter, passing it the
@@ -233,7 +233,7 @@ public class Corrector {
             System.exit(1);
         }
 
-        opt = new Options();
+        opt = new CorrectorOptions();
 
         String[] cleanArgs = opt.checkOptions(args);
 

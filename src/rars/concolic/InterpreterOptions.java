@@ -10,8 +10,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
-public class InterpreterOptions {
-    private final String HELP = "\nAvailable options:\n" +
+public class InterpreterOptions implements OptionsChecker{
+    public static final String HELP = "\nAvailable options:\n" +
             "--help :\t\tDisplay available options\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions\n" +
@@ -39,11 +39,7 @@ public class InterpreterOptions {
     private int maxExecutions = 300;
     private int maxInstructions = 500;
 
-    InterpreterOptions(String[] args){
-        if (args.length > 0) {
-            checkOptions(args);
-        }
-    }
+    public InterpreterOptions(){}
 
     public void newExecution() {
         if (userEntries) {
@@ -204,68 +200,77 @@ public class InterpreterOptions {
         return  coverageCounter.getOrDefault(block, 0);
     }
 
-    public void checkOptions(String[] args){
-        for(int i = 1; i < args.length; ++i){
-            switch (args[i]){
-                case "--help":
-                    System.out.println(HELP);
-                    System.exit(0);
-                    break;
-                case "--max-exec":
-                    maxExecutions = Integer.parseInt(args[++i]);
-                    break;
-                case "--max-inst":
-                    maxInstructions = Integer.parseInt(args[++i]);
-                    break;
-                case "--user-entries":
-                    userEntries = true;
-                    try {
-                        filesName = new String[Integer.parseInt(args[++i])];
-                        for(int j = 0; j < filesName.length; ++j){
-                            filesName[j] = args[++i];
-                        }
-                        fileNumber = 0;
-                    } catch (NumberFormatException e) {
-                        System.out.println("Wrong parameter for option --user-entries: " + args[i]);
-                        System.out.println("Try option '--help'");
-                        System.exit(1);
+    public void checkOptions(String args[]) {
+        for (int i = 1; i < args.length; ++i) {
+            int newIndex = checkOption(args, i);
+            if (newIndex == -1) {
+                System.out.println("Invalid concolic interpreter option: " + args[i]);
+                System.exit(1);
+            }
+            i = newIndex;
+        }
+    }
+
+    @Override
+    public int checkOption(String[] args, int i){
+        switch (args[i]){
+            case "--help":
+                System.out.println(HELP);
+                System.exit(0);
+            case "--max-exec":
+                maxExecutions = Integer.parseInt(args[++i]);
+                break;
+            case "--max-inst":
+                maxInstructions = Integer.parseInt(args[++i]);
+                break;
+            case "--user-entries":
+                userEntries = true;
+                try {
+                    filesName = new String[Integer.parseInt(args[++i])];
+                    for(int j = 0; j < filesName.length; ++j){
+                        filesName[j] = args[++i];
                     }
-                    break;
-                case "--dfs":
-                    if(heuristic != Heuristics.BFS) {
-                        heuristic = Heuristics.DFS;
-                        break;
-                    } else {
-                        errorHeuristic();
-                    }
-                case "--distance-exit":
-                    if(heuristic != Heuristics.BFS) {
-                        heuristic = Heuristics.TO_EXIT;
-                        break;
-                    } else {
-                        errorHeuristic();
-                    }
-                case "--random":
-                    if(heuristic != Heuristics.BFS) {
-                        heuristic = Heuristics.RANDOM;
-                        break;
-                    } else {
-                        errorHeuristic();
-                    }
-                case "--coverage":
-                    if(heuristic != Heuristics.BFS) {
-                        heuristic = Heuristics.COVERAGE;
-                        coverageCounter = new HashMap<>();
-                        break;
-                    } else {
-                        errorHeuristic();
-                    }
-                default:
-                    System.out.println("Unknown option: " + args[i]);
+                    fileNumber = 0;
+                } catch (NumberFormatException e) {
+                    System.out.println("Wrong parameter for option --user-entries: " + args[i]);
                     System.out.println("Try option '--help'");
                     System.exit(1);
+                }
+                break;
+            case "--dfs":
+                if(heuristic != Heuristics.BFS) {
+                    heuristic = Heuristics.DFS;
+                    break;
+                } else {
+                    errorHeuristic();
+                }
+            case "--distance-exit":
+                if(heuristic != Heuristics.BFS) {
+                    heuristic = Heuristics.TO_EXIT;
+                    break;
+                } else {
+                    errorHeuristic();
+                }
+            case "--random":
+                if(heuristic != Heuristics.BFS) {
+                    heuristic = Heuristics.RANDOM;
+                    break;
+                } else {
+                    errorHeuristic();
+                }
+            case "--coverage":
+                if(heuristic != Heuristics.BFS) {
+                    heuristic = Heuristics.COVERAGE;
+                    coverageCounter = new HashMap<>();
+                    break;
+                } else {
+                    errorHeuristic();
+                }
+            default:
+                i = -1;
             }
-        }
+
+            return i;
     }
 
     public void errorHeuristic(){
