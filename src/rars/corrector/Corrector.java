@@ -19,14 +19,10 @@ public class Corrector {
      * file's path followed by the supplied arguments.
      *
      * @param filename  source file to execute
-     * @param arguments list of extra arguments to pass to ConcolicInterpreter
      */
-    public static void concExecFile(File filename, List<String> arguments) {
+    public static void concExecFile(File filename) {
         try {
-            List<String> completeArgs = new ArrayList<>();
-            completeArgs.add(filename.getPath());
-            completeArgs.addAll(arguments);
-            ConcolicInterpreter.main(completeArgs.toArray(new String[0]));
+            ConcolicInterpreter.runInterpreter(filename.getPath(), opt.getInterpreterOptions());
         } catch (Exception e) {
             System.err.println("Error while executing " + filename);
             e.printStackTrace();
@@ -42,27 +38,8 @@ public class Corrector {
      *                    supply as input for the execution
      */
     public static void execStudentFile(File studentFile, File[] knownInputs) {
-        List<String> studentArgs = new ArrayList<>();
-        addMaxExecArg(studentArgs);
-        studentArgs.add("--user-entries");
-
-        studentArgs.add("" + knownInputs.length);
-        for (File f : knownInputs) {
-            studentArgs.add(f.getPath());
-        }
-
-        concExecFile(studentFile,studentArgs);
-    }
-
-    /**
-     * Adds the '--max-exec' option followed by the value of
-     * MAX_EXEC to the given argument list.
-     *
-     * @param args argument list to add the option to
-     */
-    public static void addMaxExecArg(List<String> args) {
-        args.add("--max-exec");
-        args.add(String.valueOf(opt.getMaxExecutions()));
+        updateUserEntries(knownInputs);
+        concExecFile(studentFile);
     }
 
     /**
@@ -73,11 +50,7 @@ public class Corrector {
      *              to process
      */
     public static void generateTestFiles(FilesManager files) {
-
-        List<String> arguments = new ArrayList<>();
-        addMaxExecArg(arguments);
-
-        concExecFile(files.MASTER_FILE, arguments);
+        concExecFile(files.MASTER_FILE);
         files.saveExecutionResults();
 
         for (File studentFile : files.getStudentFiles()) {
@@ -138,18 +111,22 @@ public class Corrector {
      * @param files     file manager holding the master file
      */
     public static void updateMasterList(File[] newInputs, FilesManager files) {
-        if(newInputs != null && newInputs.length != 0) {
-            List<String> masterArgs = new ArrayList<>();
-            addMaxExecArg(masterArgs);
-            masterArgs.add("--user-entries");
-            masterArgs.add("" + newInputs.length);
-            for (File f : newInputs) {
-                masterArgs.add(f.getPath());
+        updateUserEntries(newInputs);
+        concExecFile(files.MASTER_FILE);
+        files.saveExecutionResults();
+    }
+
+    private static void updateUserEntries(File[] inputs) {
+        if(inputs != null && inputs.length != 0) {
+            int i = 0;
+            String[] masterArgs = new String[inputs.length + 2];
+            masterArgs[i++] = "--user-entries";
+            masterArgs[i++] = "" + inputs.length;
+            for (File f : inputs) {
+                masterArgs[i++] = f.getPath();
             }
 
-            concExecFile(files.MASTER_FILE, masterArgs);
-
-            files.saveExecutionResults();
+            opt.checkOption(masterArgs, 0);
         }
     }
 

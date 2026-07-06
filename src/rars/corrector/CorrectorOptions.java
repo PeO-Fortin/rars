@@ -23,6 +23,10 @@ public class CorrectorOptions implements OptionsChecker {
         return userTests.toArray(new File[0]);
     }
 
+    public InterpreterOptions getInterpreterOptions() {
+        return interpreterOptions;
+    }
+
     public String[] checkOptions(String[] args) {
         interpreterOptions = new InterpreterOptions();
         cleanArgs = new ArrayList<>();

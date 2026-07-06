@@ -36,7 +36,7 @@ public class InterpreterOptions implements OptionsChecker{
     private String[] filesName;
     private int fileNumber;
 
-    private int maxExecutions = 300;
+    private int maxExecutions = 100;
     private int maxInstructions = 500;
 
     public InterpreterOptions(){}
