@@ -16,8 +16,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static void main(String[] args) throws Exception {
         InterpreterOptions opt = new InterpreterOptions();
         opt.checkOptions(args);
-        initRars();
-
         runInterpreter(args[0], opt);
     }
 
@@ -28,6 +26,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     }
 
     public static void runInterpreter(String program, InterpreterOptions options) throws Exception {
+        initRars();
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(program);
         interpreter.options = options;

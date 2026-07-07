@@ -5,7 +5,11 @@ import java.util.ArrayList;
 
 public class CorrectorOptions implements OptionsChecker {
 
-    public static String HELP = InterpreterOptions.HELP + "TODO";
+    public static String HELP = InterpreterOptions.HELP +
+            "--help :\t\tDisplay available options\n" +
+            "--sol [file] :\tThe file containing the program of reference" +
+            "--stud [files] :\tThe files to compare to the program of reference" +
+            "--tests [files] :\tThe previously prepared tests to include in the comparison";
 
     private ArrayList<File> userTests;
     private InterpreterOptions interpreterOptions;
@@ -26,7 +30,7 @@ public class CorrectorOptions implements OptionsChecker {
     public String[] checkOptions(String[] args) {
         interpreterOptions = new InterpreterOptions();
         cleanArgs = new ArrayList<>();
-        for  (int i = 1; i < args.length; i++) {
+        for  (int i = 0; i < args.length; i++) {
             int newIndex = checkOption(args, i);
             if (newIndex == -1) {
                 System.out.println("Invalid corrector option: " + args[i]);
@@ -41,7 +45,7 @@ public class CorrectorOptions implements OptionsChecker {
     public int checkOption(String[] args, int i){
         int newIndex = interpreterOptions.checkOption(args, i);
         if (newIndex != -1) {return newIndex;}
-
+        System.out.println("i vaut avant le check" + i);
         switch(args[i]) {
             case "--sol":
                 ++i;
@@ -67,7 +71,8 @@ public class CorrectorOptions implements OptionsChecker {
                 break;
             default:
                 i = -1;
-            }
-            return i;
         }
+
+        return i;
+    }
 }

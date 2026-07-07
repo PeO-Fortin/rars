@@ -31,7 +31,7 @@ public class InterpreterOptions implements OptionsChecker{
 
     boolean userEntries = false;
 
-    //User entries variable
+    //User entries variables
     private BufferedReader readerInput;
     private String[] filesName;
     private int fileNumber;
@@ -241,28 +241,28 @@ public class InterpreterOptions implements OptionsChecker{
                 }
                 break;
             case "--dfs":
-                if(heuristic != Heuristics.BFS) {
+                if(heuristic == Heuristics.BFS) {
                     heuristic = Heuristics.DFS;
                     break;
                 } else {
                     errorHeuristic();
                 }
             case "--distance-exit":
-                if(heuristic != Heuristics.BFS) {
+                if(heuristic == Heuristics.BFS) {
                     heuristic = Heuristics.TO_EXIT;
                     break;
                 } else {
                     errorHeuristic();
                 }
             case "--random":
-                if(heuristic != Heuristics.BFS) {
+                if(heuristic == Heuristics.BFS) {
                     heuristic = Heuristics.RANDOM;
                     break;
                 } else {
                     errorHeuristic();
                 }
             case "--coverage":
-                if(heuristic != Heuristics.BFS) {
+                if(heuristic == Heuristics.BFS) {
                     heuristic = Heuristics.COVERAGE;
                     coverageCounter = new HashMap<>();
                     break;
@@ -270,7 +270,7 @@ public class InterpreterOptions implements OptionsChecker{
                     errorHeuristic();
                 }
             case "--rand-cov":
-                if(heuristic != Heuristics.BFS) {
+                if(heuristic == Heuristics.BFS) {
                     heuristic = Heuristics.RANDOM_COVERAGE;
                     randCov = true;
                     coverageCounter = new HashMap<>();
