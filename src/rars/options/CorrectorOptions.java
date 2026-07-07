@@ -45,7 +45,6 @@ public class CorrectorOptions implements OptionsChecker {
     public int checkOption(String[] args, int i){
         int newIndex = interpreterOptions.checkOption(args, i);
         if (newIndex != -1) {return newIndex;}
-        System.out.println("i vaut avant le check" + i);
         switch(args[i]) {
             case "--sol":
                 ++i;
