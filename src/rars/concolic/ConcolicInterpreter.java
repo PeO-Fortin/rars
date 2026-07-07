@@ -68,12 +68,20 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     @Override
     protected ConcolicValues.V readChar() {
         String symbol = "readChar_" + lastReadCharacter++;
-        // The result from readChar is between -1 (included) and 127 (included)
-        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicLong(-2), new SymbolicVariable(symbol) }));
-        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(128) }));
 
+        if(execution % 2 == 0) {
+            //All possible ASCII
+            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                    new SymbolicValue[]{new SymbolicLong(-2), new SymbolicVariable(symbol)}));
+            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                    new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(128)}));
+        } else {
+            //Only printable ASCII
+            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                    new SymbolicValue[]{new SymbolicLong(31), new SymbolicVariable(symbol)}));
+            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                    new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(127)}));
+        }
         return generateValue(symbol);
     }
 
@@ -82,11 +90,19 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected ConcolicValues.V readInt() {
         String symbol = "readInt_" + lastReadInteger++;
 
-        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol) }));
-        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
-                new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L) }));
-
+        if(execution % 2 == 0) {
+            //All integers
+            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                    new SymbolicValue[]{new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol)}));
+            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                    new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L)}));
+        } else {
+            //Limited range
+            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                    new SymbolicValue[]{new SymbolicLong(-101), new SymbolicVariable(symbol)}));
+            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+                    new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(101)}));
+        }
         return generateValue(symbol);
     }
 
@@ -316,6 +332,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         return v;
     }
 
+    int execution = 0;
     Map<String, Integer> model = new HashMap<>();
     public void runConcolic(int maxExecutions) {
         this.distanceToExit = options.calculateDistanceToExit(cfg);
@@ -324,7 +341,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                     cfg.entryBlock
             );
         }
-        int execution = 0;
         try {
             do {
                 lastReadCharacter = 0;
