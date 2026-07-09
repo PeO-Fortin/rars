@@ -14,7 +14,9 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 
 public abstract class GenericInterpreter<V> {
     InterpreterValues<V> values;
@@ -185,7 +187,7 @@ public abstract class GenericInterpreter<V> {
             case "jal":
                 jal(ps.getAddress(), operands[0]); break;
             case "jalr":
-                jalr(registers[operands[1]], ps.getAddress(), operands[2], operands[0]); break;
+                jalr(operands[1], ps.getAddress(), operands[2], operands[0]); break;
             case "bge":
                 ifgeq(registers[operands[0]], registers[operands[1]]); break;
             case "blt":
@@ -342,14 +344,20 @@ public abstract class GenericInterpreter<V> {
 
     void sraw(V left, V right, int dst) { registers[dst] = values.sraw(left, right); }
 
+    Deque<BasicBlock> callStack = new ArrayDeque<>();
     void jal(int currentProgramCounter, int dst) {
         registers[dst] = values.inject(currentProgramCounter + DEFAULT_OFFSET);
+        callStack.push(currentBlock);
         currentBlock = currentBlock.takenSuccessor;
     }
 
-    void jalr(V jd, int currentProgramCounter, int offset, int dst) {
+    void jalr(int jd, int currentProgramCounter, int offset, int dst) {
         registers[dst] = values.inject(currentProgramCounter + DEFAULT_OFFSET);
-        currentBlock.takenSuccessor = cfg.blockMap.get(values.asInt(jd) + offset);
+        //If jump to ra aka 'ret'
+        if (jd == 1) {
+            callStack.pop();
+        }
+        currentBlock.takenSuccessor = cfg.blockMap.get(values.asInt(registers[jd]) + offset);
         currentBlock = currentBlock.takenSuccessor;
     }
 
