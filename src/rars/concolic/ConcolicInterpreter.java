@@ -38,31 +38,45 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         super(new ConcolicValues());
     }
 
-    public ExecutionTreeNode executionTreeRoot = new ExecutionTreeNode(0);
-    public ExecutionTreeNode currentNode = executionTreeRoot;
-    int nextId = 0;
     Map<BasicBlock, Integer> distanceToExit;
+    boolean lastTruthDecision = true;
 
     @Override
     protected void if_(ConcolicValues.V cond) {
-        constraints.add(cond.symbolic);
-        currentNode.condition = cond.symbolic;
-        currentNode.block = currentBlock;
+        NodeKey key = new NodeKey(currentBlock, callStack);
+        ExecutionTreeNode node = executionTree.getOrCreate(key);
+
+        if(node.condition == null) {
+            node.constraints = new ArrayList<>(constraints);
+        }
+
+        node.condition = cond.symbolic;
+        node.block = currentBlock;
+
         if (distanceToExit != null) {
-            currentNode.distanceToExit = distanceToExit.getOrDefault(currentBlock, Integer.MAX_VALUE);
+            node.distanceToExit = distanceToExit.getOrDefault(currentBlock, Integer.MAX_VALUE);
         }
-        if (!currentNode.hasChildren()) {
-            currentNode.trueBranch = executionTree.getOrCreate(new NodeKey(currentBlock, callStack));
-            currentNode.trueBranch = new ExecutionTreeNode(++nextId);
-            currentNode.trueBranch.parent = currentNode;
-            currentNode.falseBranch = new ExecutionTreeNode(++nextId);
-            currentNode.falseBranch.parent = currentNode;
+
+        if(node != executionTree.root) {
+            if (lastTruthDecision == true) {
+                executionTree.previousNode.trueBranch = node;
+            } else {
+                executionTree.previousNode.falseBranch = node;
+            }
         }
-        if (values.isTruthy(cond)) {
-            currentNode = currentNode.trueBranch;
+
+        boolean truthDecision = values.isTruthy(cond);
+
+        if(truthDecision) {
+            constraints.add(cond.symbolic);
         } else {
-            currentNode = currentNode.falseBranch;
+            SymbolicValue[] args = {cond.symbolic};
+            constraints.add(new SymbolicOperation(SymbolicOperator.Not, args));
         }
+
+        lastTruthDecision = truthDecision;
+        executionTree.previousNode = node;
+
         super.if_(cond);
     }
 
@@ -73,15 +87,15 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
         if(execution % 2 == 0) {
             //All possible ASCII
-            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+            constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicLong(-2), new SymbolicVariable(symbol)}));
-            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+            constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(128)}));
         } else {
             //Only printable ASCII
-            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+            constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicLong(31), new SymbolicVariable(symbol)}));
-            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+            constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(127)}));
         }
         return generateValue(symbol);
@@ -94,15 +108,15 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
         if(execution % 2 == 0) {
             //All integers
-            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+            constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol)}));
-            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+            constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L)}));
         } else {
             //Limited range
-            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+            constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicLong(-101), new SymbolicVariable(symbol)}));
-            currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+            constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(101)}));
         }
         return generateValue(symbol);
@@ -151,18 +165,18 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     }
 
     private ConcolicValues.V readCharforString(String symbol) {
-        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+        constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicLong(31), new SymbolicVariable(symbol) }));
-        currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
+        constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(symbol), new SymbolicLong(127) }));
 
         return getFromModel(symbol, 32);
     }
 
     private ConcolicValues.V modelizedLength(String lenSymbol, ConcolicValues.V length) {
-        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Geq,
+        constraints.add( new SymbolicOperation(SymbolicOperator.Geq,
                 new SymbolicValue[]{ new SymbolicVariable(lenSymbol), new SymbolicLong(0) }));
-        currentNode.extraConstraints.add( new SymbolicOperation(SymbolicOperator.Lt,
+        constraints.add( new SymbolicOperation(SymbolicOperator.Lt,
                 new SymbolicValue[]{ new SymbolicVariable(lenSymbol), length.symbolic }));
 
         return getFromModel(lenSymbol, 0);
@@ -341,7 +355,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public void runConcolic(int maxExecutions) {
         this.distanceToExit = options.calculateDistanceToExit(cfg);
         if (this.distanceToExit != null) {
-            executionTreeRoot.distanceToExit = this.distanceToExit.get(
+            executionTree.root.distanceToExit = this.distanceToExit.get(
                     cfg.entryBlock
             );
         }
@@ -352,7 +366,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 constraints.clear();
                 callStack.clear();
                 options.newExecution();
-                currentNode = executionTreeRoot;
                 computeNextModel();
                 super.input = "|"; super.output = "|";
                 runMain();
@@ -386,12 +399,11 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     private static class ExecutionDone extends RuntimeException {}
     ConstraintSolver solver = new ConstraintSolver();
     public void computeNextModel() {
-        ExecutionTreeNode next = executionTreeRoot.nextUnexplored();
-        currentNode = next;
+        ExecutionTreeNode next = executionTree.root.nextUnexplored();
         if (next == null) {
             throw new ExecutionDone();
         }
-        model = solver.solve(next.collectConstraints(next));
+        model = solver.solve(next.constraints);
         if (model == null) {
             // unsat!
             next.unsat = true;

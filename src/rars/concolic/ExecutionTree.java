@@ -6,16 +6,36 @@ import java.util.*;
 
 public class ExecutionTree {
     private Map<NodeKey, ExecutionTreeNode> nodes;
+    ExecutionTreeNode root;
+    ExecutionTreeNode previousNode;
+    private boolean rootDefined = false;
     private static int id = 0;
 
 
     public ExecutionTree() {
         nodes = new HashMap<>();
+        root = new ExecutionTreeNode(0);
+        previousNode = null;
     }
 
-    ExecutionTreeNode getOrCreate(NodeKey key) {
-        return nodes.computeIfAbsent(key, k->new ExecutionTreeNode(++id));
+    public boolean contains(NodeKey key){
+        return nodes.containsKey(key);
     }
+
+    public ExecutionTreeNode getOrCreate(NodeKey key) {
+        return nodes.computeIfAbsent(key, k -> {
+            if (!rootDefined) {
+                rootDefined = true;
+                return root;
+            }
+            return new ExecutionTreeNode(++id);
+        });
+    }
+
+    public ExecutionTreeNode addNode(NodeKey key, ExecutionTreeNode node) {
+        return nodes.put(key, node);
+    }
+
 }
 
 class NodeKey {
@@ -39,7 +59,7 @@ class ExecutionTreeNode {
     public ExecutionTreeNode trueBranch;
     public ExecutionTreeNode falseBranch;
     public boolean unsat = false;
-    public Collection<SymbolicValue> extraConstraints = new HashSet<>();
+    public ArrayList<SymbolicValue> constraints = new ArrayList<>();
     public boolean explored = false;
     BasicBlock block;
     public Integer distanceToExit;
@@ -193,25 +213,6 @@ class ExecutionTreeNode {
         if (trueBranch != null) size += trueBranch.size();
         if (falseBranch != null) size += falseBranch.size();
         return size;
-    }
-
-    public Collection<SymbolicValue> collectConstraints(ExecutionTreeNode comingFrom) {
-        Collection<SymbolicValue> constraints;
-        if (parent != null) {
-            constraints = parent.collectConstraints(this);
-        } else {
-            constraints = new HashSet<>();
-        }
-        constraints.addAll(this.extraConstraints);
-        if (condition != null) {
-            if (comingFrom == trueBranch) {
-                constraints.add(condition);
-            } else {
-                SymbolicValue[] args = { condition };
-                constraints.add(new SymbolicOperation(SymbolicOperator.Not, args));
-            }
-        }
-        return constraints;
     }
 
     public boolean isBlockInPath(BasicBlock target) {
