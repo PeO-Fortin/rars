@@ -84,15 +84,30 @@ class ExecutionTreeNode {
         return condition != null && (isUnexplored(true) || isUnexplored(false));
     }
 
-/*    public UnexploredEdge nextUnexploredDFS() {
-        if (trueBranch != null && falseBranch != null) {
-            ExecutionTreeNode f = falseBranch.nextUnexplored();
-            if (f != null) return f;
-            ExecutionTreeNode t = trueBranch.nextUnexplored();
+    public UnexploredEdge nextUnexploredDFS() {
+        return nextUnexploredDFS(new HashSet<>());
+    }
+
+    private UnexploredEdge nextUnexploredDFS(Set<ExecutionTreeNode> visited) {
+        if(visited.contains(this)) {return null;}
+        visited.add(this);
+
+        if(falseBranch != null) {
+            UnexploredEdge f = falseBranch.nextUnexploredDFS(visited);
+            if(f != null) return f;
+        }
+        if(trueBranch != null) {
+            UnexploredEdge t = trueBranch.nextUnexploredDFS(visited);
             if (t != null) return t;
         }
+
+        if(hasUnexploredEdge()) {
+            if(isUnexplored(false)) return new UnexploredEdge(this, false);
+            else return new UnexploredEdge(this, true);
+        }
+
         return null;
-    }*/
+    }
 
     public UnexploredEdge nextUnexploredBFS() {
         Queue<ExecutionTreeNode> worklist = new LinkedList<>();
@@ -146,34 +161,48 @@ class ExecutionTreeNode {
         }
         return best;
     }
+    */
 
     public UnexploredEdge nextUnexploredRandom() {
-        ExecutionTreeNode node = this;
-        Random rand = new Random();
+        return nextUnexploredRandom(new HashSet<>(), new Random());
+    }
 
-        while (!node.isUnexplored()) {
-            List<ExecutionTreeNode> availableBranches = new ArrayList<>();
-            if (node.trueBranch != null) availableBranches.add(node.trueBranch);
-            if (node.falseBranch != null) availableBranches.add(node.falseBranch);
+    private UnexploredEdge nextUnexploredRandom(Set<ExecutionTreeNode> visited, Random rand) {
+        if (!visited.add(this)) return null;
 
-            if (availableBranches.isEmpty()) return null;
+        List<UnexploredEdge> edges = new ArrayList<>();
+        List<ExecutionTreeNode> nodes = new ArrayList<>();
 
-            node = availableBranches.get(rand.nextInt(availableBranches.size()));
+        if(isUnexplored(false)) edges.add(new UnexploredEdge(this, false));
+        if(isUnexplored(true)) edges.add(new UnexploredEdge(this, true));
+
+        if(trueBranch != null) nodes.add(trueBranch);
+        if (falseBranch != null) nodes.add(falseBranch);
+
+        while (!edges.isEmpty() || !nodes.isEmpty()) {
+            int i = rand.nextInt(edges.size() + nodes.size());
+
+            if (i < edges.size()) {
+                return edges.get(i);
+            }
+            ExecutionTreeNode node = nodes.remove(i - edges.size());
+            UnexploredEdge edge = node.nextUnexploredRandom(visited, rand);
+            if (edge != null) return edge;
         }
-
-        return node;
-
+        return null;
     }
 
     public UnexploredEdge nextUnexploredCoverage() {
-        List<ExecutionTreeNode> candidates = new ArrayList<>();
+        List<UnexploredEdge> candidates = new ArrayList<>();
         Queue<ExecutionTreeNode> worklist = new LinkedList<>();
-        ExecutionTreeNode best = null;
+        UnexploredEdge best = null;
+
         worklist.add(this);
         while (!worklist.isEmpty()) {
             ExecutionTreeNode node = worklist.remove();
-            if (node.isUnexplored()) {
-                candidates.add(node);
+            if (node.hasUnexploredEdge()) {
+                if (node.isUnexplored(false)) candidates.add(new UnexploredEdge(node, false));
+                if (node.isUnexplored(true)) candidates.add(new UnexploredEdge(node, true));
             } else {
                 if (node.falseBranch != null) worklist.add(node.falseBranch);
                 if (node.trueBranch != null) worklist.add(node.trueBranch);
@@ -181,8 +210,16 @@ class ExecutionTreeNode {
         }
 
         int minCoverage = 0;
-        for (ExecutionTreeNode candidate : candidates) {
-            int coverage = ConcolicInterpreter.options.getCoverage(candidate.block);
+        for (UnexploredEdge candidate : candidates) {
+            int coverage;
+            BasicBlock block;
+            if(candidate.direction == true){
+                block = candidate.node.block.takenSuccessor;
+            } else {
+                block = candidate.node.block.fallthroughSuccessor;
+            }
+
+            coverage = ConcolicInterpreter.options.getCoverage(block);
 
             if (coverage <= minCoverage) {
                 minCoverage = coverage;
@@ -190,7 +227,7 @@ class ExecutionTreeNode {
             }
         }
         return best;
-    }*/
+    }
 
     public UnexploredEdge nextUnexplored() {
         UnexploredEdge result;
@@ -200,18 +237,19 @@ class ExecutionTreeNode {
             default:
                 result = nextUnexploredBFS();
                 break;
-            /*case DFS:
+            case DFS:
                 result = nextUnexploredDFS();
                 break;
-            case TO_EXIT:
+            /*case TO_EXIT:
                 result = nextUnexploredExit();
                 break;
+             */
             case RANDOM:
                 result = nextUnexploredRandom();
                 break;
             case COVERAGE:
                 result = nextUnexploredCoverage();
-                break;*/
+                break;
         }
         return result;
     }
