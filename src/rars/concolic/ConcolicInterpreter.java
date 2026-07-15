@@ -400,23 +400,20 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         UnexploredEdge next = executionTree.root.nextUnexplored();
         List<SymbolicValue> constraints;
 
-        if (next == null && executionTree.rootDefined) {
-            throw new ExecutionDone();
-        }
-
-        if (!executionTree.rootDefined) {
+        if (!executionTree.rootDefined) { //first execution
             constraints = new ArrayList<>();
+        } else if (next == null) {
+            throw new ExecutionDone();
         } else {
             constraints = next.node.constraints;
+            if(next.direction == true) {
+                constraints.add(next.node.condition);
+            } else {
+                SymbolicValue[] args = {next.node.condition};
+                constraints.add(new SymbolicOperation(SymbolicOperator.Not, args));
+            }
         }
-
-        if(next.direction == true) {
-            constraints.add(next.node.condition);
-        } else {
-            SymbolicValue[] args = {next.node.condition};
-            constraints.add(new SymbolicOperation(SymbolicOperator.Not, args));
-        }
-
+        
         model = solver.solve(constraints);
 
         if (model == null) {
