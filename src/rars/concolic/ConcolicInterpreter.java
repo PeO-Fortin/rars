@@ -48,9 +48,8 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
         if(node.condition == null) {
             node.constraints = new ArrayList<>(constraints);
+            node.condition = cond.symbolic;
         }
-
-        node.condition = cond.symbolic;
         node.block = currentBlock;
 
         if (distanceToExit != null) {
@@ -369,7 +368,6 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 computeNextModel();
                 super.input = "|"; super.output = "|";
                 runMain();
-                currentNode.explored = true;
                 printResults(execution);
                 ++execution;
             } while (execution < maxExecutions);
@@ -399,14 +397,32 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     private static class ExecutionDone extends RuntimeException {}
     ConstraintSolver solver = new ConstraintSolver();
     public void computeNextModel() {
-        ExecutionTreeNode next = executionTree.root.nextUnexplored();
-        if (next == null) {
+        UnexploredEdge next = executionTree.root.nextUnexplored();
+        List<SymbolicValue> constraints;
+
+        if (next == null && executionTree.rootDefined) {
             throw new ExecutionDone();
         }
-        model = solver.solve(next.constraints);
+
+        if (!executionTree.rootDefined) {
+            constraints = new ArrayList<>();
+        } else {
+            constraints = next.node.constraints;
+        }
+
+        if(next.direction == true) {
+            constraints.add(next.node.condition);
+        } else {
+            SymbolicValue[] args = {next.node.condition};
+            constraints.add(new SymbolicOperation(SymbolicOperator.Not, args));
+        }
+
+        model = solver.solve(constraints);
+
         if (model == null) {
-            // unsat!
-            next.unsat = true;
+            //unsat
+            if(next.direction == true) next.node.trueBranchUnsat = true;
+            else next.node.falseBranchUnsat = true;
             computeNextModel();
         }
     }

@@ -8,7 +8,7 @@ public class ExecutionTree {
     private Map<NodeKey, ExecutionTreeNode> nodes;
     ExecutionTreeNode root;
     ExecutionTreeNode previousNode;
-    private boolean rootDefined = false;
+    boolean rootDefined = false;
     private static int id = 0;
 
 
@@ -54,39 +54,37 @@ class NodeKey {
 }
 
 class ExecutionTreeNode {
-    public ExecutionTreeNode parent;
+    public int id;
+    BasicBlock block;
+
     public SymbolicValue condition;
+    public ArrayList<SymbolicValue> constraints = new ArrayList<>();
+
     public ExecutionTreeNode trueBranch;
     public ExecutionTreeNode falseBranch;
-    public boolean unsat = false;
-    public ArrayList<SymbolicValue> constraints = new ArrayList<>();
-    public boolean explored = false;
-    BasicBlock block;
+    public boolean trueBranchUnsat = false;
+    public boolean falseBranchUnsat = false;
+
     public Integer distanceToExit;
-    public int id;
+
+
     public ExecutionTreeNode(int id) {
         this.id = id;
     }
 
-    public boolean isUnexplored() {
-        return !hasChildren() && !explored && !unsat; }
-
-    public boolean hasChildren() {
-        return trueBranch != null && falseBranch != null;
-    }
-
-    public boolean hasUnexploredNode() {
-        if (isUnexplored()) {
-            return true;
-        } else if (trueBranch != null && falseBranch != null) {
-            return trueBranch.hasUnexploredNode() || falseBranch.hasUnexploredNode();
+    public boolean isUnexplored(boolean direction) {
+        if(direction == true) {
+            return trueBranch == null && !trueBranchUnsat;
         } else {
-            return false;
+            return falseBranch == null && !falseBranchUnsat;
         }
     }
 
-    public ExecutionTreeNode nextUnexploredDFS() {
-        if (isUnexplored()) return this;
+    public boolean hasUnexploredEdge() {
+        return condition != null && (isUnexplored(true) || isUnexplored(false));
+    }
+
+/*    public UnexploredEdge nextUnexploredDFS() {
         if (trueBranch != null && falseBranch != null) {
             ExecutionTreeNode f = falseBranch.nextUnexplored();
             if (f != null) return f;
@@ -94,21 +92,31 @@ class ExecutionTreeNode {
             if (t != null) return t;
         }
         return null;
-    }
+    }*/
 
-    public ExecutionTreeNode nextUnexploredBFS() {
+    public UnexploredEdge nextUnexploredBFS() {
         Queue<ExecutionTreeNode> worklist = new LinkedList<>();
+        Set<ExecutionTreeNode> visited = new HashSet<>();
         worklist.add(this);
         while (!worklist.isEmpty()) {
             ExecutionTreeNode node = worklist.remove();
-            if (node.isUnexplored()) return node;
-            if (node.falseBranch != null) worklist.add(node.falseBranch);
-            if (node.trueBranch != null) worklist.add(node.trueBranch);
+            if (node.hasUnexploredEdge()) {
+                if (node.isUnexplored(false)) return new UnexploredEdge(node, false);
+                if (node.isUnexplored(true)) return new UnexploredEdge(node, true);
+            }
+            if (node.falseBranch != null && !visited.contains(node.falseBranch)) {
+                visited.add(node.falseBranch);
+                worklist.add(node.falseBranch);
+            }
+            if (node.trueBranch != null && !visited.contains(node.trueBranch)) {
+                visited.add(node.trueBranch);
+                worklist.add(node.trueBranch);
+            }
         }
         return null;
     }
 
-    public ExecutionTreeNode nextUnexploredExit() {
+    /*public UnexploredEdge nextUnexploredExit() {
         List<ExecutionTreeNode> candidates = new ArrayList<>();
         Queue<ExecutionTreeNode> worklist = new LinkedList<>();
         ExecutionTreeNode best = null;
@@ -139,7 +147,7 @@ class ExecutionTreeNode {
         return best;
     }
 
-    public ExecutionTreeNode nextUnexploredRandom() {
+    public UnexploredEdge nextUnexploredRandom() {
         ExecutionTreeNode node = this;
         Random rand = new Random();
 
@@ -157,7 +165,7 @@ class ExecutionTreeNode {
 
     }
 
-    public ExecutionTreeNode nextUnexploredCoverage() {
+    public UnexploredEdge nextUnexploredCoverage() {
         List<ExecutionTreeNode> candidates = new ArrayList<>();
         Queue<ExecutionTreeNode> worklist = new LinkedList<>();
         ExecutionTreeNode best = null;
@@ -182,17 +190,17 @@ class ExecutionTreeNode {
             }
         }
         return best;
-    }
+    }*/
 
-    public ExecutionTreeNode nextUnexplored() {
-        ExecutionTreeNode result;
-        Heuristics heur = ConcolicInterpreter.options.getHeuristic();
-        switch (heur) {
+    public UnexploredEdge nextUnexplored() {
+        UnexploredEdge result;
+        Heuristics h = ConcolicInterpreter.options.getHeuristic();
+        switch (h) {
             case BFS:
             default:
                 result = nextUnexploredBFS();
                 break;
-            case DFS:
+            /*case DFS:
                 result = nextUnexploredDFS();
                 break;
             case TO_EXIT:
@@ -203,7 +211,7 @@ class ExecutionTreeNode {
                 break;
             case COVERAGE:
                 result = nextUnexploredCoverage();
-                break;
+                break;*/
         }
         return result;
     }
@@ -214,13 +222,14 @@ class ExecutionTreeNode {
         if (falseBranch != null) size += falseBranch.size();
         return size;
     }
+}
 
-    public boolean isBlockInPath(BasicBlock target) {
-        ExecutionTreeNode cur = this;
-        while (cur != null) {
-            if (cur.block == target) return true;
-            cur = cur.parent;
-        }
-        return false;
+class UnexploredEdge {
+    ExecutionTreeNode node;
+    boolean direction;
+
+    public UnexploredEdge(ExecutionTreeNode node, boolean direction) {
+        this.node = node;
+        this.direction = direction;
     }
 }
