@@ -69,7 +69,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected ConcolicValues.V readChar() {
         String symbol = "readChar_" + lastReadCharacter++;
 
-        if(execution % 2 == 0) {
+        if(execution > options.getMaxExecutions() * 0.1) {
             //All possible ASCII
             currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicLong(-2), new SymbolicVariable(symbol)}));
@@ -90,7 +90,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     protected ConcolicValues.V readInt() {
         String symbol = "readInt_" + lastReadInteger++;
 
-        if(execution % 2 == 0) {
+        if(execution > options.getMaxExecutions() * 0.1) {
             //All integers
             currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol)}));
