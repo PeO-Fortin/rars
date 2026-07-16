@@ -131,29 +131,34 @@ class ExecutionTreeNode {
         return null;
     }
 
-    /*public UnexploredEdge nextUnexploredExit() {
-        List<ExecutionTreeNode> candidates = new ArrayList<>();
+    public UnexploredEdge nextUnexploredExit() {
+        List<UnexploredEdge> candidates = new ArrayList<>();
         Queue<ExecutionTreeNode> worklist = new LinkedList<>();
-        ExecutionTreeNode best = null;
+        Set<ExecutionTreeNode> visited = new HashSet<>();
+        UnexploredEdge best = null;
         worklist.add(this);
+        visited.add(this);
+
         while (!worklist.isEmpty()) {
             ExecutionTreeNode node = worklist.remove();
-            if (node.isUnexplored()) {
-                candidates.add(node);
-            } else {
-                if (node.falseBranch != null) worklist.add(node.falseBranch);
-                if (node.trueBranch != null) worklist.add(node.trueBranch);
+
+            if(node.isUnexplored(false)) candidates.add(new UnexploredEdge(node,false));
+            if(node.isUnexplored(true)) candidates.add(new UnexploredEdge(node,true));
+
+            if (node.falseBranch != null && !visited.contains(node.falseBranch)) {
+                visited.add(node.falseBranch);
+                worklist.add(node.falseBranch);
+            }
+            if (node.trueBranch != null && !visited.contains(node.trueBranch)) {
+                visited.add(node.trueBranch);
+                worklist.add(node.trueBranch);
             }
         }
 
         int bestScore = Integer.MAX_VALUE;
-        for (ExecutionTreeNode candidate : candidates) {
-            int score;
-            if (candidate.parent == null) {
-                score = candidate.distanceToExit != null ? candidate.distanceToExit : Integer.MAX_VALUE;
-            } else {
-                score = candidate.parent.distanceToExit != null ? candidate.parent.distanceToExit : Integer.MAX_VALUE;
-            }
+        for (UnexploredEdge candidate : candidates) {
+            int score = candidate.node.distanceToExit != null ? candidate.node.distanceToExit : Integer.MAX_VALUE;
+
             if (best == null || score < bestScore) {
                 best = candidate;
                 bestScore = score;
@@ -161,7 +166,7 @@ class ExecutionTreeNode {
         }
         return best;
     }
-    */
+
 
     public UnexploredEdge nextUnexploredRandom() {
         return nextUnexploredRandom(new HashSet<>(), new Random());
@@ -240,10 +245,9 @@ class ExecutionTreeNode {
             case DFS:
                 result = nextUnexploredDFS();
                 break;
-            /*case TO_EXIT:
+            case TO_EXIT:
                 result = nextUnexploredExit();
                 break;
-             */
             case RANDOM:
                 result = nextUnexploredRandom();
                 break;
