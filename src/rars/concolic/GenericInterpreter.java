@@ -361,6 +361,7 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
+    public static boolean eof = false;
     protected abstract V readChar();
     protected abstract V readInt();
     protected abstract String readString(V bufAddress, V length);
@@ -391,11 +392,11 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 11:    // PrintChar
                 char ch = values.asChar(registers[10]);
-                output += (int) ch + "|";  // stocker comme nombre, pas comme caractère brut
+                if(!eof) output += (int) ch + "|";  // write as integer, not char
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
-                input += values.asInt(registers[10]) + "|";  // idem
+                if(!eof) input += values.asInt(registers[10]) + "|";// idem
                 return;
             case 34:    // PrintIntHex
                 strOut = Integer.toHexString(values.asInt(registers[10]));

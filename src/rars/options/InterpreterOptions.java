@@ -3,6 +3,7 @@ package rars.options;
 import rars.ProgramStatement;
 import rars.cfg.BasicBlock;
 import rars.cfg.CFG;
+import rars.concolic.GenericInterpreter;
 import rars.concolic.Heuristics;
 
 import java.io.*;
@@ -128,7 +129,8 @@ public class InterpreterOptions implements OptionsChecker{
 
             } else {
                 reader.close();
-                return null;
+                GenericInterpreter.eof = true;
+                return -1L;
             }
 
         } catch (IOException e) {

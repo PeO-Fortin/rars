@@ -107,14 +107,20 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     }
 
     private ConcolicValues.V generateValue(String symbol) {
-        Long value = options.readFromFile();
         ConcolicValues.V concValue;
 
-        if (value != null) {
-            concValue = new ConcolicValues.V(value, new SymbolicLong(value));
+        if(eof) {
+            concValue = new ConcolicValues.V(-1, new SymbolicLong(-1));
         } else {
-            concValue = getFromModel(symbol, -1);
+            Long value = options.readFromFile();
+
+            if (value != null) {
+                concValue = new ConcolicValues.V(value, new SymbolicLong(value));
+            } else {
+                concValue = getFromModel(symbol, -1);
+            }
         }
+
         return concValue;
     }
 
