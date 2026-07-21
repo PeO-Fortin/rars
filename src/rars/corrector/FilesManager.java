@@ -4,6 +4,7 @@ import rars.concolic.ConcolicInterpreter;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -43,6 +44,8 @@ public class FilesManager{
     public FilesManager(String [] filesName){
         MASTER_FILE = new File(filesName[0]);
         studentFiles = new File[filesName.length-1];
+
+        createFolder();
 
         cleanFolders();
 
@@ -109,7 +112,7 @@ public class FilesManager{
      * @return the array of input files from the most recent execution
      */
     public File[] getExecInputFiles(){
-        return getFiles(ConcolicInterpreter.INPUT_FOLDER_NAME, FILTER_INPUTS);
+        return getFiles(ConcolicInterpreter.INPUT_READABLE_FOLDER_NAME, FILTER_INPUTS);
     }
 
     /**
@@ -175,6 +178,15 @@ public class FilesManager{
         }
     }
 
+    private void createFolder(){
+            try {
+                Path path = Paths.get(MASTER_FOLDER);
+                Files.createDirectories(path);
+            } catch (IOException e) {
+                System.out.println("Error creating results folders: " + e.getMessage());
+            }
+    }
+
     /**
      * Cleans up the working directories before starting a new correction:
      * deletes every file (excluding subdirectories) found in the output folder
@@ -184,7 +196,7 @@ public class FilesManager{
     private void cleanFolders() {
         File[] dir = {
                 new File(ConcolicInterpreter.OUTPUT_FOLDER_NAME),
-                new File(ConcolicInterpreter.INPUT_FOLDER_NAME),
+                new File(ConcolicInterpreter.INPUT_READABLE_FOLDER_NAME),
                 new File(MASTER_FOLDER),
         };
 

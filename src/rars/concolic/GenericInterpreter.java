@@ -9,6 +9,8 @@ import rars.riscv.hardware.AddressErrorException;
 import rars.cfg.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
@@ -53,7 +55,9 @@ public abstract class GenericInterpreter<V> {
     }
 
     public String output = "";
-    public String input = "";
+    public String inputReadable = "";
+    ByteArrayOutputStream inputBytesArray = new ByteArrayOutputStream();
+    DataOutputStream inputBytes = new DataOutputStream(inputBytesArray);
 
     int instructionCounter;
     int maxInstructions;
@@ -361,7 +365,6 @@ public abstract class GenericInterpreter<V> {
         }
     }
 
-    public static boolean eof = false;
     protected abstract V readChar();
     protected abstract V readInt();
     protected abstract String readString(V bufAddress, V length);
@@ -379,10 +382,18 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 5:     // ReadInt
                 registers[10] = readInt();
-                input += values.asInt(registers[10]) + "|";
+                if(!options.eof) {
+                    try {
+                        int value = values.asInt(registers[10]);
+                        inputReadable += value + "|";
+                        inputBytes.writeInt(value);
+                    } catch (IOException e) {
+                        System.out.println("Error writing binary Int input");
+                    }
+                }
                 return;
             case 8:     // ReadString
-                input += readString(registers[10], registers[11]) + "|";
+                inputReadable += readString(registers[10], registers[11]) + "|";
                 return;
             case 9:     //Sbrk
                 memory.sBrk(values.asInt(registers[10]));
@@ -392,11 +403,19 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 11:    // PrintChar
                 char ch = values.asChar(registers[10]);
-                if(!eof) output += (int) ch + "|";  // write as integer, not char
+                if(!options.eof) output += ch + "|";
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
-                if(!eof) input += values.asInt(registers[10]) + "|";// idem
+                if(!options.eof) {
+                    try {
+                        char value = values.asChar(registers[10]);
+                        inputReadable += value + "|";
+                        inputBytes.writeChar(value);
+                    } catch (IOException e) {
+                        System.out.println("Error writing binary Char input");
+                    }
+                }
                 return;
             case 34:    // PrintIntHex
                 strOut = Integer.toHexString(values.asInt(registers[10]));

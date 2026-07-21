@@ -31,6 +31,7 @@ public class InterpreterOptions implements OptionsChecker{
     private Map<BasicBlock, Integer> coverageCounter;
 
     boolean userEntries = false;
+    public boolean eof = false;
 
     //User entries variables
     private BufferedReader readerInput;
@@ -129,7 +130,7 @@ public class InterpreterOptions implements OptionsChecker{
 
             } else {
                 reader.close();
-                GenericInterpreter.eof = true;
+                eof = true;
                 return -1L;
             }
 
