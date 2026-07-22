@@ -3,7 +3,6 @@ package rars.options;
 import rars.ProgramStatement;
 import rars.cfg.BasicBlock;
 import rars.cfg.CFG;
-import rars.concolic.GenericInterpreter;
 import rars.concolic.Heuristics;
 
 import java.io.*;
@@ -17,7 +16,8 @@ public class InterpreterOptions implements OptionsChecker{
             "--help :\t\tDisplay available options\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions\n" +
-            "--user-entries [number of files] [files] :\tUse entries from files to start the symbolic execution" +
+            "--text-entries [number of files] [files] :\tUse entries from text files to start the symbolic execution" +
+            "--binary-entries [number of files] [files]:\tUse entries from binary files to start the symbolic execution" +
             "--dfs :\tActive Depth-first search exploration\n" +
             "--distance-exit :\tActivate distance to exit exploration\n" +
             "--random :\tActive random paths exploration" +
@@ -30,13 +30,16 @@ public class InterpreterOptions implements OptionsChecker{
 
     private Map<BasicBlock, Integer> coverageCounter;
 
-    boolean userEntries = false;
+    boolean textUserEntries = false;
+    boolean binaryUserEntries = false;
     public boolean eof = false;
 
     //User entries variables
-    private BufferedReader readerInput;
-    private String[] filesName;
-    private int fileNumber;
+    private String[] textFilesName;
+    private int textFileNumber;
+    private String[] binaryFilesName;
+    private int binaryFileNumber;
+    private InputReader reader;
 
     private int maxExecutions = 100;
     private int maxInstructions = 500;
@@ -44,21 +47,17 @@ public class InterpreterOptions implements OptionsChecker{
     public InterpreterOptions(){}
 
     public void newExecution() {
-        if (userEntries) {
-            try {
-                if(readerInput != null) {
-                    readerInput.close();
-                }
-                if (fileNumber < filesName.length) {
-                    readerInput = new BufferedReader(new FileReader(filesName[fileNumber]));
-                    ++fileNumber;
-                }
-            } catch (FileNotFoundException e) {
-                System.out.println("Input file not found: " + filesName[fileNumber]);
-                System.exit(1);
-            } catch (IOException e) {
-                System.out.println("IO Error new Execution");
-                System.exit(1);
+        if (textUserEntries) {
+            if (textFileNumber < textFilesName.length - 1) {
+                reader = new TextInputReader(textFilesName[++textFileNumber]);
+            } else {
+                textUserEntries = false;
+            }
+        } else if (binaryUserEntries) {
+            if (binaryFileNumber < binaryFilesName.length-1) {
+                reader = new BinaryInputReader(textFilesName[++binaryFileNumber]);
+            }  else {
+                binaryUserEntries = false;
             }
         }
     }
@@ -80,85 +79,44 @@ public class InterpreterOptions implements OptionsChecker{
         return maxInstructions;
     }
 
-    public Long readFromFile() {
-        if(!userEntries){return null;}
+    public Long readIntFromFile() throws NumberFormatException {
+        if(!textUserEntries && !binaryUserEntries) {return null;}
+        if(eof) {return -1L;}
 
-        return readIntFromFile(readerInput);
-    }
-
-    private Long readIntFromFile(BufferedReader reader){
-        long value;
-        boolean negative = false;
+        Long value;
 
         try {
-            if(reader.ready()){
-                String sb = "";
-                int c;
-
-                do {
-                    reader.mark(1);
-                    c = reader.read();
-                    if (c == -1) return null;
-                } while (c != '|');
-
-                reader.mark(1);
-                c = reader.read();
-
-                if (c == '-') {
-                    negative = true;
-                    reader.mark(1);
-                    c = reader.read();
-                }
-
-                while (c != -1 && Character.isDigit(c)) {
-                    sb += (char) c;
-
-                    reader.mark(1);
-                    c = reader.read();
-                }
-
-                if (c != -1) {
-                    reader.reset();
-                }
-
-                if(sb.length() == 0) {
-                    return null;
-                }
-
-                value = Long.parseLong(sb.toString());
-                if (negative) { value = -value; }
-
-            } else {
-                reader.close();
+            value = reader.readInt();
+            if (value == null) {
                 eof = true;
-                return -1L;
+                value = -1L;
             }
 
         } catch (IOException e) {
-            return null;
+            System.out.println("Error while reading int from file");
+            value = null;
         }
 
         return value;
-    }
+    };
 
-    public String readStringFromFile(long length) {
-        if(!userEntries || length <= 0){return null;}
-        String value = "";
+    public Long readCharFromFile() {
+        if(!textUserEntries && !binaryUserEntries) {return null;}
+        if(eof) {return -1L;}
+
+        Long value;
 
         try {
-            for(int i = 0; i < length - 1; ++i) {
-                if(!readerInput.ready()){
-                    readerInput.close();
-                    return null;
-                }
-                char ch = (char) readerInput.read();
-                if (ch == '\0') break;
-                value += ch;
-            }
+            value = reader.readChar();
+        } catch (IOException e) {
+            System.out.println("Error while reading char from file");
+            value = null;
         }
-        catch (IOException e) {
-            return null;
+
+        if (value == -1) {
+            eof = true;
         }
+
         return value;
     }
 
@@ -229,16 +187,30 @@ public class InterpreterOptions implements OptionsChecker{
             case "--max-inst":
                 maxInstructions = Integer.parseInt(args[++i]);
                 break;
-            case "--user-entries":
-                userEntries = true;
+            case "--text-entries":
+                textUserEntries = true;
                 try {
-                    filesName = new String[Integer.parseInt(args[++i])];
-                    for(int j = 0; j < filesName.length; ++j){
-                        filesName[j] = args[++i];
+                    textFilesName = new String[Integer.parseInt(args[++i])];
+                    for(int j = 0; j < textFilesName.length; ++j){
+                        textFilesName[j] = args[++i];
                     }
-                    fileNumber = 0;
+                    textFileNumber = 0;
                 } catch (NumberFormatException e) {
-                    System.out.println("Wrong parameter for option --user-entries: " + args[i]);
+                    System.out.println("Wrong parameter for option --text-entries: " + args[i]);
+                    System.out.println("Try option '--help'");
+                    System.exit(1);
+                }
+                break;
+            case "--binary-entries":
+                binaryUserEntries = true;
+                try {
+                    binaryFilesName = new String[Integer.parseInt(args[++i])];
+                    for(int j = 0; j < binaryFilesName.length; ++j){
+                        binaryFilesName[j] = args[++i];
+                    }
+                    binaryFileNumber = 0;
+                } catch (NumberFormatException e) {
+                    System.out.println("Wrong parameter for option --binary-entries: " + args[i]);
                     System.out.println("Try option '--help'");
                     System.exit(1);
                 }

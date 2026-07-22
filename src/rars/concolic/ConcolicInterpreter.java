@@ -98,8 +98,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     @Override
     protected ConcolicValues.V readChar() {
         String symbol = "readChar_" + lastReadCharacter++;
+        ConcolicValues.V concValue;
 
-        if(execution > options.getMaxExecutions() * 0.1) {
+        if(execution > options.getMaxExecutions() * 0.9) {
             //All possible ASCII
             currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicLong(-2), new SymbolicVariable(symbol)}));
@@ -112,20 +113,31 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(127)}));
         }
-        return generateValue(symbol);
+
+        Long value = options.readCharFromFile();
+
+        if (value != null) {
+            concValue = new ConcolicValues.V(value, new SymbolicLong(value));
+        } else {
+            concValue = getFromModel(symbol, 0);
+        }
+
+        return concValue;
     }
 
     int lastReadInteger = 0;
     @Override
     protected ConcolicValues.V readInt() {
         String symbol = "readInt_" + lastReadInteger++;
+        ConcolicValues.V concValue;
 
-        if(execution > options.getMaxExecutions() * 0.1) {
-            //All integers
+        if(execution > options.getMaxExecutions() * 0.9) {
+            //All values
+            // NOTE: Even if the syscall is called readInt, in 64bits, rars reads a Long
             currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                    new SymbolicValue[]{new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol)}));
+                    new SymbolicValue[]{new SymbolicLong(Long.MIN_VALUE), new SymbolicVariable(symbol)}));
             currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                    new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L)}));
+                    new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(Long.MAX_VALUE)}));
         } else {
             //Limited range
             currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
@@ -133,22 +145,20 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             currentNode.extraConstraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(101)}));
         }
-        return generateValue(symbol);
-    }
 
-    private ConcolicValues.V generateValue(String symbol) {
-        ConcolicValues.V concValue;
+        Long value = null;
 
-        if(options.eof) {
-            concValue = new ConcolicValues.V(-1, new SymbolicLong(-1));
+        try {
+            value = options.readIntFromFile();
+        } catch (NumberFormatException e) {
+            output += "Runtime exception: invalid input integer";
+            exit = true;
+        }
+
+        if (value != null) {
+            concValue = new ConcolicValues.V(value, new SymbolicLong(value));
         } else {
-            Long value = options.readFromFile();
-
-            if (value != null) {
-                concValue = new ConcolicValues.V(value, new SymbolicLong(value));
-            } else {
-                concValue = getFromModel(symbol, -1);
-            }
+            concValue = getFromModel(symbol, 0);
         }
 
         return concValue;
@@ -160,24 +170,18 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String lenSymbol = "readString_" + lastReadString + "_len";
         String strSymbol = "readString_" + lastReadString++;
 
-        String value = options.readStringFromFile(length.concrete);
+        String value = "";
         long modelLength;
 
-        if(value != null) {
-            modelLength = value.length() + 1;
-        } else {
-            modelLength = modelizedLength(lenSymbol, length).concrete;
-        }
+        modelLength = modelizedLength(lenSymbol, length).concrete;
 
         int i = 0;
         for(; i < modelLength - 1; ++i){
             ConcolicValues.V ch;
-            if(value != null) {
-                ch = values.inject(value.charAt(i));
-            } else {
-                String charSymbol = strSymbol + "_char_" + i;
-                ch = readCharforString(charSymbol);
-            }
+            String charSymbol = strSymbol + "_char_" + i;
+            ch = readCharforString(charSymbol);
+            value += values.asChar(ch);
+
             sb(ch, values.inject(i), bufAddress);
         }
         sb(values.inject(0), values.inject(i), bufAddress);
