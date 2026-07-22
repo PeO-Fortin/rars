@@ -45,8 +45,7 @@ public class FilesManager{
         MASTER_FILE = new File(filesName[0]);
         studentFiles = new File[filesName.length-1];
 
-        createFolder();
-
+        createFolders();
         cleanFolders();
 
         for(int i = 1; i < filesName.length; ++i){
@@ -112,7 +111,7 @@ public class FilesManager{
      * @return the array of input files from the most recent execution
      */
     public File[] getExecInputFiles(){
-        return getFiles(ConcolicInterpreter.INPUT_READABLE_FOLDER_NAME, FILTER_INPUTS);
+        return getFiles(ConcolicInterpreter.INPUT_BINARY_FOLDER_NAME, FILTER_INPUTS);
     }
 
     /**
@@ -178,7 +177,7 @@ public class FilesManager{
         }
     }
 
-    private void createFolder(){
+    private void createFolders(){
             try {
                 Path path = Paths.get(MASTER_FOLDER);
                 Files.createDirectories(path);
@@ -196,7 +195,7 @@ public class FilesManager{
     private void cleanFolders() {
         File[] dir = {
                 new File(ConcolicInterpreter.OUTPUT_FOLDER_NAME),
-                new File(ConcolicInterpreter.INPUT_READABLE_FOLDER_NAME),
+                new File(ConcolicInterpreter.INPUT_BINARY_FOLDER_NAME),
                 new File(MASTER_FOLDER),
         };
 
@@ -211,7 +210,6 @@ public class FilesManager{
             c.delete();
         } catch (NullPointerException e) {
             System.out.println("Error while cleaning folders: " + e.getMessage());
-            return;
         }
     }
 
