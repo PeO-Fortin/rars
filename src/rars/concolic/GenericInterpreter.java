@@ -374,18 +374,18 @@ public abstract class GenericInterpreter<V> {
             // Register 10 = a0
             case 1:     // PrintInt
                 int it = values.asInt(registers[10]);
-                output += it + "|";
+                output += it;
                 return;
             case 4:     // PrintString
                 strOut = printString(values.asLong(registers[10]));
-                output +=  strOut + "|";
+                output +=  strOut;
                 return;
             case 5:     // ReadInt
                 registers[10] = readInt();
                 if(!options.eof) {
                     try {
                         int value = values.asInt(registers[10]);
-                        inputReadable += value + "|";
+                        inputReadable += value + "\n";
                         inputBytes.writeInt(value);
                     } catch (IOException e) {
                         System.out.println("Error writing binary Int input");
@@ -393,7 +393,7 @@ public abstract class GenericInterpreter<V> {
                 }
                 return;
             case 8:     // ReadString
-                inputReadable += readString(registers[10], registers[11]) + "|";
+                inputReadable += readString(registers[10], registers[11]);
                 return;
             case 9:     //Sbrk
                 memory.sBrk(values.asInt(registers[10]));
@@ -403,14 +403,14 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 11:    // PrintChar
                 char ch = values.asChar(registers[10]);
-                if(!options.eof) output += ch + "|";
+                if(!options.eof) output += ch;
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
                 if(!options.eof) {
                     try {
                         char value = values.asChar(registers[10]);
-                        inputReadable += value + "|";
+                        inputReadable += value;
                         inputBytes.writeChar(value);
                     } catch (IOException e) {
                         System.out.println("Error writing binary Char input");
@@ -419,11 +419,11 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 34:    // PrintIntHex
                 strOut = Integer.toHexString(values.asInt(registers[10]));
-                output += strOut + "|";
+                output += strOut;
                 return;
             case 35:    // PrintIntBinary
                 strOut = Integer.toBinaryString(values.asInt(registers[10]));
-                output +=  strOut + "|";
+                output +=  strOut;
                 return;
         }
     }
@@ -451,10 +451,10 @@ public abstract class GenericInterpreter<V> {
             s = decoder.decode(ByteBuffer.wrap(encodedChars.toByteArray())).toString();
 
         } catch (AddressErrorException e){
-            output += e.getMessage() + "|";
+            output += " | " + e.getMessage() + " | ";
             exit = true;
         } catch (CharacterCodingException e) {
-            output += "Erreur d'encodage de caractère" + "|";
+            output += " | Erreur d'encodage de caractère | ";
             exit = true;
         }
         return s;
