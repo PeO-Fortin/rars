@@ -1,9 +1,14 @@
 package rars.concolic;
 
 import rars.Globals;
+
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import rars.cfg.BasicBlock;
@@ -30,8 +35,33 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(program);
         interpreter.options = options;
+        createResultsFolders();
         interpreter.runConcolic(options.getMaxExecutions());
         System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
+    }
+
+    public static final String INPUT_READABLE_FOLDER_NAME = "src/rars/concolic/results/inputs/readable";
+    public static final String INPUT_BINARY_FOLDER_NAME = "src/rars/concolic/results/inputs/binaries";
+    public static final String OUTPUT_FOLDER_NAME = "src/rars/concolic/results/outputs/";
+    public static final String INPUT_FILE_NAME = "inputs";
+    public static final String OUTPUT_FILE_NAME = "outputs";
+
+    private static void createResultsFolders() {
+        String[] folders = {
+                INPUT_READABLE_FOLDER_NAME,
+                INPUT_BINARY_FOLDER_NAME,
+                OUTPUT_FOLDER_NAME
+        };
+
+        try {
+            for (String folder : folders) {
+                Path path = Paths.get(folder);
+
+                Files.createDirectories(path);
+            }
+        } catch (IOException e) {
+            System.out.println("Error creating results folders: " + e.getMessage());
+        }
     }
 
     public ConcolicInterpreter() {
@@ -83,8 +113,9 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     @Override
     protected ConcolicValues.V readChar() {
         String symbol = "readChar_" + lastReadCharacter++;
+        ConcolicValues.V concValue;
 
-        if(execution % 2 == 0) {
+        if(execution > options.getMaxExecutions() * 0.9) {
             //All possible ASCII
             constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicLong(-2), new SymbolicVariable(symbol)}));
@@ -97,20 +128,31 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(127)}));
         }
-        return generateValue(symbol);
+
+        Long value = options.readCharFromFile();
+
+        if (value != null) {
+            concValue = new ConcolicValues.V(value, new SymbolicLong(value));
+        } else {
+            concValue = getFromModel(symbol, 0);
+        }
+
+        return concValue;
     }
 
     int lastReadInteger = 0;
     @Override
     protected ConcolicValues.V readInt() {
         String symbol = "readInt_" + lastReadInteger++;
+        ConcolicValues.V concValue;
 
-        if(execution % 2 == 0) {
-            //All integers
+        if(execution > options.getMaxExecutions() * 0.9) {
+            //All values
+            // NOTE: Even if the syscall is called readInt, in 64bits, rars reads a Long
             constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                    new SymbolicValue[]{new SymbolicLong(Integer.MIN_VALUE - 1L), new SymbolicVariable(symbol)}));
+                    new SymbolicValue[]{new SymbolicLong(Long.MIN_VALUE), new SymbolicVariable(symbol)}));
             constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
-                    new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(Integer.MAX_VALUE + 1L)}));
+                    new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(Long.MAX_VALUE)}));
         } else {
             //Limited range
             constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
@@ -118,18 +160,22 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             constraints.add(new SymbolicOperation(SymbolicOperator.Lt,
                     new SymbolicValue[]{new SymbolicVariable(symbol), new SymbolicLong(101)}));
         }
-        return generateValue(symbol);
-    }
 
-    private ConcolicValues.V generateValue(String symbol) {
-        Long value = options.readFromFile();
-        ConcolicValues.V concValue;
+        Long value = null;
+
+        try {
+            value = options.readIntFromFile();
+        } catch (NumberFormatException e) {
+            output += "Runtime exception: invalid input integer";
+            exit = true;
+        }
 
         if (value != null) {
             concValue = new ConcolicValues.V(value, new SymbolicLong(value));
         } else {
-            concValue = getFromModel(symbol, -1);
+            concValue = getFromModel(symbol, 0);
         }
+
         return concValue;
     }
 
@@ -139,24 +185,18 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         String lenSymbol = "readString_" + lastReadString + "_len";
         String strSymbol = "readString_" + lastReadString++;
 
-        String value = options.readStringFromFile(length.concrete);
+        String value = "";
         long modelLength;
 
-        if(value != null) {
-            modelLength = value.length() + 1;
-        } else {
-            modelLength = modelizedLength(lenSymbol, length).concrete;
-        }
+        modelLength = modelizedLength(lenSymbol, length).concrete;
 
         int i = 0;
         for(; i < modelLength - 1; ++i){
             ConcolicValues.V ch;
-            if(value != null) {
-                ch = values.inject(value.charAt(i));
-            } else {
-                String charSymbol = strSymbol + "_char_" + i;
-                ch = readCharforString(charSymbol);
-            }
+            String charSymbol = strSymbol + "_char_" + i;
+            ch = readCharforString(charSymbol);
+            value += values.asChar(ch);
+
             sb(ch, values.inject(i), bufAddress);
         }
         sb(values.inject(0), values.inject(i), bufAddress);
@@ -366,7 +406,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 callStack.clear();
                 options.newExecution();
                 computeNextModel();
-                super.input = "|"; super.output = "|";
+                super.inputReadable = "|"; super.output = "|";
                 runMain();
                 printResults(execution);
                 ++execution;
@@ -376,19 +416,19 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         }
     }
 
-    public static final String INPUT_FOLDER_NAME = "src/rars/concolic/results/inputs/";
-    public static final String OUTPUT_FOLDER_NAME = "src/rars/concolic/results/outputs/";
-    public static final String INPUT_FILE_NAME = "inputs";
-    public static final String OUTPUT_FILE_NAME = "outputs";
-
     private void printResults(int execution) {
         try {
             String paddedExecution = String.format("%05d", execution);
-            PrintWriter pwInputs = new PrintWriter(new FileWriter(INPUT_FOLDER_NAME + INPUT_FILE_NAME + paddedExecution));
-            PrintWriter pwOutputs = new PrintWriter(new FileWriter(OUTPUT_FOLDER_NAME + OUTPUT_FILE_NAME + paddedExecution));
-            pwInputs.println(super.input); pwOutputs.println(super.output);
-            pwInputs.flush(); pwOutputs.flush();
-            pwInputs.close(); pwOutputs.close();
+            PrintWriter pwReadableInputs = new PrintWriter(new FileWriter(INPUT_READABLE_FOLDER_NAME + INPUT_FILE_NAME + paddedExecution));
+            PrintWriter pwReadableOutputs = new PrintWriter(new FileWriter(OUTPUT_FOLDER_NAME + OUTPUT_FILE_NAME + paddedExecution));
+            byte[] bytesResults = inputBytesArray.toByteArray();
+
+            pwReadableInputs.println(super.inputReadable); pwReadableOutputs.println(super.output);
+            pwReadableInputs.flush(); pwReadableOutputs.flush();
+            pwReadableInputs.close(); pwReadableOutputs.close();
+
+            FileOutputStream fos = new FileOutputStream(INPUT_BINARY_FOLDER_NAME + INPUT_FILE_NAME + paddedExecution);
+            fos.write(bytesResults);
         } catch (IOException e) {
             System.out.println("IO Error Print Results" + execution);
         }
@@ -413,7 +453,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 constraints.add(new SymbolicOperation(SymbolicOperator.Not, args));
             }
         }
-        
+
         model = solver.solve(constraints);
 
         if (model == null) {

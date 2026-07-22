@@ -9,6 +9,8 @@ import rars.riscv.hardware.AddressErrorException;
 import rars.cfg.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
@@ -55,7 +57,9 @@ public abstract class GenericInterpreter<V> {
     }
 
     public String output = "";
-    public String input = "";
+    public String inputReadable = "";
+    ByteArrayOutputStream inputBytesArray = new ByteArrayOutputStream();
+    DataOutputStream inputBytes = new DataOutputStream(inputBytesArray);
 
     int instructionCounter;
     int maxInstructions;
@@ -378,18 +382,26 @@ public abstract class GenericInterpreter<V> {
             // Register 10 = a0
             case 1:     // PrintInt
                 int it = values.asInt(registers[10]);
-                output += it + "|";
+                output += it;
                 return;
             case 4:     // PrintString
                 strOut = printString(values.asLong(registers[10]));
-                output +=  strOut + "|";
+                output +=  strOut;
                 return;
             case 5:     // ReadInt
                 registers[10] = readInt();
-                input += values.asInt(registers[10]) + "|";
+                if(!options.eof) {
+                    try {
+                        int value = values.asInt(registers[10]);
+                        inputReadable += value + "\n";
+                        inputBytes.writeInt(value);
+                    } catch (IOException e) {
+                        System.out.println("Error writing binary Int input");
+                    }
+                }
                 return;
             case 8:     // ReadString
-                input += readString(registers[10], registers[11]) + "|";
+                inputReadable += readString(registers[10], registers[11]);
                 return;
             case 9:     //Sbrk
                 memory.sBrk(values.asInt(registers[10]));
@@ -399,19 +411,27 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 11:    // PrintChar
                 char ch = values.asChar(registers[10]);
-                output += (int) ch + "|";  // stocker comme nombre, pas comme caractère brut
+                if(!options.eof) output += ch;
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
-                input += values.asInt(registers[10]) + "|";  // idem
+                if(!options.eof) {
+                    try {
+                        char value = values.asChar(registers[10]);
+                        inputReadable += value;
+                        inputBytes.writeChar(value);
+                    } catch (IOException e) {
+                        System.out.println("Error writing binary Char input");
+                    }
+                }
                 return;
             case 34:    // PrintIntHex
                 strOut = Integer.toHexString(values.asInt(registers[10]));
-                output += strOut + "|";
+                output += strOut;
                 return;
             case 35:    // PrintIntBinary
                 strOut = Integer.toBinaryString(values.asInt(registers[10]));
-                output +=  strOut + "|";
+                output +=  strOut;
                 return;
         }
     }
@@ -439,10 +459,10 @@ public abstract class GenericInterpreter<V> {
             s = decoder.decode(ByteBuffer.wrap(encodedChars.toByteArray())).toString();
 
         } catch (AddressErrorException e){
-            output += e.getMessage() + "|";
+            output += " | " + e.getMessage() + " | ";
             exit = true;
         } catch (CharacterCodingException e) {
-            output += "Erreur d'encodage de caractère" + "|";
+            output += " | Erreur d'encodage de caractère | ";
             exit = true;
         }
         return s;
