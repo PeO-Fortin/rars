@@ -57,10 +57,10 @@ public class Corrector {
             boolean stableInputs = false;
 
             while (!stableInputs) {
-                File[] knownInputs = files.getMasterInputsFiles();
+                File[] knownInputs = files.getBinaryMasterInputsFiles();
                 execStudentFile(studentFile, knownInputs);
 
-                File[] studentInputs = files.getExecInputFiles();
+                File[] studentInputs = files.getBinaryExecInputFiles();
                 File[] newInputs = findNewInputs(studentInputs, knownInputs);
 
                 if (newInputs.length == 0) {
@@ -124,7 +124,7 @@ public class Corrector {
         if(inputs != null && inputs.length != 0) {
             int i = 0;
             String[] masterArgs = new String[inputs.length + 2];
-            masterArgs[i++] = "--user-entries";
+            masterArgs[i++] = "--binary-entries";
             masterArgs[i++] = "" + inputs.length;
             for (File f : inputs) {
                 masterArgs[i++] = f.getPath();
@@ -143,8 +143,8 @@ public class Corrector {
      *              inputs/outputs, as well as to the correction file
      */
     public static void compareOutputs(FilesManager files) {
-        File[] masterInputs = files.getMasterInputsFiles();
-        File[] studentInputs = files.getExecInputFiles();
+        File[] masterInputs = files.getReadableMasterInputsFiles();
+        File[] studentInputs = files.getReadableExecInputFiles();
         File[] masterOutputs = files.getMasterOutputsFiles();
         File[] studentOutputs = files.getExecOutputFiles();
 
@@ -189,7 +189,7 @@ public class Corrector {
      */
 
     public static void testStudents(FilesManager files) {
-        File[] knownInputs = files.getMasterInputsFiles();
+        File[] knownInputs = files.getBinaryMasterInputsFiles();
         for (int i = 0; i < files.getNumberOfFiles(); ++i) {
             files.printStudentHeader(i);
             execStudentFile(files.getStudentFile(i), knownInputs);

@@ -40,8 +40,8 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
     }
 
-    public static final String INPUT_READABLE_FOLDER_NAME = "src/rars/concolic/results/inputs/readable";
-    public static final String INPUT_BINARY_FOLDER_NAME = "src/rars/concolic/results/inputs/binaries";
+    public static final String INPUT_READABLE_FOLDER_NAME = "src/rars/concolic/results/inputs/readable/";
+    public static final String INPUT_BINARY_FOLDER_NAME = "src/rars/concolic/results/inputs/binaries/";
     public static final String OUTPUT_FOLDER_NAME = "src/rars/concolic/results/outputs/";
     public static final String INPUT_FILE_NAME = "inputs";
     public static final String OUTPUT_FILE_NAME = "outputs";
@@ -388,7 +388,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 options.newExecution();
                 currentNode = executionTreeRoot;
                 computeNextModel();
-                super.inputReadable = "|"; super.output = "|";
+                super.inputReadable = ""; super.output = "";
                 runMain();
                 currentNode.explored = true;
                 printResults(execution);

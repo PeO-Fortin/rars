@@ -201,7 +201,7 @@ public class InterpreterOptions implements OptionsChecker{
                     System.exit(1);
                 }
                 break;
-            case "--binary-entries":
+            case "c":
                 binaryUserEntries = true;
                 try {
                     binaryFilesName = new String[Integer.parseInt(args[++i])];
