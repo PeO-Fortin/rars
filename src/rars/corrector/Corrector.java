@@ -220,8 +220,6 @@ public class Corrector {
 
         FilesManager files = new FilesManager(cleanArgs);
 
-        updateMasterList(opt.getUserTests(), files);
-
         generateTestFiles(files);
 
         testStudents(files);

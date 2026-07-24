@@ -47,8 +47,7 @@ public class FilesManager{
         MASTER_FILE = new File(filesName[0]);
         studentFiles = new File[filesName.length-1];
 
-        createFolders();
-        cleanFolders();
+        prepareMasterFolders();
 
         for(int i = 1; i < filesName.length; ++i){
             studentFiles[i-1] = new File(filesName[i]);
@@ -197,14 +196,33 @@ public class FilesManager{
         }
     }
 
-    private void createFolders(){
-            try {
-                Files.createDirectories(Paths.get(MASTER_OUTPUT_FOLDER));
-                Files.createDirectories(Paths.get(MASTER_BINARY_FOLDER));
-                Files.createDirectories(Paths.get(MASTER_READABLE_FOLDER));
+    private void prepareMasterFolders(){
+        File[] dir = {
+                new File(MASTER_OUTPUT_FOLDER),
+                new File(MASTER_BINARY_FOLDER),
+                new File(MASTER_READABLE_FOLDER)
+        };
+
+        try {
+            for(File f : dir){
+                Files.createDirectories(f.toPath());
+            }
             } catch (IOException e) {
                 System.out.println("Error creating results folders: " + e.getMessage());
             }
+
+        try {
+            for (File d : dir) {
+                for (File f : d.listFiles())
+                    if (!f.isDirectory())
+                        f.delete();
+            }
+
+            File c = new File(CORRECTION_FILE);
+            c.delete();
+        } catch (NullPointerException e) {
+            System.out.println("Error while cleaning folders: " + e.getMessage());
+        }
     }
 
     /**
@@ -214,26 +232,7 @@ public class FilesManager{
      * MASTER_FOLDER, then deletes the existing CORRECTION_FILE.
      */
     private void cleanFolders() {
-        File[] dir = {
-                new File(ConcolicInterpreter.OUTPUT_FOLDER_NAME),
-                new File(ConcolicInterpreter.INPUT_BINARY_FOLDER_NAME),
-                new File(MASTER_OUTPUT_FOLDER),
-                new File(MASTER_BINARY_FOLDER),
-                new File(MASTER_READABLE_FOLDER)
-        };
 
-        try {
-            for (File d : dir) {
-                for (File file : d.listFiles())
-                    if (!file.isDirectory())
-                        file.delete();
-            }
-
-            File c = new File(CORRECTION_FILE);
-            c.delete();
-        } catch (NullPointerException e) {
-            System.out.println("Error while cleaning folders: " + e.getMessage());
-        }
     }
 
     /**
