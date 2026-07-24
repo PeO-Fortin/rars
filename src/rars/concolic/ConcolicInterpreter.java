@@ -2,10 +2,7 @@ package rars.concolic;
 
 import rars.Globals;
 
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,7 +32,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(program);
         interpreter.options = options;
-        createResultsFolders();
+        prepareResultsFolders();
         interpreter.runConcolic(options.getMaxExecutions());
         System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
     }
@@ -46,21 +43,30 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static final String INPUT_FILE_NAME = "inputs";
     public static final String OUTPUT_FILE_NAME = "outputs";
 
-    private static void createResultsFolders() {
-        String[] folders = {
-                INPUT_READABLE_FOLDER_NAME,
-                INPUT_BINARY_FOLDER_NAME,
-                OUTPUT_FOLDER_NAME
+    private static void prepareResultsFolders() {
+        File[] dir = {
+                new File(OUTPUT_FOLDER_NAME),
+                new File(INPUT_BINARY_FOLDER_NAME),
+                new File(INPUT_READABLE_FOLDER_NAME),
         };
 
         try {
-            for (String folder : folders) {
-                Path path = Paths.get(folder);
-
-                Files.createDirectories(path);
+            for (File f : dir) {
+                Files.createDirectories(f.toPath());
             }
         } catch (IOException e) {
             System.out.println("Error creating results folders: " + e.getMessage());
+        }
+
+
+        try {
+            for (File d : dir) {
+                for (File f : d.listFiles())
+                    if (!f.isDirectory())
+                        f.delete();
+            }
+        } catch (NullPointerException e) {
+            System.out.println("Error while cleaning folders: " + e.getMessage());
         }
     }
 

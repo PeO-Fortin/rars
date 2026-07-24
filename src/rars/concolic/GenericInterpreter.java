@@ -384,9 +384,9 @@ public abstract class GenericInterpreter<V> {
                 registers[10] = readInt();
                 if(!options.eof) {
                     try {
-                        int value = values.asInt(registers[10]);
+                        long value = values.asLong(registers[10]);
                         inputReadable += value + "\n";
-                        inputBytes.writeInt(value);
+                        inputBytes.writeLong(value);
                     } catch (IOException e) {
                         System.out.println("Error writing binary Int input");
                     }
@@ -410,7 +410,11 @@ public abstract class GenericInterpreter<V> {
                 if(!options.eof) {
                     try {
                         char value = values.asChar(registers[10]);
-                        inputReadable += value;
+                        if (value >= 32 && value < 127) {
+                            inputReadable += value;
+                        } else {
+                            inputReadable += "\\u" + String.format("%04x", (int) value);
+                        }
                         inputBytes.writeChar(value);
                     } catch (IOException e) {
                         System.out.println("Error writing binary Char input");
