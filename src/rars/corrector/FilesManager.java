@@ -4,7 +4,6 @@ import rars.concolic.ConcolicInterpreter;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -169,8 +168,8 @@ public class FilesManager{
 
             String paddedIndex = String.format("%05d", topIndex);
 
-            Files.write(Paths.get(MASTER_BINARY_FOLDER,"binary_inputs" + paddedIndex), binaryInputContent);
-            Files.writeString(Paths.get(MASTER_READABLE_FOLDER, "readable_inputs" + paddedIndex), readableInputContent);
+            Files.write(Paths.get(MASTER_BINARY_FOLDER,"inputs" + paddedIndex), binaryInputContent);
+            Files.writeString(Paths.get(MASTER_READABLE_FOLDER, "inputs" + paddedIndex), readableInputContent);
             Files.writeString(Paths.get(MASTER_OUTPUT_FOLDER, "outputs" + paddedIndex), outputContent);
         } catch (IOException e) {
             System.out.println("Error while saving execution result : " + e.getMessage());

@@ -42,7 +42,7 @@ public class InterpreterOptions implements OptionsChecker{
     private InputReader reader;
 
     private int maxExecutions = 100;
-    private int maxInstructions = 500;
+    private int maxInstructions = 1000;
 
     public InterpreterOptions(){}
 

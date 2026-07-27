@@ -88,7 +88,7 @@ public abstract class GenericInterpreter<V> {
                     return;
 
                 if (instructionCounter >= maxInstructions) {
-                    output += "Maximum number of instructions reached |";
+                    output += " | Maximum number of instructions reached |";
                     return;
                 }
             }
@@ -402,20 +402,26 @@ public abstract class GenericInterpreter<V> {
                 exit = true;
                 return;
             case 11:    // PrintChar
-                char ch = values.asChar(registers[10]);
-                if(!options.eof) output += ch;
+                char pch = values.asChar(registers[10]);
+                if(!options.eof) {
+                    if (pch >= 32 && pch < 127) {
+                        output += pch;
+                    } else {
+                        output += "\\u" + String.format("%04x", (int) pch);
+                    }
+                }
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
                 if(!options.eof) {
                     try {
-                        char value = values.asChar(registers[10]);
-                        if (value >= 32 && value < 127) {
-                            inputReadable += value;
+                        char rch = values.asChar(registers[10]);
+                        if (rch >= 32 && rch < 127) {
+                            inputReadable += rch;
                         } else {
-                            inputReadable += "\\u" + String.format("%04x", (int) value);
+                            inputReadable += "\\u" + String.format("%04x", (int) rch);
                         }
-                        inputBytes.writeChar(value);
+                        inputBytes.writeChar(rch);
                     } catch (IOException e) {
                         System.out.println("Error writing binary Char input");
                     }
