@@ -3,9 +3,10 @@ package rars.options;
 import rars.ProgramStatement;
 import rars.cfg.BasicBlock;
 import rars.cfg.CFG;
-import rars.concolic.Heuristics;
+import rars.concolic.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -16,14 +17,14 @@ public class InterpreterOptions implements OptionsChecker{
             "--help :\t\tDisplay available options\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-inst [value] :\tDefine a maximum number of instructions\n" +
-            "--text-entries [number of files] [files] :\tUse entries from text files to start the symbolic execution" +
-            "--binary-entries [number of files] [files]:\tUse entries from binary files to start the symbolic execution" +
+            "--text-entries [number of files] [files] :\tUse entries from text files to start the symbolic execution\n" +
+            "--binary-entries [number of files] [files]:\tUse entries from binary files to start the symbolic execution\n" +
             "--dfs :\tActive Depth-first search exploration\n" +
             "--distance-exit :\tActivate distance to exit exploration\n" +
-            "--random :\tActive random paths exploration" +
-            "--coverage :\tActive coverage-guided exploration" +
-            "--rand-cov :\tActive combination of random and coverage-guided exploration";
-
+            "--random :\tActive random paths exploration\n" +
+            "--coverage :\tActive coverage-guided exploration\n" +
+            "--rand-cov :\tActive combination of random and coverage-guided exploration\n" +
+            "--save-memory [starting address] [ending address] :\t Save the memory state from the starting address to the ending address for each execution";
 
     Heuristics heuristic = Heuristics.BFS;
     boolean randCov;
@@ -33,6 +34,10 @@ public class InterpreterOptions implements OptionsChecker{
     boolean textUserEntries = false;
     boolean binaryUserEntries = false;
     public boolean eof = false;
+
+    public boolean saveMemory = false;
+    private int startingAddress;
+    private int endingAddress;
 
     //User entries variables
     private String[] textFilesName;
@@ -164,6 +169,10 @@ public class InterpreterOptions implements OptionsChecker{
         return  coverageCounter.getOrDefault(block, 0);
     }
 
+    public byte[] getSavedMemory(Memory memory) {
+        return memory.getMemory(startingAddress, endingAddress);
+    }
+
     public void checkOptions(String args[]) {
         for (int i = 1; i < args.length; ++i) {
             int newIndex = checkOption(args, i);
@@ -253,6 +262,27 @@ public class InterpreterOptions implements OptionsChecker{
                 } else {
                     errorHeuristic();
                 }
+            case "--save-memory":
+                saveMemory = true;
+                File d = new File(ConcolicInterpreter.MEMORY_SAVE_FOLDER);
+                try {
+                    Files.createDirectories(d.toPath());
+                    for (File f : d.listFiles())
+                        if (!f.isDirectory())
+                            f.delete();
+                } catch (IOException e) {
+                    System.out.println("Error creating memory save folder: " + e.getMessage());
+                }
+
+                try {
+                    startingAddress = Integer.decode(args[++i]);
+                    endingAddress = Integer.decode(args[++i]);
+                } catch (NumberFormatException e) {
+                    System.out.println("Wrong parameter for option --binary-entries: " + args[i]);
+                    System.out.println("Try option '--help'");
+                    System.exit(1);
+                }
+                break;
             default:
                 i = -1;
             }

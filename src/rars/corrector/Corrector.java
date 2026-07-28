@@ -50,7 +50,7 @@ public class Corrector {
      */
     public static void generateTestFiles(FilesManager files) {
         concExecFile(files.MASTER_FILE);
-        files.saveExecutionResults();
+        files.saveExecutionResults(opt.getBitmap());
 
         for (File studentFile : files.getStudentFiles()) {
 
@@ -112,7 +112,7 @@ public class Corrector {
     public static void updateMasterList(File[] newInputs, FilesManager files) {
         updateUserEntries(newInputs);
         concExecFile(files.MASTER_FILE);
-        files.saveExecutionResults();
+        files.saveExecutionResults(opt.getBitmap());
     }
 
     /**

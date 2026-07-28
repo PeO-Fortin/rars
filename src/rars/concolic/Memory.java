@@ -124,6 +124,18 @@ public class Memory {
         }
     }
 
+    public byte[] getMemory(int startingAdress, int endingAdress) {
+        byte[] memoryCopy = new byte[endingAdress - startingAdress + 1];
+
+        for (int i = 0; i <= endingAdress; i++) {
+            int index = getMemoryIndex(startingAdress, i);
+            ConcolicValues.V[] memoryBlockTable = getMemoryBlock(startingAdress, i);
+            memoryCopy[i] = memoryBlockTable[index].concrete.byteValue();
+        }
+
+        return memoryCopy;
+    }
+
     private int getMemoryIndex(long address, long offset) {
         long realAddress = address + offset;
 

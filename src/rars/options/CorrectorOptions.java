@@ -1,5 +1,7 @@
 package rars.options;
 
+import rars.riscv.hardware.MemoryConfigurations;
+
 import java.io.File;
 import java.util.ArrayList;
 
@@ -7,20 +9,33 @@ public class CorrectorOptions implements OptionsChecker {
 
     public static String HELP = InterpreterOptions.HELP +
             "--help :\t\tDisplay available options\n" +
-            "--sol [file] :\tThe file containing the program of reference" +
-            "--stud [files] :\tThe files to compare to the program of reference" +
-            "--tests [files] :\tThe previously prepared tests to include in the comparison";
+            "--sol [file] :\tThe file containing the program of reference\n" +
+            "--stud [files] :\tThe files to compare to the program of reference\n" +
+            "--tests [files] :\tThe previously prepared tests to include in the comparison\n" +
+            "--bitmap [base address code] []:\tThe correction will check the bitmap output\n" +
+            "\tBase address codes :\n" +
+            "\t\t gd (global data) =\t"+ MemoryConfigurations.getDefaultDataSegmentBaseAddress() + "\n" +
+            "\t\t gp (global pointer) = \t"+ MemoryConfigurations.getDefaultGlobalPointer() +"\n" +
+            "\t\t sd (static data) =\t"+ MemoryConfigurations.getDefaultDataBaseAddress() +"\n" +
+            "\t\t hp (heap) =\t"+ MemoryConfigurations.getDefaultHeapBaseAddress() +"\n" +
+            "\t\t mm (memory map) =\t"+ MemoryConfigurations.getDefaultMemoryMapBaseAddress() +"\n";
 
     private ArrayList<File> userTests;
     private InterpreterOptions interpreterOptions;
     private ArrayList<String> cleanArgs;
 
+    private boolean bitmap = false;
+    private int bitmapBaseAddress;
 
     public CorrectorOptions(){}
 
     public File[] getUserTests() {
         if (userTests == null) return null;
         return userTests.toArray(new File[0]);
+    }
+
+    public boolean getBitmap() {
+        return bitmap;
     }
 
     public InterpreterOptions getInterpreterOptions() {
@@ -68,10 +83,28 @@ public class CorrectorOptions implements OptionsChecker {
             case "--help":
                 System.out.println(HELP);
                 break;
+            case "--bitmap":
+                bitmap = true;
+                switch(args[++i]) {
+                    case "gd":
+                        bitmapBaseAddress = MemoryConfigurations.getDefaultDataSegmentBaseAddress();
+                        break;
+                    case "gp":
+                        bitmapBaseAddress = MemoryConfigurations.getDefaultGlobalPointer();
+                        break;
+                    case "sd":
+                        bitmapBaseAddress = MemoryConfigurations.getDefaultDataBaseAddress();
+                        break;
+                    case "hp":
+                        bitmapBaseAddress = MemoryConfigurations.getDefaultHeapBaseAddress();
+                        break;
+                    case "mm":
+                        bitmapBaseAddress = MemoryConfigurations.getDefaultMemoryMapBaseAddress();
+                        break;
+                }
             default:
                 i = -1;
         }
-
         return i;
     }
 }

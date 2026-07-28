@@ -40,6 +40,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static final String INPUT_READABLE_FOLDER_NAME = "src/rars/concolic/results/inputs/readable/";
     public static final String INPUT_BINARY_FOLDER_NAME = "src/rars/concolic/results/inputs/binaries/";
     public static final String OUTPUT_FOLDER_NAME = "src/rars/concolic/results/outputs/";
+    public static final String MEMORY_SAVE_FOLDER = ConcolicInterpreter.OUTPUT_FOLDER_NAME + "memory/";
     public static final String INPUT_FILE_NAME = "inputs";
     public static final String OUTPUT_FILE_NAME = "outputs";
 
@@ -389,6 +390,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         }
         try {
             do {
+                memory = new Memory();
                 lastReadCharacter = 0;
                 lastReadInteger = 0;
                 options.newExecution();
@@ -416,8 +418,18 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             pwReadableInputs.flush(); pwReadableOutputs.flush();
             pwReadableInputs.close(); pwReadableOutputs.close();
 
-            FileOutputStream fos = new FileOutputStream(INPUT_BINARY_FOLDER_NAME + INPUT_FILE_NAME + paddedExecution);
-            fos.write(bytesResults);
+            FileOutputStream foBinaryInputs = new FileOutputStream(INPUT_BINARY_FOLDER_NAME + INPUT_FILE_NAME + paddedExecution);
+            foBinaryInputs.write(bytesResults);
+
+            if(options.saveMemory) {
+                byte[] memoryCopy = options.getSavedMemory(memory);
+                PrintWriter pwMemory = new PrintWriter(new FileWriter(MEMORY_SAVE_FOLDER + ConcolicInterpreter.OUTPUT_FILE_NAME + paddedExecution));
+                for (int i = 0; i < memoryCopy.length; i++) {
+                    if ((i + 1) % 5 == 0) { pwMemory.println(); }
+                    pwMemory.print(memoryCopy[i] + " ");
+                }
+            }
+
         } catch (IOException e) {
             System.out.println("IO Error Print Results" + execution);
         }

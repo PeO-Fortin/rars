@@ -46,7 +46,6 @@ public abstract class GenericInterpreter<V> {
 
             cfg = new CFG(program);
             cfg.build();
-            memory = new Memory();
 
         } catch (AssemblyException e) {
             System.err.println(e.errors().generateErrorReport());

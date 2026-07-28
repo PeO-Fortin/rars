@@ -1,6 +1,8 @@
 package rars.corrector;
 
 import rars.concolic.ConcolicInterpreter;
+import rars.options.CorrectorOptions;
+import rars.options.InterpreterOptions;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -139,14 +141,23 @@ public class FilesManager{
         return getFiles(ConcolicInterpreter.OUTPUT_FOLDER_NAME, FILTER_OUTPUTS);
     }
 
+    public File[] getMemoryOutputFiles() { return getFiles(ConcolicInterpreter.MEMORY_SAVE_FOLDER, FILTER_OUTPUTS); }
+
     /**
      * Saves into MASTER_FOLDER every input/output pair produced by the
      * most recent execution of ConcolicInterpreter.
      */
-    public void saveExecutionResults() {
+    public void saveExecutionResults(boolean bitmap) {
         File[] readableInputs = getReadableExecInputFiles();
         File[] binaryInputs = getBinaryExecInputFiles();
-        File[] outputs = getExecOutputFiles();
+        File[] outputs;
+
+
+        if(bitmap){
+            outputs = getMemoryOutputFiles();
+        } else {
+            outputs = getExecOutputFiles();
+        }
 
         for(int i = 0; i < readableInputs.length; ++i) {
             saveExecutionResults(readableInputs[i], binaryInputs[i], outputs[i]);
