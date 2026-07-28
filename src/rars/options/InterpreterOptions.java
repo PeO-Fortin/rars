@@ -169,6 +169,14 @@ public class InterpreterOptions implements OptionsChecker{
         return  coverageCounter.getOrDefault(block, 0);
     }
 
+    public void setStartingAddress(int startingAddress) {
+        this.startingAddress = startingAddress;
+    }
+
+    public void setEndingAddress(int endingAddress) {
+        this.endingAddress = endingAddress;
+    }
+
     public byte[] getSavedMemory(Memory memory) {
         return memory.getMemory(startingAddress, endingAddress);
     }

@@ -152,12 +152,7 @@ public class FilesManager{
         File[] binaryInputs = getBinaryExecInputFiles();
         File[] outputs;
 
-
-        if(bitmap){
-            outputs = getMemoryOutputFiles();
-        } else {
-            outputs = getExecOutputFiles();
-        }
+        outputs = bitmap ? getMemoryOutputFiles() : getExecOutputFiles();
 
         for(int i = 0; i < readableInputs.length; ++i) {
             saveExecutionResults(readableInputs[i], binaryInputs[i], outputs[i]);

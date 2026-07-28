@@ -425,7 +425,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 byte[] memoryCopy = options.getSavedMemory(memory);
                 PrintWriter pwMemory = new PrintWriter(new FileWriter(MEMORY_SAVE_FOLDER + ConcolicInterpreter.OUTPUT_FILE_NAME + paddedExecution));
                 for (int i = 0; i < memoryCopy.length; i++) {
-                    if ((i + 1) % 5 == 0) { pwMemory.println(); }
+                    if ((i + 1) % 10 == 0) { pwMemory.println(); }
                     pwMemory.print(memoryCopy[i] + " ");
                 }
             }

@@ -1,5 +1,6 @@
 package rars.options;
 
+import rars.concolic.MemoryValueTypes;
 import rars.riscv.hardware.MemoryConfigurations;
 
 import java.io.File;
@@ -12,7 +13,7 @@ public class CorrectorOptions implements OptionsChecker {
             "--sol [file] :\tThe file containing the program of reference\n" +
             "--stud [files] :\tThe files to compare to the program of reference\n" +
             "--tests [files] :\tThe previously prepared tests to include in the comparison\n" +
-            "--bitmap [base address code] []:\tThe correction will check the bitmap output\n" +
+            "--bitmap [unit width] [unit height] [display width] [display height] [base address code]:\tThe correction will check the bitmap output\n" +
             "\tBase address codes :\n" +
             "\t\t gd (global data) =\t"+ MemoryConfigurations.getDefaultDataSegmentBaseAddress() + "\n" +
             "\t\t gp (global pointer) = \t"+ MemoryConfigurations.getDefaultGlobalPointer() +"\n" +
@@ -24,7 +25,11 @@ public class CorrectorOptions implements OptionsChecker {
     private InterpreterOptions interpreterOptions;
     private ArrayList<String> cleanArgs;
 
-    private boolean bitmap = false;
+    public boolean bitmap = false;
+    private byte unitWidth;
+    private byte unitHeight;
+    private short displayWidth;
+    private short displayHeight;
     private int bitmapBaseAddress;
 
     public CorrectorOptions(){}
@@ -34,9 +39,7 @@ public class CorrectorOptions implements OptionsChecker {
         return userTests.toArray(new File[0]);
     }
 
-    public boolean getBitmap() {
-        return bitmap;
-    }
+
 
     public InterpreterOptions getInterpreterOptions() {
         return interpreterOptions;
@@ -85,6 +88,12 @@ public class CorrectorOptions implements OptionsChecker {
                 break;
             case "--bitmap":
                 bitmap = true;
+
+                unitWidth = Byte.parseByte(args[++i]);
+                unitHeight = Byte.parseByte(args[++i]);
+                displayWidth = Short.parseShort(args[++i]);
+                displayHeight = Short.parseShort(args[++i]);
+
                 switch(args[++i]) {
                     case "gd":
                         bitmapBaseAddress = MemoryConfigurations.getDefaultDataSegmentBaseAddress();
@@ -102,6 +111,13 @@ public class CorrectorOptions implements OptionsChecker {
                         bitmapBaseAddress = MemoryConfigurations.getDefaultMemoryMapBaseAddress();
                         break;
                 }
+
+                int endingAddress = bitmapBaseAddress + ((displayHeight / unitHeight) * (displayWidth / unitWidth) * MemoryValueTypes.WORD.getSize());
+
+                interpreterOptions.saveMemory = true;
+                interpreterOptions.setStartingAddress(bitmapBaseAddress);
+                interpreterOptions.setEndingAddress(endingAddress);
+                break;
             default:
                 i = -1;
         }
