@@ -4,8 +4,6 @@ import rars.Globals;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 import rars.cfg.BasicBlock;
@@ -414,7 +412,8 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             PrintWriter pwReadableOutputs = new PrintWriter(new FileWriter(OUTPUT_FOLDER_NAME + OUTPUT_FILE_NAME + paddedExecution));
             byte[] bytesResults = inputBytesArray.toByteArray();
 
-            pwReadableInputs.println(super.inputReadable); pwReadableOutputs.println(super.output);
+            pwReadableInputs.println(super.inputReadable);
+            pwReadableOutputs.println(super.output);
             pwReadableInputs.flush(); pwReadableOutputs.flush();
             pwReadableInputs.close(); pwReadableOutputs.close();
 

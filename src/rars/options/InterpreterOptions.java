@@ -161,7 +161,7 @@ public class InterpreterOptions implements OptionsChecker{
 
     public void countCoverage(BasicBlock block) {
         if(heuristic == Heuristics.COVERAGE) {
-            coverageCounter.merge(block, 1, Integer::sum);
+            coverageCounter.merge(block, 1, Integer::sum); //Add 1 to the counter or create the node and give the value 1
         }
     }
 

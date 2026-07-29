@@ -377,7 +377,20 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 4:     // PrintString
                 strOut = printString(values.asLong(registers[10]));
-                output +=  strOut;
+
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < strOut.length(); i++) {
+                    char ch = strOut.charAt(i);
+
+                    if (ch >= 32 && ch < 127) {
+                        sb.append(ch);
+                    } else {
+                        sb.append("\\u")
+                                .append(String.format("%04x", (int) ch));
+                    }
+                }
+
+                output += sb.toString();
                 return;
             case 5:     // ReadInt
                 registers[10] = readInt();
@@ -402,7 +415,14 @@ public abstract class GenericInterpreter<V> {
                 return;
             case 11:    // PrintChar
                 char ch = values.asChar(registers[10]);
-                if(!options.eof) output += ch;
+
+                if(!options.eof) {
+                    if (ch >= 32 && ch < 127) {
+                        output += ch;
+                    } else {
+                        output += "\\u" + String.format("%04x", (int) ch);
+                    }
+                }
                 return;
             case 12:    // ReadChar
                 registers[10] = readChar();
