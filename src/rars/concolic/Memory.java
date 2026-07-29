@@ -37,7 +37,7 @@ public class Memory {
         MemoryValue memValue = new MemoryValue(MemoryValueTypes.WORD, true);
         ConcolicValues.V address;
 
-        for(int i = 0; i < dataBlockTable.length; i += 4){
+        for(int i = 0; i < dataBlockTable.length; i += 4) {
             try {
                 Integer value = rarsMemory.getRawWordOrNull(base + i);
                 if (value == null) {
@@ -127,10 +127,15 @@ public class Memory {
     public byte[] getMemory(int startingAdress, int endingAdress) {
         byte[] memoryCopy = new byte[endingAdress - startingAdress + 1];
 
-        for (int i = 0; i <= endingAdress; i++) {
+        for (int i = 0; i <= endingAdress - startingAdress; i++) {
             int index = getMemoryIndex(startingAdress, i);
             ConcolicValues.V[] memoryBlockTable = getMemoryBlock(startingAdress, i);
-            memoryCopy[i] = memoryBlockTable[index].concrete.byteValue();
+
+            if(memoryBlockTable[index] == null) {
+                memoryCopy[i] = 0;
+            } else {
+                memoryCopy[i] = memoryBlockTable[index].concrete.byteValue();
+            }
         }
 
         return memoryCopy;

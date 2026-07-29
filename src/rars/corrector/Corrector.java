@@ -158,13 +158,13 @@ public class Corrector {
                 if (!studentOutput.equals(masterOutput)) {
                     pw.println("FAIL");
                     pw.println(masterInputs[i].getName());
-                    pw.println("Teacher Inputs : " + Files.readString(masterInputs[i].toPath()));
+                    pw.println("Teacher Inputs :\n" + Files.readString(masterInputs[i].toPath()));
                     pw.println(studentInputs[i].getName());
-                    pw.println("Student Inputs : " + Files.readString(studentInputs[i].toPath()));
+                    pw.println("Student Inputs :\n" + Files.readString(studentInputs[i].toPath()));
                     pw.println(masterOutputs[i].getName());
-                    pw.println("Teacher Outputs : " + Files.readString(masterOutputs[i].toPath()));
+                    pw.println("Teacher Outputs :\n " + Files.readString(masterOutputs[i].toPath()));
                     pw.println(studentOutputs[i].getName());
-                    pw.println("Student Outputs : " + Files.readString(studentOutputs[i].toPath()));
+                    pw.println("Student Outputs :\n" + Files.readString(studentOutputs[i].toPath()));
                     success = false;
                 }
             }

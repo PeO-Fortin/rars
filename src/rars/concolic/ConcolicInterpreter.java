@@ -38,7 +38,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static final String INPUT_READABLE_FOLDER_NAME = "src/rars/concolic/results/inputs/readable/";
     public static final String INPUT_BINARY_FOLDER_NAME = "src/rars/concolic/results/inputs/binaries/";
     public static final String OUTPUT_FOLDER_NAME = "src/rars/concolic/results/outputs/";
-    public static final String MEMORY_SAVE_FOLDER = ConcolicInterpreter.OUTPUT_FOLDER_NAME + "memory/";
+    public static final String MEMORY_SAVE_FOLDER = OUTPUT_FOLDER_NAME + "memory/";
     public static final String INPUT_FILE_NAME = "inputs";
     public static final String OUTPUT_FILE_NAME = "outputs";
 
