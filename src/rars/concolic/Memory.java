@@ -8,12 +8,15 @@ public class Memory {
     public static final int DEFAULT_GLOBAL_POINTER = MemoryConfigurations.getDefaultGlobalPointer();
     public static final int DATA_SIZE = 4194304; //4MB
     public static final int STACK_SIZE = 8192; //8KB
+    public static final int MEMORY_MAP_SIZE = 65536; //64KB
 
     public static final int DATA_BASE_ADDRESS = MemoryConfigurations.getDefaultDataSegmentBaseAddress();
     public static final int DATA_LIMIT_ADDRESS = DATA_BASE_ADDRESS + DATA_SIZE;
     public static final int HEAP_BASE_ADDRESS = MemoryConfigurations.getDefaultHeapBaseAddress();
-    public static final long STACK_BASE_ADDRESS = MemoryConfigurations.getDefaultStackBaseAddress();
-    public static final long STACK_LIMIT_ADDRESS = STACK_BASE_ADDRESS - STACK_SIZE;
+    public static final int STACK_BASE_ADDRESS = MemoryConfigurations.getDefaultStackBaseAddress();
+    public static final int STACK_LIMIT_ADDRESS = STACK_BASE_ADDRESS - STACK_SIZE;
+    public static final int MEMORY_MAP_BASE_ADDRESS = MemoryConfigurations.getDefaultMemoryMapBaseAddress();
+    public static final int MEMORY_MAP_LIMIT_ADDRESS = MEMORY_MAP_BASE_ADDRESS + MEMORY_MAP_SIZE;
 
     public final ConcolicValues.V DEFAULT_VALUE = new ConcolicValues.V(0, new SymbolicLong(0));
 
@@ -21,6 +24,7 @@ public class Memory {
 
     private ConcolicValues.V[] dataBlockTable;
     private ConcolicValues.V[] stackBlockTable;
+    private ConcolicValues.V[] memoryMapBlockTable;
 
     public Memory() { initialize(); }
 
@@ -28,6 +32,7 @@ public class Memory {
         heapAddress = HEAP_BASE_ADDRESS;
         dataBlockTable = new ConcolicValues.V[DATA_SIZE];
         stackBlockTable = new ConcolicValues.V[STACK_SIZE];
+        memoryMapBlockTable = new ConcolicValues.V[MEMORY_MAP_SIZE];
         intializeData();
     }
 
@@ -147,7 +152,9 @@ public class Memory {
         if (realAddress >= DATA_BASE_ADDRESS && realAddress <= DATA_LIMIT_ADDRESS) {
             return (int)(realAddress - DATA_BASE_ADDRESS);
         } else if (realAddress <= STACK_BASE_ADDRESS && realAddress >= STACK_LIMIT_ADDRESS) {
-            return (int)(realAddress - STACK_LIMIT_ADDRESS);
+            return (int) (realAddress - STACK_LIMIT_ADDRESS);
+        } else if (realAddress >= MEMORY_MAP_BASE_ADDRESS && realAddress <= MEMORY_MAP_LIMIT_ADDRESS) {
+            return (int) (realAddress - MEMORY_MAP_BASE_ADDRESS);
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }
@@ -160,6 +167,8 @@ public class Memory {
             return dataBlockTable;
         } else if (realAddress <= STACK_BASE_ADDRESS && realAddress >= STACK_LIMIT_ADDRESS) {
             return stackBlockTable;
+        } else if (realAddress >= MEMORY_MAP_BASE_ADDRESS && realAddress <= MEMORY_MAP_LIMIT_ADDRESS) {
+            return memoryMapBlockTable;
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }
