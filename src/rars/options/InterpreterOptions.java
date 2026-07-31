@@ -7,10 +7,7 @@ import rars.concolic.*;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 public class InterpreterOptions implements OptionsChecker{
     public static final String HELP = "\nAvailable options:\n" +
@@ -30,6 +27,8 @@ public class InterpreterOptions implements OptionsChecker{
     boolean randCov;
 
     private Map<BasicBlock, Integer> coverageCounter;
+    private Set<BasicBlock> exploredBlocks;
+    private Set<ProgramStatement> exploredInstructions;
 
     boolean textUserEntries = false;
     boolean binaryUserEntries = false;
@@ -47,9 +46,12 @@ public class InterpreterOptions implements OptionsChecker{
     private InputReader reader;
 
     private int maxExecutions = 100;
-    private int maxInstructions = 500;
+    private int maxInstructions = 1000;
 
-    public InterpreterOptions(){}
+    public InterpreterOptions(){
+        exploredBlocks = new HashSet<>();
+        exploredInstructions = new HashSet<>();
+    }
 
     public void newExecution() {
         if (textUserEntries) {
@@ -159,10 +161,23 @@ public class InterpreterOptions implements OptionsChecker{
         return distances;
     }
 
-    public void countCoverage(BasicBlock block) {
+    public void countBlockCoverage(BasicBlock block) {
+        exploredBlocks.add(block);
         if(heuristic == Heuristics.COVERAGE) {
             coverageCounter.merge(block, 1, Integer::sum); //Add 1 to the counter or create the node and give the value 1
         }
+    }
+
+    public void countInstructionCoverage(ProgramStatement ps) {
+        exploredInstructions.add(ps);
+    }
+
+    public void printCoverage(CFG cfg) {
+        int coveredBlocks = exploredBlocks.size() / cfg.getNumberOfBlocks();
+        int coveredInstructions = exploredInstructions.size() / cfg.getNumberOfInstructions();
+
+        System.out.println("Covered blocks: " + coveredBlocks + "%");
+        System.out.println("Covered instructions: " + coveredInstructions + "%");
     }
 
     public int getCoverage(BasicBlock block) {
@@ -283,10 +298,10 @@ public class InterpreterOptions implements OptionsChecker{
                 }
 
                 try {
-                    startingAddress = Integer.decode(args[++i]);
-                    endingAddress = Integer.decode(args[++i]);
+                    startingAddress = Long.decode(args[++i]).intValue();
+                    endingAddress = Long.decode(args[++i]).intValue();
                 } catch (NumberFormatException e) {
-                    System.out.println("Wrong parameter for option --binary-entries: " + args[i]);
+                    System.out.println("Wrong parameter for option --save-memory: " + args[i]);
                     System.out.println("Try option '--help'");
                     System.exit(1);
                 }

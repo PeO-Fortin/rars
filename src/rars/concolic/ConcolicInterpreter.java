@@ -319,7 +319,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -334,7 +334,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -349,7 +349,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -364,7 +364,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -403,6 +403,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         } catch (ExecutionDone e) {
             System.out.println("Execution completed");
         }
+        options.printCoverage(cfg);
     }
 
     private void printResults(int execution) {

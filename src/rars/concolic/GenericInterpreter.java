@@ -73,7 +73,7 @@ public abstract class GenericInterpreter<V> {
         instructionCounter = 0;
         maxInstructions = options.getMaxInstructions();
         while (currentBlock != null) {
-            options.countCoverage(currentBlock);
+            options.countBlockCoverage(currentBlock);
 
             BasicBlock executedBlock = currentBlock;
 
@@ -87,7 +87,7 @@ public abstract class GenericInterpreter<V> {
                     return;
 
                 if (instructionCounter >= maxInstructions) {
-                    output += "Maximum number of instructions reached |";
+                    output += " | Maximum number of instructions reached |";
                     return;
                 }
             }
@@ -99,6 +99,7 @@ public abstract class GenericInterpreter<V> {
     }
 
     public void executePS(ProgramStatement ps) {
+        options.countInstructionCoverage(ps);
         int[] operands = ps.getOperands();
         switch (ps.getInstruction().getName()) {
             case "lui":
