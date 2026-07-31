@@ -25,7 +25,6 @@ public class BasicBlock {
 
     public List<BasicBlock> getOut() {
         if (instructions.isEmpty()) return new ArrayList<>();
-        ProgramStatement terminator = getTerminator();
         List<BasicBlock> result = new ArrayList<>();
         if (takenSuccessor != null) result.add(takenSuccessor);
         if (fallthroughSuccessor != null) result.add(fallthroughSuccessor);

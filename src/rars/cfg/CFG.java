@@ -32,6 +32,17 @@ public class CFG {
         return null;
     }
 
+    public int getNumberOfBlocks() {
+        return blockCount;
+    }
+
+    public int getNumberOfInstructions() {
+        int instructions = 0;
+        for (BasicBlock block : blocks)
+            instructions += block.instructions.size();
+        return instructions;
+    }
+
     /** Sort blocks pseudo-topologically (topological but ignore back edges).
      * This also removes unreachable blocks.
      */
