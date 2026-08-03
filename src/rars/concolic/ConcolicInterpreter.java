@@ -34,7 +34,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         prepareResultsFolders();
         System.out.println("Program: " + program);
         interpreter.runConcolic(options.getMaxExecutions());
-        System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
+        System.out.printf("Edges covered: %d\n", interpreter.edgesCovered.size());
         System.out.println();
     }
 
