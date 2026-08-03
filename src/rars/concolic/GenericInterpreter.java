@@ -47,6 +47,7 @@ public abstract class GenericInterpreter<V> {
 
             cfg = new CFG(program);
             cfg.build();
+            memory = new Memory();
 
         } catch (AssemblyException e) {
             System.err.println(e.errors().generateErrorReport());
@@ -416,13 +417,12 @@ public abstract class GenericInterpreter<V> {
                 exit = true;
                 return;
             case 11:    // PrintChar
-                char ch = values.asChar(registers[10]);
-
+                char pch = values.asChar(registers[10]);
                 if(!options.eof) {
-                    if (ch >= 32 && ch < 127) {
-                        output += ch;
+                    if (pch >= 32 && pch < 127) {
+                        output += pch;
                     } else {
-                        output += "\\u" + String.format("%04x", (int) ch);
+                        output += "\\u" + String.format("%04x", (int) pch);
                     }
                 }
                 return;
@@ -430,13 +430,13 @@ public abstract class GenericInterpreter<V> {
                 registers[10] = readChar();
                 if(!options.eof) {
                     try {
-                        char value = values.asChar(registers[10]);
-                        if (value >= 32 && value < 127) {
-                            inputReadable += value;
+                        char rch = values.asChar(registers[10]);
+                        if (rch >= 32 && rch < 127) {
+                            inputReadable += rch;
                         } else {
-                            inputReadable += "\\u" + String.format("%04x", (int) value);
+                            inputReadable += "\\u" + String.format("%04x", (int) rch);
                         }
-                        inputBytes.writeChar(value);
+                        inputBytes.writeChar(rch);
                     } catch (IOException e) {
                         System.out.println("Error writing binary Char input");
                     }
