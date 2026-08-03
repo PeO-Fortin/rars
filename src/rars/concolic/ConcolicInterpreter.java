@@ -30,9 +30,12 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
         interpreter.prepare(program);
         interpreter.options = options;
+        interpreter.options.prepareCoverage();
         prepareResultsFolders();
+        System.out.println("Program: " + program);
         interpreter.runConcolic(options.getMaxExecutions());
         System.out.printf("edges covered: %d\n", interpreter.edgesCovered.size());
+        System.out.println();
     }
 
     public static final String INPUT_READABLE_FOLDER_NAME = "src/rars/concolic/results/inputs/readable/";
@@ -156,7 +159,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         try {
             value = options.readIntFromFile();
         } catch (NumberFormatException e) {
-            output += "Runtime exception: invalid input integer";
+            output += "|Runtime exception: invalid input integer|";
             exit = true;
         }
 
@@ -217,7 +220,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.BYTE, true);
             memory.storeMemory(bValue, memAddress, offset);
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             exit = true;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -231,7 +234,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             MemoryValue memValue = new MemoryValue(value, MemoryValueTypes.HALFWORD, true);
             memory.storeMemory(memValue, offset, memAddress);
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             exit = true;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -245,7 +248,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.WORD, true);
             memory.storeMemory(bValue, memAddress, offset);
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             exit = true;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -259,7 +262,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             MemoryValue bValue = new MemoryValue(value, MemoryValueTypes.DOUBLEWORD, true);
             memory.storeMemory(bValue, memAddress, offset);
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             exit = true;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -274,7 +277,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";
@@ -289,7 +292,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
             memory.accessMemory(bValue, memAddress, offset);
             return bValue.getConcolicValue();
         } catch (ArrayIndexOutOfBoundsException e) {
-            output += "Access outside memory|";
+            output += "|Access outside memory|";
             return null;
         } catch (AddressErrorException e) {
             output += e.getMessage() + "|";

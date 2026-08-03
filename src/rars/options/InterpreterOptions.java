@@ -49,8 +49,6 @@ public class InterpreterOptions implements OptionsChecker{
     private int maxInstructions = 1000;
 
     public InterpreterOptions(){
-        exploredBlocks = new HashSet<>();
-        exploredInstructions = new HashSet<>();
     }
 
     public void newExecution() {
@@ -67,6 +65,11 @@ public class InterpreterOptions implements OptionsChecker{
                 binaryUserEntries = false;
             }
         }
+    }
+
+    public void prepareCoverage() {
+        exploredBlocks = new HashSet<>();
+        exploredInstructions = new HashSet<>();
     }
 
     public Heuristics getHeuristic() {
