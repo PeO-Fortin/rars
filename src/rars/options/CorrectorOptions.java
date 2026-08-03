@@ -1,9 +1,12 @@
 package rars.options;
 
+import rars.concolic.ConcolicInterpreter;
 import rars.concolic.MemoryValueTypes;
 import rars.riscv.hardware.MemoryConfigurations;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 public class CorrectorOptions implements OptionsChecker {
@@ -117,6 +120,17 @@ public class CorrectorOptions implements OptionsChecker {
                 interpreterOptions.saveMemory = true;
                 interpreterOptions.setStartingAddress(bitmapBaseAddress);
                 interpreterOptions.setEndingAddress(endingAddress);
+
+                File d = new File(ConcolicInterpreter.MEMORY_SAVE_FOLDER);
+                try {
+                    Files.createDirectories(d.toPath());
+                    for (File f : d.listFiles())
+                        if (!f.isDirectory())
+                            f.delete();
+                } catch (IOException e) {
+                    System.out.println("Error creating memory save folder: " + e.getMessage());
+                }
+
                 break;
             default:
                 i = -1;

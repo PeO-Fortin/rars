@@ -146,7 +146,7 @@ public class Corrector {
         File[] masterInputs = files.getReadableMasterInputsFiles();
         File[] studentInputs = files.getReadableExecInputFiles();
         File[] masterOutputs = files.getMasterOutputsFiles();
-        File[] studentOutputs = files.getExecOutputFiles();
+        File[] studentOutputs = opt.bitmap ? files.getMemoryOutputFiles() : files.getExecOutputFiles();
 
         try {
             PrintWriter pw = new PrintWriter(new FileWriter(files.CORRECTION_FILE, true));
