@@ -21,6 +21,7 @@ import java.util.ArrayList;
 public abstract class GenericInterpreter<V> {
     InterpreterValues<V> values;
     public static InterpreterOptions options;
+    public static final String LIBS_FILENAME = "test/rars/concolic/libs.s";
 
     public GenericInterpreter(InterpreterValues<V> values) {
         this.values = values;
@@ -38,7 +39,7 @@ public abstract class GenericInterpreter<V> {
             RISCVprogram program = new RISCVprogram();
             ArrayList<String> filenames = new ArrayList<>();
             filenames.add(filename);
-            filenames.add("test/rars/concolic/libs.s");
+            filenames.add(LIBS_FILENAME);
 
             ArrayList<RISCVprogram> programs = program.prepareFilesForAssembly(filenames, filename, null);
             Assembler assembler = new Assembler();

@@ -27,8 +27,8 @@ public class InterpreterOptions implements OptionsChecker{
     boolean randCov;
 
     private Map<BasicBlock, Integer> coverageCounter;
-    private Set<BasicBlock> exploredBlocks;
-    private Set<ProgramStatement> exploredInstructions;
+    private Set<Integer> exploredBlocks;
+    private Set<Integer> exploredInstructions;
 
     boolean textUserEntries = false;
     boolean binaryUserEntries = false;
@@ -162,22 +162,32 @@ public class InterpreterOptions implements OptionsChecker{
     }
 
     public void countBlockCoverage(BasicBlock block) {
-        exploredBlocks.add(block);
+        if(!block.instructions.get(0).getSourceProgram().getFilename().equals(GenericInterpreter.LIBS_FILENAME))
+            exploredBlocks.add(block.id);
+
         if(heuristic == Heuristics.COVERAGE) {
             coverageCounter.merge(block, 1, Integer::sum); //Add 1 to the counter or create the node and give the value 1
         }
     }
 
     public void countInstructionCoverage(ProgramStatement ps) {
-        exploredInstructions.add(ps);
+        if(!ps.getSourceProgram().getFilename().equals(GenericInterpreter.LIBS_FILENAME))
+            exploredInstructions.add(ps.getAddress());
     }
 
     public void printCoverage(CFG cfg) {
-        int coveredBlocks = exploredBlocks.size() / cfg.getNumberOfBlocks();
-        int coveredInstructions = exploredInstructions.size() / cfg.getNumberOfInstructions();
+        float totalBlocks = 0;
+        float totalInstructions = 0;
 
-        System.out.println("Covered blocks: " + coveredBlocks + "%");
-        System.out.println("Covered instructions: " + coveredInstructions + "%");
+        for (BasicBlock block : cfg.blocks) {
+            if (!block.instructions.get(0).getSourceProgram().getFilename().equals(GenericInterpreter.LIBS_FILENAME)) {
+                totalBlocks++;
+                totalInstructions += block.instructions.size();
+            }
+        }
+
+        System.out.printf("Covered blocks: %.2f %%\n", exploredBlocks.size() / totalBlocks * 100);
+        System.out.printf("Covered instructions: %.2f %%\n", exploredInstructions.size() / totalInstructions * 100);
     }
 
     public int getCoverage(BasicBlock block) {
