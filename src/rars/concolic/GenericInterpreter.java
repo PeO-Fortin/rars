@@ -60,8 +60,8 @@ public abstract class GenericInterpreter<V> {
     ByteArrayOutputStream inputBytesArray = new ByteArrayOutputStream();
     DataOutputStream inputBytes = new DataOutputStream(inputBytesArray);
 
-    int instructionCounter;
-    int maxInstructions;
+    int branchCounter;
+    int maxBranch;
 
     final int DEFAULT_OFFSET = 4;
 
@@ -72,8 +72,8 @@ public abstract class GenericInterpreter<V> {
 
     void run(BasicBlock entryPoint) {
         currentBlock = entryPoint;
-        instructionCounter = 0;
-        maxInstructions = options.getMaxInstructions();
+        branchCounter = 0;
+        maxBranch = options.getMaxBranch();
         while (currentBlock != null) {
             options.countBlockCoverage(currentBlock);
 
@@ -83,13 +83,12 @@ public abstract class GenericInterpreter<V> {
                 executePS(ps);
 
                 registers[0] = values.inject(0);
-                ++instructionCounter;
 
                 if (exit)
                     return;
 
-                if (instructionCounter >= maxInstructions) {
-                    output += " | Maximum number of instructions reached |";
+                if (branchCounter >= branchCounter) {
+                    output += " | Maximum number of branches reached |";
                     return;
                 }
             }
@@ -193,12 +192,16 @@ public abstract class GenericInterpreter<V> {
             case "jalr":
                 jalr(registers[operands[1]], ps.getAddress(), operands[2], operands[0]); break;
             case "bge":
+                ++branchCounter;
                 ifgeq(registers[operands[0]], registers[operands[1]]); break;
             case "blt":
+                ++branchCounter;
                 iflt(registers[operands[0]], registers[operands[1]]); break;
             case "beq":
+                ++branchCounter;
                 ifeq(registers[operands[0]], registers[operands[1]]); break;
             case "bne":
+                ++branchCounter;
                 ifneq(registers[operands[0]], registers[operands[1]]); break;
         }
     }

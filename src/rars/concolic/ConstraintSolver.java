@@ -108,5 +108,4 @@ class ConstraintSolver {
         }
         return vars;
     }
-
 }

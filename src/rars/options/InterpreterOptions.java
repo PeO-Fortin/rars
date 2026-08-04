@@ -13,7 +13,7 @@ public class InterpreterOptions implements OptionsChecker{
     public static final String HELP = "\nAvailable options:\n" +
             "--help :\t\tDisplay available options\n" +
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
-            "--max-inst [value] :\tDefine a maximum number of instructions\n" +
+            "--max-branch [value] :\tDefine a maximum number of branches\n" +
             "--text-entries [number of files] [files] :\tUse entries from text files to start the symbolic execution\n" +
             "--binary-entries [number of files] [files]:\tUse entries from binary files to start the symbolic execution\n" +
             "--dfs :\tActive Depth-first search exploration\n" +
@@ -46,7 +46,7 @@ public class InterpreterOptions implements OptionsChecker{
     private InputReader reader;
 
     private int maxExecutions = 100;
-    private int maxInstructions = 1000;
+    private int maxBranch = 30;
 
     public InterpreterOptions(){
     }
@@ -85,8 +85,8 @@ public class InterpreterOptions implements OptionsChecker{
         return maxExecutions;
     }
 
-    public int getMaxInstructions(){
-        return maxInstructions;
+    public int getMaxBranch(){
+        return maxBranch;
     }
 
     public Long readIntFromFile() throws NumberFormatException {
@@ -229,8 +229,8 @@ public class InterpreterOptions implements OptionsChecker{
             case "--max-exec":
                 maxExecutions = Integer.parseInt(args[++i]);
                 break;
-            case "--max-inst":
-                maxInstructions = Integer.parseInt(args[++i]);
+            case "--max-branch":
+                maxBranch = Integer.parseInt(args[++i]);
                 break;
             case "--text-entries":
                 textUserEntries = true;
