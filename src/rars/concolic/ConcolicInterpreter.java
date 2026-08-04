@@ -478,7 +478,8 @@ class ExecutionTreeNode {
     }
 
     public boolean isUnexplored() {
-       return !hasChildren() && !explored && !unsat; }
+       return !hasChildren() && !explored && !unsat;
+    }
 
     public boolean hasChildren() {
         return trueBranch != null && falseBranch != null;
