@@ -3,7 +3,17 @@ if git submodule status | grep \( > /dev/null ; then
     version=$(git describe --tags --match 'v*' --dirty | cut -c2-)
     echo "Version = $version" > src/Version.properties
     mkdir -p build
-    find src -name "*.java" | xargs javac --release 17 -d build -cp .:/usr/share/java/com.microsoft.z3.jar:lib/jsoftfloat.jar
+    Z3_JAR=$(find /usr/share -iname "com.microsoft.z3.jar" -o -iname "z3.jar" | head -n1)
+
+    if [ -z "$Z3_JAR" ]; then
+        echo "ERROR: Z3 Java jar not found."
+        exit 1
+    fi
+
+    find src -name "*.java" | \
+        xargs javac --release 17 \
+            -d build \
+            -cp ".:${Z3_JAR}:lib/jsoftfloat.jar"
     if [[ "$OSTYPE" == "darwin"* ]]; then
         find src -type f -not -name "*.java" -exec rsync -R {} build \;
     else
