@@ -87,7 +87,7 @@ public abstract class GenericInterpreter<V> {
                 if (exit)
                     return;
 
-                if (branchCounter >= branchCounter) {
+                if (branchCounter >= maxBranch) {
                     output += " | Maximum number of branches reached |";
                     return;
                 }
