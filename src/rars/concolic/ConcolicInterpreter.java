@@ -404,6 +404,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 lastReadInteger = 0;
                 constraints.clear();
                 callStack.clear();
+                loopStack.clear();
                 options.newExecution();
                 computeNextModel();
                 super.inputReadable = "|"; super.output = "|";

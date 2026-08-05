@@ -23,18 +23,13 @@ import java.util.Deque;
 public abstract class GenericInterpreter<V> {
     InterpreterValues<V> values;
     public static InterpreterOptions options;
+    CFG cfg;
+    Memory memory;
 
     public GenericInterpreter(InterpreterValues<V> values) {
         this.values = values;
     }
 
-    CFG cfg;
-    public void runOn(String filename) throws Exception {
-        prepare(filename);
-        runMain();
-    }
-
-    Memory memory;
     public void prepare(String filename) throws Exception {
         try {
             RISCVprogram program = new RISCVprogram();
@@ -349,6 +344,7 @@ public abstract class GenericInterpreter<V> {
     void sraw(V left, V right, int dst) { registers[dst] = values.sraw(left, right); }
 
     Deque<BasicBlock> callStack = new ArrayDeque<>();
+    Deque<BasicBlock> loopStack = new ArrayDeque<>();
     void jal(int currentProgramCounter, int dst) {
         registers[dst] = values.inject(currentProgramCounter + DEFAULT_OFFSET);
         callStack.push(currentBlock);
