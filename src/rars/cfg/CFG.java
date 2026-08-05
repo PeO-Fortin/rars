@@ -14,6 +14,8 @@ public class CFG {
     public List<BasicBlock> blocks = new ArrayList<>();
     public Map<Integer, BasicBlock> blockMap;
 
+    private Map<BasicBlock, Set<BasicBlock>> loops;
+
     private int blockCount = 0;
 
     public CFG(RISCVprogram p) {
@@ -60,9 +62,49 @@ public class CFG {
         Set<Integer> blockEntryPoints = findEntryPoints(machineList);
         createBlocks(machineList, blockEntryPoints);
         findSuccessors();
+        findLoops();
 
         entryBlock = blocks.get(0);
         exitBlock = blocks.get(blocks.size() - 1);
+    }
+
+    public void findLoops() {
+        cleanUpCFG();
+
+        Map<BasicBlock, List<BasicBlock>> predecessors = new HashMap<>();
+        for (BasicBlock block : blocks) predecessors.put(block, new ArrayList<>());
+
+        for (BasicBlock block : blocks)
+            for (BasicBlock successor : block.getOut())
+                predecessors.get(successor).add(block);
+
+        loops = new HashMap<>();
+
+        for (BasicBlock block : blocks) {
+            for (BasicBlock successor : block.getOut()) {
+                if (successor.id <= block.id) { // back-edge
+                    Set<BasicBlock> bodyOfLoop = loops.computeIfAbsent(successor, h -> new HashSet<>(Set.of(h)));
+                    Deque<BasicBlock> worklist = new ArrayDeque<>();
+                    if (!bodyOfLoop.contains(block)) {
+                        bodyOfLoop.add(block);
+                        worklist.push(block);
+                    }
+                    while (!worklist.isEmpty()) {
+                        BasicBlock current = worklist.pop();
+                        for (BasicBlock p : predecessors.get(current)) {
+                            if (!bodyOfLoop.contains(p)) {
+                                bodyOfLoop.add(p);
+                                worklist.push(p);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean isPartOfLoop(BasicBlock b) {
+
     }
 
     private void add(ProgramStatement statement, BasicBlock currentBlock) {
@@ -70,7 +112,7 @@ public class CFG {
         currentBlock.add(statement);
     }
 
-    public void cleanUpCFG() {
+    private void cleanUpCFG() {
         reorder();
         for (int i=0; i<blocks.size(); i++)
             blocks.get(i).id = i;
@@ -125,6 +167,7 @@ public class CFG {
                 block.fallthroughSuccessor = blockMap.get(pc + 4);
             } else if (instruction.equals("jal")) {
                 block.takenSuccessor = blockMap.get(pc + operands[1]);
+                block.fallthroughSuccessor = blockMap.get(pc + 4);
             } else if (instruction.equals("jalr")) {
                 block.takenSuccessor = null;
             } else {
