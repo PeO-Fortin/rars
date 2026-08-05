@@ -32,6 +32,7 @@ public class FilesManager{
     //FILES
     public final File MASTER_FILE;
     private File[] studentFiles;
+    private File[] execFiles;
 
     private static int topIndex = 0;
 
@@ -44,14 +45,21 @@ public class FilesManager{
      *                  filesName[0]: the path of the master file
      *                  filesName[1..n-1]}: the paths of the student files
      */
-    public FilesManager(String [] filesName){
-        MASTER_FILE = new File(filesName[0]);
-        studentFiles = new File[filesName.length-1];
+    public FilesManager(String [][] filesName){
+        MASTER_FILE = new File(filesName[0][0]);
+        studentFiles = new File[filesName[1].length];
 
         prepareMasterFolders();
 
         for(int i = 1; i < filesName.length; ++i){
-            studentFiles[i-1] = new File(filesName[i]);
+            studentFiles[i-1] = new File(filesName[1][i]);
+        }
+
+        if(filesName[2].length > 0){
+            execFiles = new File[filesName[2].length];
+            for(int i = 1; i < filesName[2].length; ++i){
+                execFiles[i] = new File(filesName[2][i]);
+            }
         }
     }
 
@@ -79,11 +87,30 @@ public class FilesManager{
      * @param index index of the student file, between {@code 0} and {@code getNumberOfFiles() - 1}
      * @return the corresponding student file
      */
-    public File getStudentFile(int index){
+    public File[] getStudentFile(int index){
         if(index < 0 || index >= studentFiles.length){
             return null;
         }
-        return studentFiles[index];
+
+        File[] studentFile = new File[studentFiles.length + (execFiles != null ? execFiles.length : 0)];
+        int i = 0;
+        studentFile[i++] = studentFile[index];
+        for(File execFile : execFiles){
+            studentFile[i++] = execFile;
+        }
+
+        return studentFile;
+    }
+
+    public File[] getMasterFile(){
+        File[] masterFile = new File[1 + (execFiles != null ? execFiles.length : 0)];
+        int i = 0;
+        masterFile[i++] = MASTER_FILE;
+        for(File execFile : execFiles){
+            masterFile[i++] = execFile;
+        }
+
+        return masterFile;
     }
 
     /**
@@ -228,16 +255,6 @@ public class FilesManager{
         } catch (NullPointerException e) {
             System.out.println("Error while cleaning folders: " + e.getMessage());
         }
-    }
-
-    /**
-     * Cleans up the working directories before starting a new correction:
-     * deletes every file (excluding subdirectories) found in the output folder
-     * and the input folder of ConcolicInterpreter, as well as in
-     * MASTER_FOLDER, then deletes the existing CORRECTION_FILE.
-     */
-    private void cleanFolders() {
-
     }
 
     /**

@@ -16,7 +16,15 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static void main(String[] args) throws Exception {
         InterpreterOptions opt = new InterpreterOptions();
         opt.checkOptions(args);
-        runInterpreter(args[0], opt);
+        ArrayList<String> programs = new ArrayList<>();
+        for(String arg : args) {
+            if(!arg.startsWith("-")) {
+                programs.add(arg);
+            } else {
+                break;
+            }
+        }
+        runInterpreter(programs, opt);
     }
 
     public static void initRars() {
@@ -25,14 +33,14 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         Globals.instructionSet.populate();
     }
 
-    public static void runInterpreter(String program, InterpreterOptions options) throws Exception {
+    public static void runInterpreter(ArrayList<String> programs, InterpreterOptions options) throws Exception {
         initRars();
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
-        interpreter.prepare(program);
+        interpreter.prepare(programs);
         interpreter.options = options;
         interpreter.options.prepareCoverage();
         prepareResultsFolders();
-        System.out.println("Program: " + program);
+        System.out.println("Program: " + programs.get(0));
         interpreter.runConcolic(options.getMaxExecutions());
         System.out.printf("Edges covered: %d\n", interpreter.edgesCovered.size());
         System.out.println();

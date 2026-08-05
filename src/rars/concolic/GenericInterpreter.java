@@ -28,20 +28,13 @@ public abstract class GenericInterpreter<V> {
     }
 
     CFG cfg;
-    public void runOn(String filename) throws Exception {
-        prepare(filename);
-        runMain();
-    }
-
     Memory memory;
-    public void prepare(String filename) throws Exception {
+    public void prepare(ArrayList<String> filenames) throws Exception {
         try {
             RISCVprogram program = new RISCVprogram();
-            ArrayList<String> filenames = new ArrayList<>();
-            filenames.add(filename);
             filenames.add(LIBS_FILENAME);
 
-            ArrayList<RISCVprogram> programs = program.prepareFilesForAssembly(filenames, filename, null);
+            ArrayList<RISCVprogram> programs = program.prepareFilesForAssembly(filenames, filenames.get(0), null);
             Assembler assembler = new Assembler();
             assembler.assemble(programs, true, false, program);
 

@@ -5,6 +5,7 @@ import rars.options.CorrectorOptions;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.util.ArrayList;
 
 /**
  * Entry point of the automatic correction process for RARS assignments.
@@ -17,13 +18,17 @@ public class Corrector {
      * Executes a source file through ConcolicInterpreter, passing it the
      * file's path followed by the supplied arguments.
      *
-     * @param filename  source file to execute
+     * @param files  source file to execute
      */
-    public static void concExecFile(File filename) {
+    public static void concExecFile(File[] files) {
         try {
-            ConcolicInterpreter.runInterpreter(filename.getPath(), opt.getInterpreterOptions());
+            ArrayList<String> filenames = new ArrayList<>();
+            for (File file : files) {
+                filenames.add(file.getPath());
+            }
+            ConcolicInterpreter.runInterpreter(filenames, opt.getInterpreterOptions());
         } catch (Exception e) {
-            System.err.println("Error while executing " + filename);
+            System.err.println("Error while executing " + files[0].getName());
             e.printStackTrace();
         }
     }
@@ -32,13 +37,13 @@ public class Corrector {
      * Executes a student file, providing the content of the given input files
      * as the known user entries.
      *
-     * @param studentFile student file to execute
+     * @param studentFiles student files to execute
      * @param knownInputs known inputs files (originating from the master file) to
      *                    supply as input for the execution
      */
-    public static void execStudentFile(File studentFile, File[] knownInputs) {
+    public static void execStudentFile(File[] studentFiles, File[] knownInputs) {
         updateUserEntries(knownInputs);
-        concExecFile(studentFile);
+        concExecFile(studentFiles);
     }
 
     /**
@@ -49,7 +54,7 @@ public class Corrector {
      *              to process
      */
     public static void generateTestFiles(FilesManager files) {
-        concExecFile(files.MASTER_FILE);
+        concExecFile(files.getMasterFiles());
         files.saveExecutionResults(opt.bitmap);
 
         for (File studentFile : files.getStudentFiles()) {
@@ -58,7 +63,7 @@ public class Corrector {
 
             while (!stableInputs) {
                 File[] knownInputs = files.getBinaryMasterInputsFiles();
-                execStudentFile(studentFile, knownInputs);
+                execStudentFile(studentFiles, knownInputs);
 
                 File[] studentInputs = files.getBinaryExecInputFiles();
                 File[] newInputs = findNewInputs(studentInputs, knownInputs);
@@ -111,7 +116,7 @@ public class Corrector {
      */
     public static void updateMasterList(File[] newInputs, FilesManager files) {
         updateUserEntries(newInputs);
-        concExecFile(files.MASTER_FILE);
+        concExecFile(files.getMasterFiles());
         files.saveExecutionResults(opt.bitmap);
     }
 
@@ -216,7 +221,7 @@ public class Corrector {
 
         opt = new CorrectorOptions();
 
-        String[] cleanArgs = opt.checkOptions(args);
+        String[][] cleanArgs = opt.checkOptions(args);
 
         FilesManager files = new FilesManager(cleanArgs);
 

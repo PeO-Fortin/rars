@@ -15,6 +15,7 @@ public class CorrectorOptions implements OptionsChecker {
             "--help :\t\tDisplay available options\n" +
             "--sol [file] :\tThe file containing the program of reference\n" +
             "--stud [files] :\tThe files to compare to the program of reference\n" +
+            "--exec-file [files] :\tThe additional files to join to the correction programs\n" +
             "--tests [files] :\tThe previously prepared tests to include in the comparison\n" +
             "--bitmap [unit width] [unit height] [display width] [display height] [base address code]:\tThe correction will check the bitmap output\n" +
             "\tBase address codes :\n" +
@@ -26,7 +27,8 @@ public class CorrectorOptions implements OptionsChecker {
 
     private ArrayList<File> userTests;
     private InterpreterOptions interpreterOptions;
-    private ArrayList<String> cleanArgs;
+    private ArrayList<ArrayList<String>> cleanArgsList;
+    private String[][] cleanArgs;
 
     public boolean bitmap = false;
     private byte unitWidth;
@@ -48,9 +50,13 @@ public class CorrectorOptions implements OptionsChecker {
         return interpreterOptions;
     }
 
-    public String[] checkOptions(String[] args) {
+    public String[][] checkOptions(String[] args) {
         interpreterOptions = new InterpreterOptions();
-        cleanArgs = new ArrayList<>();
+        cleanArgsList = new ArrayList<>();
+        cleanArgsList.add(new ArrayList<>()); // 0 : master
+        cleanArgsList.add(new ArrayList<>()); // 1 : students
+        cleanArgsList.add(new ArrayList<>()); // 2 : other needed files
+
         for  (int i = 0; i < args.length; i++) {
             int newIndex = checkOption(args, i);
             if (newIndex == -1) {
@@ -60,7 +66,14 @@ public class CorrectorOptions implements OptionsChecker {
 
             i = newIndex;
         }
-        return cleanArgs.toArray(new String[0]);
+
+        cleanArgs = cleanArgsList.stream()
+                .map(rowList -> rowList.toArray(new String[0]))
+                .toArray(String[][]::new);
+
+        cleanArgsList = null;
+
+        return cleanArgs;
     }
 
     public int checkOption(String[] args, int i){
@@ -69,13 +82,21 @@ public class CorrectorOptions implements OptionsChecker {
         switch(args[i]) {
             case "--sol":
                 ++i;
-                cleanArgs.add(0, args[i]);
+                cleanArgsList.get(0).add(args[i]);
                 break;
             case "--stud":
                 ++i;
                 for(; i < args.length; i++){
                     if(args[i].startsWith("-")) break;
-                    cleanArgs.add(args[i]);
+                    cleanArgsList.get(1).add(args[i]);
+                }
+                --i;
+                break;
+            case "--exec-file":
+                ++i;
+                for(; i < args.length; i++){
+                    if(args[i].startsWith("-")) break;
+                    cleanArgsList.get(2).add(args[i]);
                 }
                 --i;
                 break;
