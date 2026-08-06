@@ -13,8 +13,7 @@ public class CFG {
     public BasicBlock exitBlock;
     public List<BasicBlock> blocks = new ArrayList<>();
     public Map<Integer, BasicBlock> blockMap;
-
-    private Map<BasicBlock, Set<BasicBlock>> loops;
+    private Set<BasicBlock> loopHeaders;
 
     private int blockCount = 0;
 
@@ -62,49 +61,41 @@ public class CFG {
         Set<Integer> blockEntryPoints = findEntryPoints(machineList);
         createBlocks(machineList, blockEntryPoints);
         findSuccessors();
-        findLoops();
+        findLoopHeaders();
 
         entryBlock = blocks.get(0);
         exitBlock = blocks.get(blocks.size() - 1);
     }
 
-    public void findLoops() {
+
+    private void findLoopHeaders() {
         cleanUpCFG();
 
-        Map<BasicBlock, List<BasicBlock>> predecessors = new HashMap<>();
-        for (BasicBlock block : blocks) predecessors.put(block, new ArrayList<>());
-
-        for (BasicBlock block : blocks)
-            for (BasicBlock successor : block.getOut())
-                predecessors.get(successor).add(block);
-
-        loops = new HashMap<>();
-
+        loopHeaders = new HashSet<>();
         for (BasicBlock block : blocks) {
             for (BasicBlock successor : block.getOut()) {
-                if (successor.id <= block.id) { // back-edge
-                    Set<BasicBlock> bodyOfLoop = loops.computeIfAbsent(successor, h -> new HashSet<>(Set.of(h)));
-                    Deque<BasicBlock> worklist = new ArrayDeque<>();
-                    if (!bodyOfLoop.contains(block)) {
-                        bodyOfLoop.add(block);
-                        worklist.push(block);
-                    }
-                    while (!worklist.isEmpty()) {
-                        BasicBlock current = worklist.pop();
-                        for (BasicBlock p : predecessors.get(current)) {
-                            if (!bodyOfLoop.contains(p)) {
-                                bodyOfLoop.add(p);
-                                worklist.push(p);
-                            }
-                        }
-                    }
+                if (isBackEdge(block, successor)) {
+                    loopHeaders.add(successor);
                 }
             }
         }
     }
 
-    public boolean isPartOfLoop(BasicBlock b) {
+    public boolean isLoopHeader(BasicBlock block) {
+        return loopHeaders.contains(block);
+    }
 
+    private boolean isBackEdge(BasicBlock source, BasicBlock target) {
+        if (target.id > source.id) return false;
+        ProgramStatement terminator = source.getTerminator();
+        String instruction = terminator.getInstruction().getName();
+        if (isBranch(instruction)) return true;
+        //Distinction between a call and an unconditional jump
+        if (instruction.equals("jal")) {
+            int destinationRegister = terminator.getOperands()[0];
+            return destinationRegister == 0;
+        }
+        return false;
     }
 
     private void add(ProgramStatement statement, BasicBlock currentBlock) {

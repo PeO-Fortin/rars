@@ -91,6 +91,15 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     @Override
     protected void if_(ConcolicValues.V cond) {
+        if (cfg.isLoopHeader(currentBlock)) {
+            int n = loopIterCount.merge(currentBlock, 1, Integer::sum);
+            if (n > options.getMaxIteration()) {
+                currentNode = loopFusedNode.computeIfAbsent(currentBlock,
+                        block -> new ExecutionTreeNode(++nextId));
+                super.if_(cond);
+                return;
+            }
+        }
         currentNode.condition = cond.symbolic;
         currentNode.block = currentBlock;
         if (distanceToExit != null) {
@@ -391,6 +400,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     int execution = 0;
     Map<String, Integer> model = new HashMap<>();
     Map<BasicBlock, Integer> loopIterCount = new HashMap<>();
+    Map<BasicBlock, ExecutionTreeNode> loopFusedNode = new HashMap<>();
     public void runConcolic(int maxExecutions) {
         this.distanceToExit = options.calculateDistanceToExit(cfg);
         if (this.distanceToExit != null) {
