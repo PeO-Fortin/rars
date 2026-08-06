@@ -390,6 +390,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
 
     int execution = 0;
     Map<String, Integer> model = new HashMap<>();
+    Map<BasicBlock, Integer> loopIterCount = new HashMap<>();
     public void runConcolic(int maxExecutions) {
         this.distanceToExit = options.calculateDistanceToExit(cfg);
         if (this.distanceToExit != null) {
@@ -402,12 +403,14 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
                 memory = new Memory();
                 lastReadCharacter = 0;
                 lastReadInteger = 0;
+                loopIterCount.clear();
                 options.newExecution();
                 currentNode = executionTreeRoot;
                 computeNextModel();
                 super.inputReadable = ""; super.output = "";
                 runMain();
                 currentNode.explored = true;
+                executionTreeRoot.deleteBranchIfComplete();
                 printResults(execution);
                 ++execution;
             } while (execution < maxExecutions);
@@ -657,6 +660,25 @@ class ExecutionTreeNode {
         while (cur != null) {
             if (cur.block == target) return true;
             cur = cur.parent;
+        }
+        return false;
+    }
+
+    public boolean deleteBranchIfComplete() {
+        if (unsat || (isUnexplored() == false && trueBranch == null && falseBranch == null)) {
+            return true;
+        }
+        if (hasChildren()) {
+            boolean trueExplored = trueBranch.deleteBranchIfComplete();
+            boolean falseExplored = falseBranch.deleteBranchIfComplete();
+            if (trueExplored && falseExplored) {
+                trueBranch = null;
+                falseBranch = null;
+                explored = true; // marque ce nœud comme définitivement clos
+                extraConstraints.clear();
+                condition = null;
+                return true;
+            }
         }
         return false;
     }
