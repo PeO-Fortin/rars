@@ -54,16 +54,18 @@ public class Corrector {
      *              to process
      */
     public static void generateTestFiles(FilesManager files) {
-        concExecFile(files.getMasterFiles());
+        concExecFile(files.getMasterFile());
         files.saveExecutionResults(opt.bitmap);
 
-        for (File studentFile : files.getStudentFiles()) {
+        File[] studentFiles = files.getStudentFiles();
+
+        for (int i = 0; i < studentFiles.length; ++i) {
 
             boolean stableInputs = false;
 
             while (!stableInputs) {
                 File[] knownInputs = files.getBinaryMasterInputsFiles();
-                execStudentFile(studentFiles, knownInputs);
+                execStudentFile(files.getStudentFile(i), knownInputs);
 
                 File[] studentInputs = files.getBinaryExecInputFiles();
                 File[] newInputs = findNewInputs(studentInputs, knownInputs);
@@ -116,7 +118,7 @@ public class Corrector {
      */
     public static void updateMasterList(File[] newInputs, FilesManager files) {
         updateUserEntries(newInputs);
-        concExecFile(files.getMasterFiles());
+        concExecFile(files.getMasterFile());
         files.saveExecutionResults(opt.bitmap);
     }
 
