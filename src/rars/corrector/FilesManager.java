@@ -51,13 +51,13 @@ public class FilesManager{
 
         prepareMasterFolders();
 
-        for(int i = 1; i < filesName.length; ++i){
-            studentFiles[i-1] = new File(filesName[1][i]);
+        for(int i = 0; i < filesName[1].length; ++i){
+            studentFiles[i] = new File(filesName[1][i]);
         }
 
         if(filesName[2].length > 0){
             execFiles = new File[filesName[2].length];
-            for(int i = 1; i < filesName[2].length; ++i){
+            for(int i = 0; i < filesName[2].length; ++i){
                 execFiles[i] = new File(filesName[2][i]);
             }
         }
@@ -92,11 +92,14 @@ public class FilesManager{
             return null;
         }
 
-        File[] studentFile = new File[studentFiles.length + (execFiles != null ? execFiles.length : 0)];
+        File[] studentFile = new File[1 + (execFiles != null ? execFiles.length : 0)];
         int i = 0;
-        studentFile[i++] = studentFile[index];
-        for(File execFile : execFiles){
-            studentFile[i++] = execFile;
+        studentFile[i++] = studentFiles[index];
+
+        if(execFiles != null) {
+            for (File execFile : execFiles) {
+                studentFile[i++] = execFile;
+            }
         }
 
         return studentFile;
@@ -106,8 +109,11 @@ public class FilesManager{
         File[] masterFile = new File[1 + (execFiles != null ? execFiles.length : 0)];
         int i = 0;
         masterFile[i++] = MASTER_FILE;
-        for(File execFile : execFiles){
-            masterFile[i++] = execFile;
+
+        if(execFiles != null) {
+            for (File execFile : execFiles) {
+                masterFile[i++] = execFile;
+            }
         }
 
         return masterFile;

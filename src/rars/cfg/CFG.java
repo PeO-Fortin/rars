@@ -61,10 +61,11 @@ public class CFG {
         Set<Integer> blockEntryPoints = findEntryPoints(machineList);
         createBlocks(machineList, blockEntryPoints);
         findSuccessors();
-        findLoopHeaders();
 
         entryBlock = blocks.get(0);
         exitBlock = blocks.get(blocks.size() - 1);
+
+        findLoopHeaders();
     }
 
 
@@ -105,7 +106,7 @@ public class CFG {
 
     private void cleanUpCFG() {
         reorder();
-        for (int i=0; i<blocks.size(); i++)
+        for (int i = 0; i < blocks.size(); i++)
             blocks.get(i).id = i;
     }
 
