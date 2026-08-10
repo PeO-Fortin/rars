@@ -490,6 +490,7 @@ class ExecutionTreeNode {
     public ExecutionTreeNode falseBranch;
     public boolean unsat = false;
     public Collection<SymbolicValue> extraConstraints = new HashSet<>();
+    private ConstraintList constraints;
     public boolean explored = false;
     BasicBlock block;
     public Integer distanceToExit;
@@ -647,20 +648,33 @@ class ExecutionTreeNode {
     }
 
     public Collection<SymbolicValue> collectConstraints(ExecutionTreeNode comingFrom) {
-        Collection<SymbolicValue> constraints;
-        if (parent != null) {
-            constraints = parent.collectConstraints(this);
-        } else {
-            constraints = new HashSet<>();
-        }
-        constraints.addAll(this.extraConstraints);
-        if (condition != null) {
-            if (comingFrom == trueBranch) {
-                constraints.add(condition);
+        return getConstraintsList(comingFrom).toCollection();
+    }
+
+    public ConstraintList getConstraintsList(ExecutionTreeNode comingFrom) {
+        if(constraints == null) {
+            ConstraintList consList;
+            if (parent != null) {
+                consList = parent.getConstraintsList(this);
             } else {
-                SymbolicValue[] args = { condition };
-                constraints.add(new SymbolicOperation(SymbolicOperator.Not, args));
+                consList = new ConstraintList(null, null);
             }
+
+            for (SymbolicValue cons : extraConstraints) {
+                consList = consList.addConstraint(cons);
+            }
+
+            if (condition != null) {
+                SymbolicValue branchCond;
+                if (comingFrom == trueBranch) {
+                    branchCond = condition;
+                } else {
+                    branchCond = new SymbolicOperation(SymbolicOperator.Not, new SymbolicValue[]{condition});
+                }
+                consList = consList.addConstraint(branchCond);
+            }
+
+            constraints = consList;
         }
         return constraints;
     }
@@ -691,5 +705,29 @@ class ExecutionTreeNode {
             }
         }
         return false;
+    }
+}
+
+class ConstraintList {
+    SymbolicValue head;
+    ConstraintList tail;
+
+    ConstraintList(SymbolicValue head, ConstraintList tail) {
+        this.head = head;
+        this.tail = tail;
+    }
+
+    ConstraintList addConstraint(SymbolicValue constraint) {
+        return new ConstraintList(constraint, this);
+    }
+
+    Collection<SymbolicValue> toCollection() {
+        List<SymbolicValue> constraints = new ArrayList<>();
+        ConstraintList list = this;
+        while (list.head != null) {
+            constraints.add(list.head);
+            list = list.tail;
+        }
+        return constraints;
     }
 }
