@@ -467,7 +467,7 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
         if (next == null) {
             throw new ExecutionDone();
         }
-        model = solver.solve(next.collectConstraints(next));
+        model = solver.solve(next.collectConstraints());
         if (model == null) {
             // unsat!
             next.unsat = true;
@@ -647,15 +647,15 @@ class ExecutionTreeNode {
         return size;
     }
 
-    public Collection<SymbolicValue> collectConstraints(ExecutionTreeNode comingFrom) {
-        return getConstraintsList(comingFrom).toCollection();
+    public Collection<SymbolicValue> collectConstraints() {
+        return getConstraintsList().toCollection();
     }
 
-    public ConstraintList getConstraintsList(ExecutionTreeNode comingFrom) {
+    private ConstraintList getConstraintsList() {
         if(constraints == null) {
             ConstraintList consList;
             if (parent != null) {
-                consList = parent.getConstraintsList(this);
+                consList = parent.getChildConstraintsList(this);
             } else {
                 consList = new ConstraintList(null, null);
             }
@@ -664,19 +664,20 @@ class ExecutionTreeNode {
                 consList = consList.addConstraint(cons);
             }
 
-            if (condition != null) {
-                SymbolicValue branchCond;
-                if (comingFrom == trueBranch) {
-                    branchCond = condition;
-                } else {
-                    branchCond = new SymbolicOperation(SymbolicOperator.Not, new SymbolicValue[]{condition});
-                }
-                consList = consList.addConstraint(branchCond);
-            }
-
             constraints = consList;
         }
         return constraints;
+    }
+
+    private ConstraintList getChildConstraintsList (ExecutionTreeNode child) {
+        ConstraintList base = getConstraintsList();
+        if (condition == null) return base;
+        SymbolicValue branchCond;
+        if (child == trueBranch)
+            branchCond = condition;
+        else
+            branchCond = new SymbolicOperation(SymbolicOperator.Not, new SymbolicValue[]{condition});
+        return base.addConstraint(branchCond);
     }
 
     public boolean isBlockInPath(BasicBlock target) {

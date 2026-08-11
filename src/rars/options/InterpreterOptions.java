@@ -91,7 +91,9 @@ public class InterpreterOptions implements OptionsChecker{
         return maxBranch;
     }
 
-    public int getMaxIteration(){ return maxIteration; }
+    public int getMaxIteration(){
+        return maxIteration;
+    }
 
     public Long readIntFromFile() throws NumberFormatException {
         if(!textUserEntries && !binaryUserEntries) {return null;}
@@ -236,7 +238,7 @@ public class InterpreterOptions implements OptionsChecker{
             case "--max-branch":
                 maxBranch = Integer.parseInt(args[++i]);
                 break;
-            case "--max-iteration":
+            case "--max-iter":
                 maxIteration = Integer.parseInt(args[++i]);
                 break;
             case "--text-entries":
