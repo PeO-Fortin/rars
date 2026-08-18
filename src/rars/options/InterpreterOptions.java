@@ -15,6 +15,7 @@ public class InterpreterOptions implements OptionsChecker{
             "--max-exec [value] :\tDefine a maximum number of executions\n" +
             "--max-branch [value] :\tDefine a maximum number of branches\n" +
             "--max-iter [value] :\tDefine a maximum number of iterations to keep in the execution tree\n" +
+            "--max-inst [value] :\tDefine a maximum number of instructions\n" +
             "--text-entries [number of files] [files] :\tUse entries from text files to start the symbolic execution\n" +
             "--binary-entries [number of files] [files]:\tUse entries from binary files to start the symbolic execution\n" +
             "--dfs :\tActive Depth-first search exploration\n" +
@@ -49,6 +50,7 @@ public class InterpreterOptions implements OptionsChecker{
     private int maxExecutions = 100;
     private int maxBranch = 30;
     private int maxIteration = 3;
+    private int maxInstructions = 15000;
 
     public InterpreterOptions(){
     }
@@ -93,6 +95,10 @@ public class InterpreterOptions implements OptionsChecker{
 
     public int getMaxIteration(){
         return maxIteration;
+    }
+
+    public int getMaxInstructions(){
+        return maxInstructions;
     }
 
     public Long readIntFromFile() throws NumberFormatException {
@@ -241,6 +247,9 @@ public class InterpreterOptions implements OptionsChecker{
             case "--max-iter":
                 maxIteration = Integer.parseInt(args[++i]);
                 break;
+            case "--max-inst":
+                maxInstructions = Integer.parseInt(args[++i]);
+                break;
             case "--text-entries":
                 textUserEntries = true;
                 try {
@@ -255,7 +264,7 @@ public class InterpreterOptions implements OptionsChecker{
                     System.exit(1);
                 }
                 break;
-            case "c":
+            case "--binary-entries":
                 binaryUserEntries = true;
                 try {
                     binaryFilesName = new String[Integer.parseInt(args[++i])];

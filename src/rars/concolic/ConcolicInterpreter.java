@@ -1,5 +1,6 @@
 package rars.concolic;
 
+import rars.AssemblyException;
 import rars.Globals;
 
 import java.io.*;
@@ -36,14 +37,18 @@ public class ConcolicInterpreter extends GenericInterpreter<ConcolicValues.V> {
     public static void runInterpreter(ArrayList<String> programs, InterpreterOptions options) throws Exception {
         initRars();
         ConcolicInterpreter interpreter = new ConcolicInterpreter();
-        interpreter.prepare(programs);
-        interpreter.options = options;
-        interpreter.options.prepareCoverage();
-        prepareResultsFolders();
-        System.out.println("Program: " + programs.get(0));
-        interpreter.runConcolic(options.getMaxExecutions());
-        System.out.printf("Edges covered: %d\n", interpreter.edgesCovered.size());
-        System.out.println();
+        try {
+            interpreter.prepare(programs);
+            interpreter.options = options;
+            interpreter.options.prepareCoverage();
+            prepareResultsFolders();
+            System.out.println("Program: " + programs.get(0));
+            interpreter.runConcolic(options.getMaxExecutions());
+            System.out.printf("Edges covered: %d\n", interpreter.edgesCovered.size());
+            System.out.println();
+        } catch (AssemblyException e) {
+            System.out.println("This program cannot be assembled");
+        }
     }
 
     public static final String INPUT_READABLE_FOLDER_NAME = "src/rars/concolic/results/inputs/readable/";

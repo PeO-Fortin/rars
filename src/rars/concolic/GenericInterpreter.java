@@ -56,6 +56,9 @@ public abstract class GenericInterpreter<V> {
     int branchCounter;
     int maxBranch;
 
+    int instructionCounter;
+    int maxInstructions;
+
     final int DEFAULT_OFFSET = 4;
 
     V[] registers;
@@ -66,7 +69,9 @@ public abstract class GenericInterpreter<V> {
     void run(BasicBlock entryPoint) {
         currentBlock = entryPoint;
         branchCounter = 0;
+        instructionCounter = 0;
         maxBranch = options.getMaxBranch();
+        maxInstructions = options.getMaxInstructions();
         while (currentBlock != null) {
             options.countBlockCoverage(currentBlock);
 
@@ -76,12 +81,18 @@ public abstract class GenericInterpreter<V> {
                 executePS(ps);
 
                 registers[0] = values.inject(0);
+                ++instructionCounter;
 
                 if (exit)
                     return;
 
                 if (branchCounter >= maxBranch) {
                     output += " | Maximum number of branches reached |";
+                    return;
+                }
+
+                if (instructionCounter >= maxInstructions) {
+                    output += " | Maximum number of instructions reached |";
                     return;
                 }
             }
