@@ -204,8 +204,8 @@ L’ensemble des instructions utilisées par les demandes des travaux étudiants
 
 Cette recherche a permis le développement d’un correcteur de travaux en RISC-V, appuyé sur un moteur d’exécution symbolique. Par contre, nous avons fait face aux problématiques classiques de ce type de moteur, soit la gestion des boucles et la représentation de la mémoire symbolique. Il serait donc intéressant de poursuivre le travail afin de peaufiner le contrôle sur les différentes exécutions et obtenir des tests de correction qui s’adaptent plus aisément aux différentes formes que les programmes peuvent prendre.
 
-[^1] Martin Nowak, «Fine-Grain Memory Object Representation in Symbolic Execution», 34th IEEE/ACM International Conference on Automated Software Engineering (ASE), 2019 
+[^1]: Martin Nowak, «Fine-Grain Memory Object Representation in Symbolic Execution», 34th IEEE/ACM International Conference on Automated Software Engineering (ASE), 2019 
 
-[^2] Daniil Kutz, «Towards Symbolic Pointers Reasoning in Dynamic Symbolic Execution», Ivannikov Memorial Workshop (IVMEM), 2021
+[^2]: Daniil Kutz, «Towards Symbolic Pointers Reasoning in Dynamic Symbolic Execution», Ivannikov Memorial Workshop (IVMEM), 2021
 
-[^3] Roberto Baldoni, Emilio Coppa, Daniele Cono D'Elia, Camil Demetrescu, Irene Finocchi, «A Survey of Symbolic Execution Techniques», ACM Computing Surveys, v51, n3, 2019, p.8.
+[^3]: Roberto Baldoni, Emilio Coppa, Daniele Cono D'Elia, Camil Demetrescu, Irene Finocchi, «A Survey of Symbolic Execution Techniques», ACM Computing Surveys, v51, n3, 2019, p.8.
